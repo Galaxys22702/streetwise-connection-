@@ -2,11 +2,6 @@ name: Stripe test validation
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - ops/stripe-test-run
-    paths:
-      - ".github/workflows/stripe-test-validation.yml"
 
 permissions:
   contents: read
