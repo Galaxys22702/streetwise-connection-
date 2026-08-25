@@ -19,14 +19,27 @@ jobs:
       - name: Build production target
         run: docker build --target production -t streetwise-connection:production .
 
-      - name: Smoke test production target
+      - name: Smoke test production and provisioning targets
         run: |
-          docker run -d --name streetwise-smoke -p 3000:3000 streetwise-connection:production
+          docker run -d --name streetwise-smoke -p 3000:3000 \
+            -e ESIM_PROVIDER=mock \
+            streetwise-connection:production
           trap 'docker logs streetwise-smoke; docker rm -f streetwise-smoke' EXIT
+
           for i in {1..10}; do
-            if curl --fail --silent http://127.0.0.1:3000/health; then
-              exit 0
+            if curl --fail --silent http://127.0.0.1:3000/health >/dev/null; then
+              break
             fi
             sleep 1
           done
-          exit 1
+
+          curl --fail --silent http://127.0.0.1:3000/api/provider/status | grep '"provider":"mock"'
+          curl --fail --silent 'http://127.0.0.1:3000/api/provider/catalogue?country=US' | grep 'mock_1GB_7D_GLOBAL'
+
+          ORDER_RESPONSE=$(curl --fail --silent \
+            -X POST http://127.0.0.1:3000/api/esims/order \
+            -H 'Content-Type: application/json' \
+            -d '{"bundleName":"mock_1GB_7D_GLOBAL","quantity":1,"country":"US","device":"iPhone 15","validateOnly":false}')
+
+          echo "$ORDER_RESPONSE" | grep '"status":"completed"'
+          echo "$ORDER_RESPONSE" | grep '"mock":true'
