@@ -10,6 +10,7 @@ import {
   logoutRequest,
   registerUser
 } from "./services/authService.js";
+import { getCustomerDashboard } from "./services/dashboardService.js";
 import {
   createCheckout,
   getSubscriptionForUser,
@@ -21,9 +22,11 @@ import {
   checkProviderCoverage,
   getEsimInstallDetails,
   getEsimOrder,
+  listEsimOrdersForUser,
   listProviderBundles,
   providerStatus,
-  provisionEsim
+  provisionEsim,
+  recordMockUsage
 } from "./services/esimService.js";
 
 const PORT = Number(process.env.PORT || 3000);
@@ -113,7 +116,7 @@ const server = http.createServer(async (req, res) => {
     return sendJson(res, 200, {
       ok: true,
       service: "streetwise-connection",
-      version: "0.3.0",
+      version: "0.4.0",
       database,
       payments: paymentProviderStatus(),
       provider
@@ -155,6 +158,24 @@ const server = http.createServer(async (req, res) => {
       const user = await requireUser(req);
       const subscription = await getSubscriptionForUser(user.id);
       return sendJson(res, 200, { user, subscription });
+    } catch (error) {
+      return sendError(res, error, 401);
+    }
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/dashboard") {
+    try {
+      const user = await requireUser(req);
+      return sendJson(res, 200, await getCustomerDashboard(user));
+    } catch (error) {
+      return sendError(res, error, 401);
+    }
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/esims") {
+    try {
+      const user = await requireUser(req);
+      return sendJson(res, 200, { esims: await listEsimOrdersForUser(user.id) });
     } catch (error) {
       return sendError(res, error, 401);
     }
@@ -221,14 +242,31 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "POST" && url.pathname === "/api/esims/order") {
     try {
+      const user = await authenticateRequest(req);
       if (process.env.ESIM_LIVE_ORDERS_ENABLED === "true") {
-        const user = await requireUser(req);
+        if (!user) return sendJson(res, 401, { error: "authentication_required" });
         if (!(await hasActiveSubscription(user.id))) {
           return sendJson(res, 402, { error: "active_subscription_required" });
         }
       }
-      const result = await provisionEsim(await readJsonBody(req));
+      const result = await provisionEsim(await readJsonBody(req), { user });
       return sendJson(res, 201, result);
+    } catch (error) {
+      return sendError(res, error);
+    }
+  }
+
+  const usageMatch = url.pathname.match(/^\/api\/esims\/orders\/([^/]+)\/usage\/simulate$/);
+  if (req.method === "POST" && usageMatch) {
+    try {
+      const user = await requireUser(req);
+      const body = await readJsonBody(req);
+      const order = await recordMockUsage(
+        decodeURIComponent(usageMatch[1]),
+        user.id,
+        body.usedMegabytes
+      );
+      return sendJson(res, 200, { order });
     } catch (error) {
       return sendError(res, error);
     }
@@ -237,7 +275,10 @@ const server = http.createServer(async (req, res) => {
   const installMatch = url.pathname.match(/^\/api\/esims\/orders\/([^/]+)\/install$/);
   if (req.method === "GET" && installMatch) {
     try {
-      const details = await getEsimInstallDetails(decodeURIComponent(installMatch[1]));
+      const user = await authenticateRequest(req);
+      const details = await getEsimInstallDetails(decodeURIComponent(installMatch[1]), {
+        userId: user?.id || null
+      });
       if (!details) return sendJson(res, 404, { error: "install_details_not_found" });
       return sendJson(res, 200, { install: details });
     } catch (error) {
@@ -247,8 +288,10 @@ const server = http.createServer(async (req, res) => {
 
   const orderMatch = url.pathname.match(/^\/api\/esims\/orders\/([^/]+)$/);
   if (req.method === "GET" && orderMatch) {
+    const user = await authenticateRequest(req);
     const order = await getEsimOrder(decodeURIComponent(orderMatch[1]), {
-      refresh: url.searchParams.get("refresh") === "true"
+      refresh: url.searchParams.get("refresh") === "true",
+      userId: user?.id || null
     });
     if (!order) return sendJson(res, 404, { error: "order_not_found" });
     return sendJson(res, 200, { order });
