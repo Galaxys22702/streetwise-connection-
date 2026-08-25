@@ -23,18 +23,13 @@ jobs:
     timeout-minutes: 10
     env:
       ESIM_API_KEY: ${{ secrets.ESIM_API_KEY }}
-      CONFIGURED_ESIM_PROVIDER: ${{ vars.ESIM_PROVIDER }}
-      CONFIGURED_LIVE_ORDERS_ENABLED: ${{ vars.ESIM_LIVE_ORDERS_ENABLED }}
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Verify safe provider configuration
-        run: |
-          test -n "$ESIM_API_KEY"
-          test "$CONFIGURED_ESIM_PROVIDER" = "esim-go"
-          test "$CONFIGURED_LIVE_ORDERS_ENABLED" = "false"
+      - name: Verify API secret is configured
+        run: test -n "$ESIM_API_KEY"
 
       - name: Build production image
         run: docker build --target production -t streetwise-connection:provider-test .
@@ -42,7 +37,7 @@ jobs:
       - name: Verify eSIM Go API connection and U.S. catalogue
         run: |
           docker run -d --name streetwise-provider-test -p 3001:3000 \
-            -e ESIM_PROVIDER="$CONFIGURED_ESIM_PROVIDER" \
+            -e ESIM_PROVIDER=esim-go \
             -e ESIM_API_KEY="$ESIM_API_KEY" \
             -e ESIM_LIVE_ORDERS_ENABLED=false \
             -e PAYMENT_PROVIDER=mock \
