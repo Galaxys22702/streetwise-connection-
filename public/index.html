@@ -11,13 +11,13 @@
   <header class="hero">
     <nav>
       <strong>Streetwise Connection</strong>
-      <span class="badge">MVP</span>
+      <span class="badge">MVP 0.3</span>
     </nav>
     <div class="hero-copy">
       <p class="eyebrow">Affordable mobile data, built differently</p>
       <h1>Internet that travels with your device.</h1>
       <p class="lead">A software platform for affordable eSIM-based mobile data—no separate hotspot required.</p>
-      <a class="button" href="#coverage">Check prototype coverage</a>
+      <a class="button" href="#account">Create an account</a>
     </div>
   </header>
 
@@ -31,11 +31,44 @@
       <div id="plans" class="card-grid" aria-live="polite"></div>
     </section>
 
+    <section id="account" class="section panel">
+      <div>
+        <p class="eyebrow">Customer account</p>
+        <h2>Sign up, subscribe, connect.</h2>
+        <p>Create a Streetwise account before checkout. Test environments use mock payments unless Stripe is configured.</p>
+        <div id="account-summary" class="result" aria-live="polite">Not signed in.</div>
+        <button id="logout-button" class="button secondary" type="button" hidden>Sign out</button>
+      </div>
+      <div class="account-grid">
+        <form id="register-form" class="card">
+          <h3>Create account</h3>
+          <label>Email
+            <input name="email" type="email" autocomplete="email" required />
+          </label>
+          <label>Password
+            <input name="password" type="password" autocomplete="new-password" minlength="10" required />
+          </label>
+          <button class="button" type="submit">Create account</button>
+        </form>
+        <form id="login-form" class="card">
+          <h3>Sign in</h3>
+          <label>Email
+            <input name="email" type="email" autocomplete="email" required />
+          </label>
+          <label>Password
+            <input name="password" type="password" autocomplete="current-password" required />
+          </label>
+          <button class="button" type="submit">Sign in</button>
+        </form>
+      </div>
+      <div id="auth-result" class="result full-width" aria-live="polite"></div>
+    </section>
+
     <section id="coverage" class="section panel">
       <div>
         <p class="eyebrow">Coverage prototype</p>
         <h2>See how the service flow will work.</h2>
-        <p>This checker uses mock data today. A real launch will query an eSIM/carrier partner in real time.</p>
+        <p>This checker uses the configured provider. A live launch will query the eSIM/carrier partner in real time.</p>
       </div>
       <form id="coverage-form">
         <label>Country code
@@ -55,8 +88,8 @@
         <h2>Software + licensed network partners.</h2>
       </div>
       <div class="steps">
-        <article><span>01</span><h3>Partner</h3><p>Connect to an MVNO, carrier, or eSIM aggregator API.</p></article>
-        <article><span>02</span><h3>Provision</h3><p>Issue an eSIM profile securely after payment and eligibility checks.</p></article>
+        <article><span>01</span><h3>Account</h3><p>Create a customer account and choose a plan.</p></article>
+        <article><span>02</span><h3>Pay + provision</h3><p>Confirm subscription payment, then securely issue the eSIM profile.</p></article>
         <article><span>03</span><h3>Manage</h3><p>Track usage, renew service, top up data, and support customers.</p></article>
       </div>
     </section>
