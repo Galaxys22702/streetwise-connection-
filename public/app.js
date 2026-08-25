@@ -6,6 +6,10 @@ const loginForm = document.querySelector("#login-form");
 const authResultEl = document.querySelector("#auth-result");
 const accountSummaryEl = document.querySelector("#account-summary");
 const logoutButton = document.querySelector("#logout-button");
+const dashboardSection = document.querySelector("#dashboard");
+const dashboardSummaryEl = document.querySelector("#dashboard-summary");
+const esimListEl = document.querySelector("#esim-list");
+const refreshDashboardButton = document.querySelector("#refresh-dashboard");
 
 const TOKEN_KEY = "streetwise_session_token";
 let token = sessionStorage.getItem(TOKEN_KEY) || "";
@@ -17,6 +21,19 @@ async function api(path, options = {}) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error || `request_failed_${response.status}`);
   return data;
+}
+
+function formatBytes(value) {
+  if (value == null) return "—";
+  const bytes = Number(value);
+  if (bytes >= 1024 ** 3) return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
+  if (bytes >= 1024 ** 2) return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
+  return `${bytes} B`;
+}
+
+function formatDate(value) {
+  if (!value) return "—";
+  return new Date(value).toLocaleDateString();
 }
 
 async function loadPlans() {
@@ -32,10 +49,61 @@ async function loadPlans() {
   `).join("");
 }
 
+function renderDashboard(data) {
+  const subscription = data.subscription;
+  dashboardSummaryEl.innerHTML = `
+    <article class="stat-card"><span>Plan</span><strong>${subscription?.planId || "None"}</strong></article>
+    <article class="stat-card"><span>Status</span><strong>${subscription?.status || "Not active"}</strong></article>
+    <article class="stat-card"><span>eSIMs</span><strong>${data.summary.total}</strong></article>
+    <article class="stat-card"><span>Data used</span><strong>${formatBytes(data.summary.totalUsedBytes)}</strong></article>
+  `;
+
+  if (!data.esims.length) {
+    esimListEl.innerHTML = `<article class="card"><h3>No eSIMs yet</h3><p>Once a profile is provisioned, it will appear here with installation and usage information.</p></article>`;
+    return;
+  }
+
+  esimListEl.innerHTML = data.esims.map((order) => `
+    <article class="card esim-card">
+      <div class="esim-heading">
+        <div>
+          <p class="eyebrow">${order.status}</p>
+          <h3>${order.bundleName}</h3>
+        </div>
+        <span class="badge">${order.country || "Global"}</span>
+      </div>
+      <div class="usage-row">
+        <span>Used ${formatBytes(order.usage.usedBytes)}</span>
+        <span>${order.usage.limitBytes ? `${formatBytes(order.usage.remainingBytes)} remaining` : "Allowance pending"}</span>
+      </div>
+      <div class="usage-bar"><span style="width:${order.usage.percentUsed || 0}%"></span></div>
+      <dl class="details-grid">
+        <div><dt>Device</dt><dd>${order.device || "—"}</dd></div>
+        <div><dt>Activated</dt><dd>${formatDate(order.activatedAt)}</dd></div>
+        <div><dt>ICCID</dt><dd>${order.install?.iccid || "Pending"}</dd></div>
+        <div><dt>SM-DP+</dt><dd>${order.install?.smdpAddress || "Pending"}</dd></div>
+      </dl>
+      ${order.install?.activationCode ? `<details><summary>Installation code</summary><code>${order.install.activationCode}</code></details>` : ""}
+      ${order.provider === "mock" ? `<button class="button secondary usage-button" type="button" data-order-id="${order.id}">Simulate 100 MB use</button>` : ""}
+    </article>
+  `).join("");
+}
+
+async function refreshDashboard() {
+  if (!token) {
+    dashboardSection.hidden = true;
+    return;
+  }
+  const data = await api("/api/dashboard");
+  dashboardSection.hidden = false;
+  renderDashboard(data);
+}
+
 async function refreshAccount() {
   if (!token) {
     accountSummaryEl.textContent = "Not signed in.";
     logoutButton.hidden = true;
+    dashboardSection.hidden = true;
     return;
   }
 
@@ -44,11 +112,13 @@ async function refreshAccount() {
     const subscription = data.subscription;
     accountSummaryEl.innerHTML = `<strong>${data.user.email}</strong><br>${subscription ? `Plan: ${subscription.planId} · Status: ${subscription.status}` : "No subscription yet."}`;
     logoutButton.hidden = false;
+    await refreshDashboard();
   } catch {
     token = "";
     sessionStorage.removeItem(TOKEN_KEY);
     accountSummaryEl.textContent = "Session expired. Sign in again.";
     logoutButton.hidden = true;
+    dashboardSection.hidden = true;
   }
 }
 
@@ -89,6 +159,29 @@ logoutButton.addEventListener("click", async () => {
   sessionStorage.removeItem(TOKEN_KEY);
   authResultEl.textContent = "Signed out.";
   await refreshAccount();
+});
+
+refreshDashboardButton.addEventListener("click", () => {
+  refreshDashboard().catch((error) => {
+    authResultEl.textContent = error.message.replaceAll("_", " ");
+  });
+});
+
+esimListEl.addEventListener("click", async (event) => {
+  const button = event.target.closest(".usage-button");
+  if (!button) return;
+  button.disabled = true;
+  try {
+    await api(`/api/esims/orders/${encodeURIComponent(button.dataset.orderId)}/usage/simulate`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ usedMegabytes: 100 })
+    });
+    await refreshDashboard();
+  } catch (error) {
+    authResultEl.textContent = error.message.replaceAll("_", " ");
+    button.disabled = false;
+  }
 });
 
 plansEl.addEventListener("click", async (event) => {
