@@ -77,16 +77,34 @@ jobs:
 
           curl --fail --silent 'http://127.0.0.1:3000/api/provider/catalogue?country=US' | grep 'mock_1GB_7D_GLOBAL'
 
+          IDEMPOTENCY_KEY='ci-esim-order-001'
           ORDER_RESPONSE=$(curl --fail --silent \
             -X POST http://127.0.0.1:3000/api/esims/order \
             -H 'Content-Type: application/json' \
             -H "Authorization: Bearer $TOKEN" \
+            -H "Idempotency-Key: $IDEMPOTENCY_KEY" \
             -d '{"bundleName":"mock_1GB_7D_GLOBAL","quantity":1,"country":"US","device":"iPhone 15","validateOnly":false}')
 
           echo "$ORDER_RESPONSE" | grep '"status":"completed"'
           echo "$ORDER_RESPONSE" | grep '"mock":true'
+          echo "$ORDER_RESPONSE" | grep '"idempotentReplay":false'
           ORDER_ID=$(echo "$ORDER_RESPONSE" | jq -r '.order.id')
           test -n "$ORDER_ID"
+
+          REPLAY_RESPONSE=$(curl --fail --silent \
+            -X POST http://127.0.0.1:3000/api/esims/order \
+            -H 'Content-Type: application/json' \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Idempotency-Key: $IDEMPOTENCY_KEY" \
+            -d '{"bundleName":"mock_1GB_7D_GLOBAL","quantity":1,"country":"US","device":"iPhone 15","validateOnly":false}')
+
+          REPLAY_ORDER_ID=$(echo "$REPLAY_RESPONSE" | jq -r '.order.id')
+          test "$REPLAY_ORDER_ID" = "$ORDER_ID"
+          echo "$REPLAY_RESPONSE" | grep '"idempotentReplay":true'
+
+          ORDER_COUNT=$(curl --fail --silent http://127.0.0.1:3000/api/esims \
+            -H "Authorization: Bearer $TOKEN" | jq '.esims | length')
+          test "$ORDER_COUNT" -eq 1
 
           curl --fail --silent http://127.0.0.1:3000/api/dashboard \
             -H "Authorization: Bearer $TOKEN" | grep "$ORDER_ID"
