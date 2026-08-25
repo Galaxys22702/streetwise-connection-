@@ -1,3 +1,8 @@
+import { inject } from 'https://cdn.jsdelivr.net/npm/@vercel/analytics@2.0.1/dist/index.mjs';
+
+// Initialize Vercel Web Analytics
+inject();
+
 const plansEl = document.querySelector("#plans");
 const coverageForm = document.querySelector("#coverage-form");
 const coverageResultEl = document.querySelector("#coverage-result");

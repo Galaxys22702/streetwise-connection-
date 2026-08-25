@@ -49,7 +49,7 @@ function applySecurityHeaders(res) {
   res.setHeader("cross-origin-resource-policy", "same-origin");
   res.setHeader(
     "content-security-policy",
-    "default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:"
+    "default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://va.vercel-scripts.com; img-src 'self' data:"
   );
   if (IS_PRODUCTION) {
     res.setHeader("strict-transport-security", "max-age=31536000; includeSubDomains");
