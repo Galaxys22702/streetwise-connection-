@@ -11,7 +11,7 @@
   <header class="hero">
     <nav>
       <strong>Streetwise Connection</strong>
-      <span class="badge">MVP 0.3</span>
+      <span class="badge">MVP 0.4</span>
     </nav>
     <div class="hero-copy">
       <p class="eyebrow">Affordable mobile data, built differently</p>
@@ -64,6 +64,19 @@
       <div id="auth-result" class="result full-width" aria-live="polite"></div>
     </section>
 
+    <section id="dashboard" class="section panel" hidden>
+      <div>
+        <p class="eyebrow">My Streetwise</p>
+        <h2>Your connection dashboard.</h2>
+        <p>See subscription state, active eSIMs, installation information, and data usage from one place.</p>
+        <button id="refresh-dashboard" class="button secondary" type="button">Refresh dashboard</button>
+      </div>
+      <div>
+        <div id="dashboard-summary" class="stats-grid" aria-live="polite"></div>
+        <div id="esim-list" class="esim-list" aria-live="polite"></div>
+      </div>
+    </section>
+
     <section id="coverage" class="section panel">
       <div>
         <p class="eyebrow">Coverage prototype</p>
@@ -90,7 +103,7 @@
       <div class="steps">
         <article><span>01</span><h3>Account</h3><p>Create a customer account and choose a plan.</p></article>
         <article><span>02</span><h3>Pay + provision</h3><p>Confirm subscription payment, then securely issue the eSIM profile.</p></article>
-        <article><span>03</span><h3>Manage</h3><p>Track usage, renew service, top up data, and support customers.</p></article>
+        <article><span>03</span><h3>Manage</h3><p>Track usage, renewal state, installation details, and support from the dashboard.</p></article>
       </div>
     </section>
   </main>
