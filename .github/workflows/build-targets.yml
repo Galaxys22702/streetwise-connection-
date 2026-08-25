@@ -19,21 +19,62 @@ jobs:
       - name: Build production target
         run: docker build --target production -t streetwise-connection:production .
 
-      - name: Smoke test production and provisioning targets
+      - name: Smoke test database accounts payments and provisioning
         run: |
-          docker run -d --name streetwise-smoke -p 3000:3000 \
+          docker network create streetwise-test
+          docker run -d --name streetwise-postgres --network streetwise-test \
+            -e POSTGRES_DB=streetwise \
+            -e POSTGRES_USER=streetwise \
+            -e POSTGRES_PASSWORD=streetwise_dev \
+            postgres:16-alpine
+
+          trap 'docker logs streetwise-smoke 2>/dev/null || true; docker rm -f streetwise-smoke streetwise-postgres 2>/dev/null || true; docker network rm streetwise-test 2>/dev/null || true' EXIT
+
+          for i in {1..20}; do
+            if docker exec streetwise-postgres pg_isready -U streetwise -d streetwise >/dev/null 2>&1; then
+              break
+            fi
+            sleep 1
+          done
+
+          DATABASE_URL='postgres://streetwise:streetwise_dev@streetwise-postgres:5432/streetwise'
+
+          docker run --rm --network streetwise-test \
+            -e DATABASE_URL="$DATABASE_URL" \
+            streetwise-connection:production node scripts/migrate.js
+
+          docker run -d --name streetwise-smoke --network streetwise-test -p 3000:3000 \
+            -e DATABASE_URL="$DATABASE_URL" \
+            -e PAYMENT_PROVIDER=mock \
             -e ESIM_PROVIDER=mock \
             streetwise-connection:production
-          trap 'docker logs streetwise-smoke; docker rm -f streetwise-smoke' EXIT
 
-          for i in {1..10}; do
+          for i in {1..15}; do
             if curl --fail --silent http://127.0.0.1:3000/health >/dev/null; then
               break
             fi
             sleep 1
           done
 
+          curl --fail --silent http://127.0.0.1:3000/health | grep '"connected":true'
           curl --fail --silent http://127.0.0.1:3000/api/provider/status | grep '"provider":"mock"'
+
+          REGISTER_RESPONSE=$(curl --fail --silent \
+            -X POST http://127.0.0.1:3000/api/auth/register \
+            -H 'Content-Type: application/json' \
+            -d '{"email":"ci@streetwise.test","password":"streetwise-ci-password"}')
+          TOKEN=$(echo "$REGISTER_RESPONSE" | jq -r '.session.token')
+          test -n "$TOKEN"
+
+          curl --fail --silent http://127.0.0.1:3000/api/account \
+            -H "Authorization: Bearer $TOKEN" | grep 'ci@streetwise.test'
+
+          curl --fail --silent \
+            -X POST http://127.0.0.1:3000/api/payments/checkout \
+            -H 'Content-Type: application/json' \
+            -H "Authorization: Bearer $TOKEN" \
+            -d '{"planId":"starter-10"}' | grep '"provider":"mock"'
+
           curl --fail --silent 'http://127.0.0.1:3000/api/provider/catalogue?country=US' | grep 'mock_1GB_7D_GLOBAL'
 
           ORDER_RESPONSE=$(curl --fail --silent \
