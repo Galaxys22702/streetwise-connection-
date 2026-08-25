@@ -3,7 +3,14 @@ import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { plans } from "./config/plans.js";
-import { checkCoverage } from "./providers/mockEsimProvider.js";
+import {
+  checkProviderCoverage,
+  getEsimInstallDetails,
+  getEsimOrder,
+  listProviderBundles,
+  providerStatus,
+  provisionEsim
+} from "./services/esimService.js";
 
 const PORT = Number(process.env.PORT || 3000);
 const PUBLIC_DIR = fileURLToPath(new URL("../public/", import.meta.url));
@@ -21,6 +28,13 @@ function sendJson(res, status, payload) {
     "cache-control": "no-store"
   });
   res.end(JSON.stringify(payload));
+}
+
+function sendError(res, error, fallbackStatus = 400) {
+  return sendJson(res, Number(error.statusCode) || fallbackStatus, {
+    error: error.message || "request_failed",
+    ...(error.providerPayload ? { provider: error.providerPayload } : {})
+  });
 }
 
 async function readJsonBody(req) {
@@ -62,10 +76,12 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
 
   if (req.method === "GET" && url.pathname === "/health") {
+    const provider = await providerStatus();
     return sendJson(res, 200, {
       ok: true,
       service: "streetwise-connection",
-      version: "0.1.0"
+      version: "0.2.0",
+      provider
     });
   }
 
@@ -73,22 +89,59 @@ const server = http.createServer(async (req, res) => {
     return sendJson(res, 200, { plans });
   }
 
+  if (req.method === "GET" && url.pathname === "/api/provider/status") {
+    return sendJson(res, 200, await providerStatus());
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/provider/catalogue") {
+    try {
+      const bundles = await listProviderBundles({ country: url.searchParams.get("country") || "" });
+      return sendJson(res, 200, { bundles });
+    } catch (error) {
+      return sendError(res, error, 502);
+    }
+  }
+
   if (req.method === "POST" && url.pathname === "/api/coverage/check") {
     try {
       const body = await readJsonBody(req);
-      const result = await checkCoverage(body);
+      const result = await checkProviderCoverage(body);
       return sendJson(res, 200, result);
     } catch (error) {
       const status = error.message === "request_too_large" ? 413 : 400;
-      return sendJson(res, status, { error: error.message || "invalid_request" });
+      return sendError(res, error, status);
     }
   }
 
   if (req.method === "POST" && url.pathname === "/api/esims/order") {
-    return sendJson(res, 501, {
-      error: "provider_not_connected",
-      message: "Real eSIM provisioning will be enabled after a licensed provider API is integrated."
+    try {
+      const body = await readJsonBody(req);
+      const result = await provisionEsim(body);
+      return sendJson(res, 201, result);
+    } catch (error) {
+      const status = error.message === "request_too_large" ? 413 : 400;
+      return sendError(res, error, status);
+    }
+  }
+
+  const installMatch = url.pathname.match(/^\/api\/esims\/orders\/([^/]+)\/install$/);
+  if (req.method === "GET" && installMatch) {
+    try {
+      const details = await getEsimInstallDetails(decodeURIComponent(installMatch[1]));
+      if (!details) return sendJson(res, 404, { error: "install_details_not_found" });
+      return sendJson(res, 200, { install: details });
+    } catch (error) {
+      return sendError(res, error, 502);
+    }
+  }
+
+  const orderMatch = url.pathname.match(/^\/api\/esims\/orders\/([^/]+)$/);
+  if (req.method === "GET" && orderMatch) {
+    const order = await getEsimOrder(decodeURIComponent(orderMatch[1]), {
+      refresh: url.searchParams.get("refresh") === "true"
     });
+    if (!order) return sendJson(res, 404, { error: "order_not_found" });
+    return sendJson(res, 200, { order });
   }
 
   if (req.method === "GET") {
