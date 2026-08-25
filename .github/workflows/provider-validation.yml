@@ -64,6 +64,20 @@ jobs:
           FIRST_BUNDLE=$(echo "$CATALOGUE" | jq -r '.bundles[0].name // empty')
           test -n "$FIRST_BUNDLE"
 
+          CANDIDATE='esim_3GB_30D_US_V2'
+          echo "$CATALOGUE" | jq -e --arg name "$CANDIDATE" '.bundles | any(.name == $name)'
+
+          VALIDATION=$(curl --fail --silent \
+            -X POST http://127.0.0.1:3001/api/esims/order \
+            -H 'Content-Type: application/json' \
+            -d "{\"bundleName\":\"$CANDIDATE\",\"quantity\":1,\"country\":\"US\",\"device\":\"iPhone 15\",\"validateOnly\":true}")
+
+          echo "$VALIDATION" | jq -e '.order.status == "validated"'
+          echo "$VALIDATION" | jq -e '.safety.liveOrderExecuted == false'
+          QUOTED_TOTAL=$(echo "$VALIDATION" | jq -r '.order.total // "unknown"')
+          QUOTED_CURRENCY=$(echo "$VALIDATION" | jq -r '.order.currency // "unknown"')
+
           echo "eSIM Go connection verified. U.S. catalogue bundles: $BUNDLE_COUNT"
-          echo "First available bundle: $FIRST_BUNDLE"
+          echo "Candidate validated: $CANDIDATE"
+          echo "Quoted provider total: $QUOTED_TOTAL $QUOTED_CURRENCY"
           echo "Live ordering remained disabled throughout this test."
