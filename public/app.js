@@ -14,6 +14,37 @@ const refreshDashboardButton = document.querySelector("#refresh-dashboard");
 const TOKEN_KEY = "streetwise_session_token";
 let token = sessionStorage.getItem(TOKEN_KEY) || "";
 
+const HTML_ESCAPE = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;"
+};
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (character) => HTML_ESCAPE[character]);
+}
+
+function displayValue(value, fallback = "—") {
+  const text = String(value ?? "").trim();
+  return text ? escapeHtml(text) : fallback;
+}
+
+function safePercent(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 0;
+  return Math.min(100, Math.max(0, number));
+}
+
+function checkoutUrl(value) {
+  const url = new URL(String(value || ""), window.location.origin);
+  const isLocal = url.origin === window.location.origin;
+  const isStripe = url.protocol === "https:" && (url.hostname === "stripe.com" || url.hostname.endsWith(".stripe.com"));
+  if (!isLocal && !isStripe) throw new Error("invalid_checkout_url");
+  return url.href;
+}
+
 async function api(path, options = {}) {
   const headers = new Headers(options.headers || {});
   if (token) headers.set("authorization", `Bearer ${token}`);
@@ -26,6 +57,7 @@ async function api(path, options = {}) {
 function formatBytes(value) {
   if (value == null) return "—";
   const bytes = Number(value);
+  if (!Number.isFinite(bytes) || bytes < 0) return "—";
   if (bytes >= 1024 ** 3) return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
   if (bytes >= 1024 ** 2) return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
   return `${bytes} B`;
@@ -33,28 +65,33 @@ function formatBytes(value) {
 
 function formatDate(value) {
   if (!value) return "—";
-  return new Date(value).toLocaleDateString();
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "—" : date.toLocaleDateString();
 }
 
 async function loadPlans() {
   const data = await api("/api/plans");
-  plansEl.innerHTML = data.plans.map((plan) => `
-    <article class="card">
-      <p class="eyebrow">${plan.status}</p>
-      <h3>${plan.name}</h3>
-      <p class="price">${plan.priceUsd ? `$${plan.priceUsd}` : "Flexible"}<small>${plan.priceUsd ? "/mo" : ""}</small></p>
-      <p>${plan.description}</p>
-      ${plan.priceUsd ? `<button class="button subscribe-button" data-plan-id="${plan.id}" type="button">Start checkout</button>` : ""}
-    </article>
-  `).join("");
+  plansEl.innerHTML = data.plans.map((plan) => {
+    const price = Number(plan.priceUsd);
+    const hasPrice = Number.isFinite(price) && price > 0;
+    return `
+      <article class="card">
+        <p class="eyebrow">${displayValue(plan.status, "planned")}</p>
+        <h3>${displayValue(plan.name, "Streetwise plan")}</h3>
+        <p class="price">${hasPrice ? `$${price}` : "Flexible"}<small>${hasPrice ? "/mo" : ""}</small></p>
+        <p>${displayValue(plan.description, "Plan details coming soon.")}</p>
+        ${hasPrice ? `<button class="button subscribe-button" data-plan-id="${escapeHtml(plan.id)}" type="button">Start checkout</button>` : ""}
+      </article>
+    `;
+  }).join("");
 }
 
 function renderDashboard(data) {
   const subscription = data.subscription;
   dashboardSummaryEl.innerHTML = `
-    <article class="stat-card"><span>Plan</span><strong>${subscription?.planId || "None"}</strong></article>
-    <article class="stat-card"><span>Status</span><strong>${subscription?.status || "Not active"}</strong></article>
-    <article class="stat-card"><span>eSIMs</span><strong>${data.summary.total}</strong></article>
+    <article class="stat-card"><span>Plan</span><strong>${displayValue(subscription?.planId, "None")}</strong></article>
+    <article class="stat-card"><span>Status</span><strong>${displayValue(subscription?.status, "Not active")}</strong></article>
+    <article class="stat-card"><span>eSIMs</span><strong>${Number(data.summary.total) || 0}</strong></article>
     <article class="stat-card"><span>Data used</span><strong>${formatBytes(data.summary.totalUsedBytes)}</strong></article>
   `;
 
@@ -63,30 +100,34 @@ function renderDashboard(data) {
     return;
   }
 
-  esimListEl.innerHTML = data.esims.map((order) => `
-    <article class="card esim-card">
-      <div class="esim-heading">
-        <div>
-          <p class="eyebrow">${order.status}</p>
-          <h3>${order.bundleName}</h3>
+  esimListEl.innerHTML = data.esims.map((order) => {
+    const percentUsed = safePercent(order.usage?.percentUsed);
+    const limitBytes = Number(order.usage?.limitBytes || 0);
+    return `
+      <article class="card esim-card">
+        <div class="esim-heading">
+          <div>
+            <p class="eyebrow">${displayValue(order.status, "pending")}</p>
+            <h3>${displayValue(order.bundleName, "eSIM plan")}</h3>
+          </div>
+          <span class="badge">${displayValue(order.country, "Global")}</span>
         </div>
-        <span class="badge">${order.country || "Global"}</span>
-      </div>
-      <div class="usage-row">
-        <span>Used ${formatBytes(order.usage.usedBytes)}</span>
-        <span>${order.usage.limitBytes ? `${formatBytes(order.usage.remainingBytes)} remaining` : "Allowance pending"}</span>
-      </div>
-      <div class="usage-bar"><span style="width:${order.usage.percentUsed || 0}%"></span></div>
-      <dl class="details-grid">
-        <div><dt>Device</dt><dd>${order.device || "—"}</dd></div>
-        <div><dt>Activated</dt><dd>${formatDate(order.activatedAt)}</dd></div>
-        <div><dt>ICCID</dt><dd>${order.install?.iccid || "Pending"}</dd></div>
-        <div><dt>SM-DP+</dt><dd>${order.install?.smdpAddress || "Pending"}</dd></div>
-      </dl>
-      ${order.install?.activationCode ? `<details><summary>Installation code</summary><code>${order.install.activationCode}</code></details>` : ""}
-      ${order.provider === "mock" ? `<button class="button secondary usage-button" type="button" data-order-id="${order.id}">Simulate 100 MB use</button>` : ""}
-    </article>
-  `).join("");
+        <div class="usage-row">
+          <span>Used ${formatBytes(order.usage?.usedBytes)}</span>
+          <span>${limitBytes > 0 ? `${formatBytes(order.usage?.remainingBytes)} remaining` : "Allowance pending"}</span>
+        </div>
+        <div class="usage-bar"><span style="width:${percentUsed}%"></span></div>
+        <dl class="details-grid">
+          <div><dt>Device</dt><dd>${displayValue(order.device)}</dd></div>
+          <div><dt>Activated</dt><dd>${formatDate(order.activatedAt)}</dd></div>
+          <div><dt>ICCID</dt><dd>${displayValue(order.install?.iccid, "Pending")}</dd></div>
+          <div><dt>SM-DP+</dt><dd>${displayValue(order.install?.smdpAddress, "Pending")}</dd></div>
+        </dl>
+        ${order.install?.activationCode ? `<details><summary>Installation code</summary><code>${escapeHtml(order.install.activationCode)}</code></details>` : ""}
+        ${order.provider === "mock" ? `<button class="button secondary usage-button" type="button" data-order-id="${escapeHtml(order.id)}">Simulate 100 MB use</button>` : ""}
+      </article>
+    `;
+  }).join("");
 }
 
 async function refreshDashboard() {
@@ -110,7 +151,7 @@ async function refreshAccount() {
   try {
     const data = await api("/api/account");
     const subscription = data.subscription;
-    accountSummaryEl.innerHTML = `<strong>${data.user.email}</strong><br>${subscription ? `Plan: ${subscription.planId} · Status: ${subscription.status}` : "No subscription yet."}`;
+    accountSummaryEl.innerHTML = `<strong>${escapeHtml(data.user.email)}</strong><br>${subscription ? `Plan: ${displayValue(subscription.planId)} · Status: ${displayValue(subscription.status)}` : "No subscription yet."}`;
     logoutButton.hidden = false;
     await refreshDashboard();
   } catch {
@@ -201,7 +242,7 @@ plansEl.addEventListener("click", async (event) => {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ planId: button.dataset.planId })
     });
-    window.location.assign(data.checkout.url);
+    window.location.assign(checkoutUrl(data.checkout.url));
   } catch (error) {
     authResultEl.textContent = error.message.replaceAll("_", " ");
     button.disabled = false;
@@ -220,9 +261,10 @@ coverageForm.addEventListener("submit", async (event) => {
       headers: { "content-type": "application/json" },
       body: JSON.stringify(payload)
     });
+    const message = displayValue(data.message || data.reason, "Coverage has not been confirmed yet.");
     coverageResultEl.innerHTML = data.supported
-      ? `<strong>Prototype match found.</strong><br>${data.message}`
-      : `<strong>Not confirmed yet.</strong><br>${data.message || data.reason}`;
+      ? `<strong>Prototype match found.</strong><br>${message}`
+      : `<strong>Not confirmed yet.</strong><br>${message}`;
   } catch (error) {
     coverageResultEl.textContent = error.message.replaceAll("_", " ");
   }
