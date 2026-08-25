@@ -8,11 +8,11 @@ Build the software layer needed to sell and manage data plans on eSIM-capable ph
 
 > This repository does **not** create a cellular network by itself. Real service requires contracts/API access with an MVNO, carrier, eSIM aggregator, or other licensed connectivity provider.
 
-## Current MVP — 0.3
+## Current MVP — 0.4
 
-- Responsive storefront
+- Responsive storefront and customer dashboard
 - $10/month target retail plan
-- PostgreSQL customer and subscription schema
+- PostgreSQL customer, subscription, eSIM-order, and usage schema
 - Customer registration/login/logout
 - Scrypt password hashing and expiring sessions
 - Mock payment mode for safe testing
@@ -23,11 +23,14 @@ Build the software layer needed to sell and manage data plans on eSIM-capable ph
 - Mock eSIM provider for safe development
 - eSIM Go v2.5 provider adapter
 - Wholesale catalogue lookup
-- Order validation and transaction workflow
-- eSIM installation-detail endpoint
+- Persistent eSIM order records and provider references
+- Installation details stored with the customer order
+- Customer-level order access controls
+- Data allowance/usage fields and usage-event history
+- Mock usage simulation for dashboard testing
 - Separate live-payment and live-eSIM safety switches
 - Docker builder and production targets
-- GitHub Actions integration smoke tests
+- GitHub Actions full-flow smoke tests
 
 ## Run locally
 
@@ -69,6 +72,7 @@ See:
 
 - [`docs/ACCOUNTS_AND_PAYMENTS.md`](docs/ACCOUNTS_AND_PAYMENTS.md)
 - [`docs/ESIM_PROVISIONING.md`](docs/ESIM_PROVISIONING.md)
+- [`docs/CUSTOMER_DASHBOARD.md`](docs/CUSTOMER_DASHBOARD.md)
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 
 ## Customer and payment API
@@ -78,6 +82,7 @@ POST /api/auth/register
 POST /api/auth/login
 POST /api/auth/logout
 GET  /api/account
+GET  /api/dashboard
 
 GET  /api/payments/status
 POST /api/payments/checkout
@@ -96,10 +101,14 @@ GET  /api/provider/status
 GET  /api/provider/catalogue?country=US
 POST /api/coverage/check
 POST /api/esims/order
+GET  /api/esims
 GET  /api/esims/orders/{streetwiseOrderId}
 GET  /api/esims/orders/{streetwiseOrderId}?refresh=true
 GET  /api/esims/orders/{streetwiseOrderId}/install
+POST /api/esims/orders/{streetwiseOrderId}/usage/simulate
 ```
+
+The usage simulation route works only with the mock eSIM provider and exists for development/testing.
 
 ## Safety model
 
@@ -119,17 +128,17 @@ When live eSIM ordering is enabled, the order route also requires an authenticat
 
 ## Current production limitations
 
-The Streetwise eSIM order store is still in memory, so application restarts clear those order records. Before a public launch, move eSIM orders and usage records into PostgreSQL, add provider webhooks and idempotency keys, implement cancellation/refund workflows, harden browser auth with secure HttpOnly cookies, add rate limiting and audit logs, and complete telecom/tax/privacy/consumer-disclosure review.
+The database now persists customer eSIM orders and usage snapshots. Before a public launch, add real provider usage synchronization/webhooks, purchase idempotency keys, cancellation/refund workflows, secure HttpOnly cookie sessions, rate limiting, audit logs, monitoring/backups, and launch-market telecom/tax/privacy/consumer-disclosure review.
 
 ## Next milestones
 
 1. Open/configure the wholesale eSIM provider account and test API credentials.
-2. Create a Stripe test account/product/price and verify the webhook flow end to end.
-3. Move eSIM orders and installed profiles into PostgreSQL.
-4. Map wholesale bundle costs to Streetwise retail pricing and margins.
+2. Create a Stripe test product/price and verify the webhook flow end to end.
+3. Map wholesale bundle costs to Streetwise retail pricing and margins.
+4. Add provider webhooks and usage synchronization.
 5. Add idempotency protection against duplicate telecom purchases.
-6. Add provider webhooks for order, profile, and usage state changes.
-7. Add usage tracking and top-ups.
-8. Add subscription cancellation, refunds, failed-payment handling, and customer support tools.
+6. Add data top-ups and low-data notifications.
+7. Add subscription cancellation, refunds, failed-payment handling, and customer support tools.
+8. Move browser authentication to secure HttpOnly cookies and add CSRF/rate-limit controls.
 9. Deploy PostgreSQL and the application to a managed production environment with secrets, backups, monitoring, and logging.
 10. Complete launch-market telecom, tax, privacy, and consumer-disclosure review.
