@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: streetwise-connection-staging
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    preDeployCommand: npm run db:migrate
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: streetwise-staging-db
+          property: connectionString
+      - key: DATABASE_SSL
+        value: "false"
+      - key: DATABASE_POOL_MAX
+        value: "10"
+      - key: SESSION_DAYS
+        value: "30"
+      - key: PAYMENT_PROVIDER
+        value: stripe
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_LIVE_MODE_ENABLED
+        value: "false"
+      - key: ESIM_PROVIDER
+        value: esim-go
+      - key: ESIM_API_KEY
+        sync: false
+      - key: ESIM_LIVE_ORDERS_ENABLED
+        value: "false"
+
+databases:
+  - name: streetwise-staging-db
+    plan: free
+    region: oregon
+    databaseName: streetwise
+    user: streetwise
+    ipAllowList: []

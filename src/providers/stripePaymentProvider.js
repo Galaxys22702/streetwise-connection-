@@ -34,7 +34,11 @@ export function stripeStatus() {
 
 export async function createStripeCheckoutSession({ user, plan }) {
   const stripe = client();
-  const baseUrl = String(process.env.APP_BASE_URL || "http://localhost:3000").replace(/\/$/, "");
+  const baseUrl = String(
+    process.env.APP_BASE_URL ||
+    process.env.RENDER_EXTERNAL_URL ||
+    "http://localhost:3000"
+  ).replace(/\/$/, "");
   const configuredPrice = String(process.env.STRIPE_PRICE_ID || "").trim();
 
   const lineItem = configuredPrice
