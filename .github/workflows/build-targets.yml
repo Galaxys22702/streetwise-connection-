@@ -1,0 +1,32 @@
+name: Build targets
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build builder target
+        run: docker build --target builder -t streetwise-connection:builder .
+
+      - name: Build production target
+        run: docker build --target production -t streetwise-connection:production .
+
+      - name: Smoke test production target
+        run: |
+          docker run -d --name streetwise-smoke -p 3000:3000 streetwise-connection:production
+          trap 'docker logs streetwise-smoke; docker rm -f streetwise-smoke' EXIT
+          for i in {1..10}; do
+            if curl --fail --silent http://127.0.0.1:3000/health; then
+              exit 0
+            fi
+            sleep 1
+          done
+          exit 1
