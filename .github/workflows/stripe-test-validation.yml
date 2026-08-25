@@ -1,0 +1,54 @@
+name: Stripe test validation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stripe-test-connection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_LIVE_MODE_ENABLED: "false"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Require Stripe test secret
+        run: |
+          test -n "$STRIPE_SECRET_KEY"
+          case "$STRIPE_SECRET_KEY" in
+            sk_test_*) ;;
+            *) echo "Only a Stripe test secret (sk_test_...) is permitted." >&2; exit 1 ;;
+          esac
+
+      - name: Install production dependencies
+        run: npm install --omit=dev
+
+      - name: Verify Streetwise Stripe safety state
+        run: |
+          node --input-type=module <<'NODE'
+          import { stripeStatus } from './src/providers/stripePaymentProvider.js';
+
+          const status = stripeStatus();
+          if (!status.configured) throw new Error('stripe_not_configured');
+          if (status.keyMode !== 'test') throw new Error(`unexpected_key_mode:${status.keyMode}`);
+          if (status.liveModeEnabled) throw new Error('stripe_live_mode_must_remain_disabled');
+
+          console.log('Streetwise Stripe configuration is test-only and live mode is disabled.');
+          NODE
+
+      - name: Verify Stripe API connection
+        run: |
+          node --input-type=module <<'NODE'
+          import Stripe from 'stripe';
+
+          const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { maxNetworkRetries: 2 });
+          const account = await stripe.accounts.retrieve();
+          if (!account?.id) throw new Error('stripe_account_not_returned');
+          console.log('Stripe test API connection verified successfully.');
+          NODE
