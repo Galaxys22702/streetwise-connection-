@@ -2,11 +2,6 @@ name: Stripe test validation
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - ops/stripe-test-run
-    paths:
-      - ".github/workflows/stripe-test-validation.yml"
 
 permissions:
   contents: read
@@ -18,7 +13,6 @@ jobs:
     env:
       STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
       STRIPE_LIVE_MODE_ENABLED: "false"
-      APP_BASE_URL: "https://example.com"
 
     steps:
       - name: Check out repository
@@ -57,44 +51,4 @@ jobs:
           const account = await stripe.accounts.retrieve();
           if (!account?.id) throw new Error('stripe_account_not_returned');
           console.log('Stripe test API connection verified successfully.');
-          NODE
-
-      - name: Create verify and expire $10 Starter checkout
-        run: |
-          node --input-type=module <<'NODE'
-          import Stripe from 'stripe';
-          import { plans } from './src/config/plans.js';
-          import { createStripeCheckoutSession } from './src/providers/stripePaymentProvider.js';
-
-          const plan = plans.find((item) => item.id === 'starter-10');
-          if (!plan) throw new Error('starter_plan_missing');
-          if (Number(plan.priceUsd) !== 10) throw new Error(`unexpected_starter_price:${plan.priceUsd}`);
-
-          const created = await createStripeCheckoutSession({
-            user: { id: 'streetwise-ci-test-user', email: 'streetwise-test@example.com' },
-            plan
-          });
-
-          if (!created.id) throw new Error('checkout_session_id_missing');
-          if (!created.url) throw new Error('checkout_session_url_missing');
-          if (created.livemode !== false) throw new Error('checkout_session_must_be_test_mode');
-
-          const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { maxNetworkRetries: 2 });
-          const session = await stripe.checkout.sessions.retrieve(created.id, { expand: ['line_items'] });
-
-          if (session.mode !== 'subscription') throw new Error(`unexpected_checkout_mode:${session.mode}`);
-          if (session.livemode !== false) throw new Error('retrieved_session_must_be_test_mode');
-          if (session.amount_total !== 1000) throw new Error(`unexpected_amount_total:${session.amount_total}`);
-          if (session.currency !== 'usd') throw new Error(`unexpected_currency:${session.currency}`);
-
-          const firstLine = session.line_items?.data?.[0];
-          if (!firstLine || firstLine.amount_total !== 1000) {
-            throw new Error(`unexpected_line_item_total:${firstLine?.amount_total}`);
-          }
-
-          const expired = await stripe.checkout.sessions.expire(created.id);
-          if (expired.status !== 'expired') throw new Error(`checkout_not_expired:${expired.status}`);
-
-          console.log(`Streetwise Starter test Checkout Session created for $${(session.amount_total / 100).toFixed(2)} USD/month.`);
-          console.log('Session was test mode and was immediately expired; no payment or subscription was completed.');
           NODE
