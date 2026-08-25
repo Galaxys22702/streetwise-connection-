@@ -6,11 +6,13 @@ on:
     branches: [main]
     paths:
       - "src/providers/**"
+      - "src/config/plans.js"
       - ".github/workflows/provider-validation.yml"
   push:
     branches: [main]
     paths:
       - "src/providers/**"
+      - "src/config/plans.js"
       - ".github/workflows/provider-validation.yml"
 
 permissions:
@@ -34,7 +36,7 @@ jobs:
       - name: Build production image
         run: docker build --target production -t streetwise-connection:provider-test .
 
-      - name: Verify eSIM Go API connection and U.S. catalogue
+      - name: Verify eSIM Go API connection and Starter plan economics
         run: |
           docker run -d --name streetwise-provider-test -p 3001:3000 \
             -e ESIM_PROVIDER=esim-go \
@@ -74,10 +76,14 @@ jobs:
           QUOTED_TOTAL=$(echo "$VALIDATION" | jq -r '.order.total // "unknown"')
           QUOTED_CURRENCY=$(echo "$VALIDATION" | jq -r '.order.currency // "unknown"')
           test "$QUOTED_TOTAL" != "unknown"
-          test "$QUOTED_CURRENCY" != "unknown"
+          test "$QUOTED_CURRENCY" = "USD"
+
+          MAX_PROVIDER_COST_USD='6'
+          awk -v quoted="$QUOTED_TOTAL" -v max="$MAX_PROVIDER_COST_USD" 'BEGIN { exit !(quoted <= max) }'
 
           echo "eSIM Go connection verified. U.S. catalogue bundles: $BUNDLE_COUNT"
-          echo "Candidate: $CANDIDATE"
+          echo "Starter candidate: $CANDIDATE"
           echo "Validation status: $ORDER_STATUS"
           echo "Quoted provider total: $QUOTED_TOTAL $QUOTED_CURRENCY"
+          echo "Wholesale guardrail: <= $MAX_PROVIDER_COST_USD USD"
           echo "Live ordering remained disabled throughout this test."
