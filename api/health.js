@@ -1,3 +1,7 @@
+import { databaseStatus } from "../src/db/index.js";
+import { providerStatus } from "../src/services/esimService.js";
+import { paymentProviderStatus } from "../src/services/paymentService.js";
+
 export default async function handler(req, res) {
   res.setHeader("x-content-type-options", "nosniff");
   res.setHeader("cache-control", "no-store");
@@ -7,18 +11,23 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "method_not_allowed" });
   }
 
+  const [database, provider] = await Promise.all([
+    databaseStatus(),
+    providerStatus().catch((error) => ({
+      configured: false,
+      connected: false,
+      error: error.message || "provider_status_unavailable"
+    }))
+  ]);
+
   const status = {
     ok: true,
     service: "streetwise-connection",
     version: "0.4.0",
     runtime: "vercel",
-    databaseConfigured: Boolean(String(process.env.DATABASE_URL || "").trim()),
-    paymentProvider: String(process.env.PAYMENT_PROVIDER || "mock").toLowerCase(),
-    stripeConfigured: Boolean(String(process.env.STRIPE_SECRET_KEY || "").trim()),
-    esimProvider: String(process.env.ESIM_PROVIDER || "mock").toLowerCase(),
-    esimConfigured: Boolean(String(process.env.ESIM_API_KEY || "").trim()),
-    stripeLiveModeEnabled: process.env.STRIPE_LIVE_MODE_ENABLED === "true",
-    esimLiveOrdersEnabled: process.env.ESIM_LIVE_ORDERS_ENABLED === "true"
+    database,
+    payments: paymentProviderStatus(),
+    provider
   };
 
   return res.status(200).json(status);
