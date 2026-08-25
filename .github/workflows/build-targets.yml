@@ -19,7 +19,7 @@ jobs:
       - name: Build production target
         run: docker build --target production -t streetwise-connection:production .
 
-      - name: Smoke test database accounts payments dashboard and provisioning
+      - name: Smoke test database accounts payments dashboard provisioning and security
         run: |
           docker network create streetwise-test
           docker run -d --name streetwise-postgres --network streetwise-test \
@@ -58,6 +58,19 @@ jobs:
 
           curl --fail --silent http://127.0.0.1:3000/health | grep '"connected":true'
           curl --fail --silent http://127.0.0.1:3000/api/provider/status | grep '"provider":"mock"'
+
+          HEADERS=$(curl --silent --head http://127.0.0.1:3000/ | tr -d '\r')
+          echo "$HEADERS" | grep -qi '^content-security-policy:'
+          echo "$HEADERS" | grep -qi '^x-content-type-options: nosniff'
+          echo "$HEADERS" | grep -qi '^x-frame-options: DENY'
+          echo "$HEADERS" | grep -qi '^referrer-policy: no-referrer'
+
+          UNAUTH_TRANSACTION_CODE=$(curl --silent --output /dev/null --write-out '%{http_code}' \
+            -X POST http://127.0.0.1:3000/api/esims/order \
+            -H 'Content-Type: application/json' \
+            -H 'Idempotency-Key: unauthenticated-ci-order' \
+            -d '{"bundleName":"mock_1GB_7D_GLOBAL","quantity":1,"country":"US","device":"iPhone 15","validateOnly":false}')
+          test "$UNAUTH_TRANSACTION_CODE" -eq 401
 
           REGISTER_RESPONSE=$(curl --fail --silent \
             -X POST http://127.0.0.1:3000/api/auth/register \
@@ -102,9 +115,13 @@ jobs:
           test "$REPLAY_ORDER_ID" = "$ORDER_ID"
           echo "$REPLAY_RESPONSE" | grep '"idempotentReplay":true'
 
-          ORDER_COUNT=$(curl --fail --silent http://127.0.0.1:3000/api/esims \
-            -H "Authorization: Bearer $TOKEN" | jq '.esims | length')
+          ESIM_LIST=$(curl --fail --silent http://127.0.0.1:3000/api/esims \
+            -H "Authorization: Bearer $TOKEN")
+          ORDER_COUNT=$(echo "$ESIM_LIST" | jq '.esims | length')
           test "$ORDER_COUNT" -eq 1
+          echo "$ESIM_LIST" | jq -e '.esims[0] | (has("userId") | not)'
+          echo "$ESIM_LIST" | jq -e '.esims[0] | (has("customerEmail") | not)'
+          echo "$ESIM_LIST" | jq -e '.esims[0] | (has("providerOrderReference") | not)'
 
           curl --fail --silent http://127.0.0.1:3000/api/dashboard \
             -H "Authorization: Bearer $TOKEN" | grep "$ORDER_ID"
