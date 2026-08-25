@@ -91,9 +91,14 @@ export async function createEsimOrder({ bundleName, quantity = 1, validateOnly =
 
   const payload = {
     type,
-    quantity: safeQuantity,
-    item: bundleName,
-    ...(type === "transaction" ? { assign: true, iccid: "" } : {})
+    assign: type === "transaction",
+    order: [
+      {
+        type: "bundle",
+        quantity: safeQuantity,
+        item: bundleName
+      }
+    ]
   };
 
   const data = await request("/orders", {
@@ -101,16 +106,21 @@ export async function createEsimOrder({ bundleName, quantity = 1, validateOnly =
     body: JSON.stringify(payload)
   });
 
+  const status = type === "validate"
+    ? (data?.valid === false ? "invalid" : "validated")
+    : (data?.status || "submitted");
+
   return {
     provider: "esim-go",
     mode: type,
     liveOrderExecuted: type === "transaction",
     orderReference: data?.orderReference || null,
-    status: data?.status || (type === "validate" ? "validated" : "submitted"),
+    status,
     statusMessage: data?.statusMessage || null,
     total: data?.total ?? null,
     currency: data?.currency || null,
     assigned: Boolean(data?.assigned),
+    valid: type === "validate" ? data?.valid !== false : null,
     providerPayload: data
   };
 }
