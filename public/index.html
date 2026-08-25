@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Streetwise Connection affordable eSIM mobile data prototype" />
+  <title>Streetwise Connection</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="hero">
+    <nav>
+      <strong>Streetwise Connection</strong>
+      <span class="badge">MVP</span>
+    </nav>
+    <div class="hero-copy">
+      <p class="eyebrow">Affordable mobile data, built differently</p>
+      <h1>Internet that travels with your device.</h1>
+      <p class="lead">A software platform for affordable eSIM-based mobile data—no separate hotspot required.</p>
+      <a class="button" href="#coverage">Check prototype coverage</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="section">
+      <div>
+        <p class="eyebrow">Target pricing</p>
+        <h2>Start at $10/month.</h2>
+        <p>Our first pricing target is a $10 monthly plan. Final data limits and countries depend on wholesale carrier agreements.</p>
+      </div>
+      <div id="plans" class="card-grid" aria-live="polite"></div>
+    </section>
+
+    <section id="coverage" class="section panel">
+      <div>
+        <p class="eyebrow">Coverage prototype</p>
+        <h2>See how the service flow will work.</h2>
+        <p>This checker uses mock data today. A real launch will query an eSIM/carrier partner in real time.</p>
+      </div>
+      <form id="coverage-form">
+        <label>Country code
+          <input name="country" placeholder="US" maxlength="2" required />
+        </label>
+        <label>Device
+          <input name="device" placeholder="iPhone 13" required />
+        </label>
+        <button class="button" type="submit">Check coverage</button>
+      </form>
+      <div id="coverage-result" class="result" aria-live="polite"></div>
+    </section>
+
+    <section class="section">
+      <div>
+        <p class="eyebrow">How it becomes real</p>
+        <h2>Software + licensed network partners.</h2>
+      </div>
+      <div class="steps">
+        <article><span>01</span><h3>Partner</h3><p>Connect to an MVNO, carrier, or eSIM aggregator API.</p></article>
+        <article><span>02</span><h3>Provision</h3><p>Issue an eSIM profile securely after payment and eligibility checks.</p></article>
+        <article><span>03</span><h3>Manage</h3><p>Track usage, renew service, top up data, and support customers.</p></article>
+      </div>
+    </section>
+  </main>
+
+  <footer>Streetwise Connection · Prototype</footer>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
