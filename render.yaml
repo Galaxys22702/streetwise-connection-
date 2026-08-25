@@ -6,7 +6,6 @@ services:
     region: oregon
     dockerfilePath: ./Dockerfile
     healthCheckPath: /health
-    preDeployCommand: npm run db:migrate
     envVars:
       - key: DATABASE_URL
         fromDatabase:
