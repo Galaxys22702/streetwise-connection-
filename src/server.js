@@ -3,6 +3,20 @@ import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { plans } from "./config/plans.js";
+import { databaseStatus } from "./db/index.js";
+import {
+  authenticateRequest,
+  loginUser,
+  logoutRequest,
+  registerUser
+} from "./services/authService.js";
+import {
+  createCheckout,
+  getSubscriptionForUser,
+  handleStripeWebhook,
+  hasActiveSubscription,
+  paymentProviderStatus
+} from "./services/paymentService.js";
 import {
   checkProviderCoverage,
   getEsimInstallDetails,
@@ -37,16 +51,35 @@ function sendError(res, error, fallbackStatus = 400) {
   });
 }
 
-async function readJsonBody(req) {
+async function readRawBody(req, maxBytes = 1_048_576) {
   const chunks = [];
   let size = 0;
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > 32_768) throw new Error("request_too_large");
+    if (size > maxBytes) {
+      const error = new Error("request_too_large");
+      error.statusCode = 413;
+      throw error;
+    }
     chunks.push(chunk);
   }
-  if (!chunks.length) return {};
-  return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  return Buffer.concat(chunks);
+}
+
+async function readJsonBody(req) {
+  const raw = await readRawBody(req, 32_768);
+  if (!raw.length) return {};
+  return JSON.parse(raw.toString("utf8"));
+}
+
+async function requireUser(req) {
+  const user = await authenticateRequest(req);
+  if (!user) {
+    const error = new Error("authentication_required");
+    error.statusCode = 401;
+    throw error;
+  }
+  return user;
 }
 
 async function serveStatic(pathname, res) {
@@ -76,17 +109,92 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
 
   if (req.method === "GET" && url.pathname === "/health") {
-    const provider = await providerStatus();
+    const [provider, database] = await Promise.all([providerStatus(), databaseStatus()]);
     return sendJson(res, 200, {
       ok: true,
       service: "streetwise-connection",
-      version: "0.2.0",
+      version: "0.3.0",
+      database,
+      payments: paymentProviderStatus(),
       provider
     });
   }
 
   if (req.method === "GET" && url.pathname === "/api/plans") {
     return sendJson(res, 200, { plans });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/auth/register") {
+    try {
+      return sendJson(res, 201, await registerUser(await readJsonBody(req)));
+    } catch (error) {
+      return sendError(res, error);
+    }
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/auth/login") {
+    try {
+      return sendJson(res, 200, await loginUser(await readJsonBody(req)));
+    } catch (error) {
+      return sendError(res, error);
+    }
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/auth/logout") {
+    try {
+      await requireUser(req);
+      await logoutRequest(req);
+      return sendJson(res, 200, { loggedOut: true });
+    } catch (error) {
+      return sendError(res, error, 401);
+    }
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/account") {
+    try {
+      const user = await requireUser(req);
+      const subscription = await getSubscriptionForUser(user.id);
+      return sendJson(res, 200, { user, subscription });
+    } catch (error) {
+      return sendError(res, error, 401);
+    }
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/payments/status") {
+    return sendJson(res, 200, paymentProviderStatus());
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/payments/checkout") {
+    try {
+      const user = await requireUser(req);
+      const checkout = await createCheckout(user, await readJsonBody(req));
+      return sendJson(res, 201, { checkout });
+    } catch (error) {
+      return sendError(res, error);
+    }
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/payments/subscription") {
+    try {
+      const user = await requireUser(req);
+      return sendJson(res, 200, { subscription: await getSubscriptionForUser(user.id) });
+    } catch (error) {
+      return sendError(res, error, 401);
+    }
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/payments/webhook") {
+    try {
+      if (String(process.env.PAYMENT_PROVIDER || "mock").toLowerCase() !== "stripe") {
+        return sendJson(res, 404, { error: "stripe_webhook_not_enabled" });
+      }
+      const signature = String(req.headers["stripe-signature"] || "");
+      if (!signature) return sendJson(res, 400, { error: "stripe_signature_required" });
+      const rawBody = await readRawBody(req);
+      return sendJson(res, 200, await handleStripeWebhook(rawBody, signature));
+    } catch (error) {
+      return sendError(res, error, 400);
+    }
   }
 
   if (req.method === "GET" && url.pathname === "/api/provider/status") {
@@ -104,23 +212,25 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "POST" && url.pathname === "/api/coverage/check") {
     try {
-      const body = await readJsonBody(req);
-      const result = await checkProviderCoverage(body);
+      const result = await checkProviderCoverage(await readJsonBody(req));
       return sendJson(res, 200, result);
     } catch (error) {
-      const status = error.message === "request_too_large" ? 413 : 400;
-      return sendError(res, error, status);
+      return sendError(res, error);
     }
   }
 
   if (req.method === "POST" && url.pathname === "/api/esims/order") {
     try {
-      const body = await readJsonBody(req);
-      const result = await provisionEsim(body);
+      if (process.env.ESIM_LIVE_ORDERS_ENABLED === "true") {
+        const user = await requireUser(req);
+        if (!(await hasActiveSubscription(user.id))) {
+          return sendJson(res, 402, { error: "active_subscription_required" });
+        }
+      }
+      const result = await provisionEsim(await readJsonBody(req));
       return sendJson(res, 201, result);
     } catch (error) {
-      const status = error.message === "request_too_large" ? 413 : 400;
-      return sendError(res, error, status);
+      return sendError(res, error);
     }
   }
 
