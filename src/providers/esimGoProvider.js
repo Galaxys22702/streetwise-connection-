@@ -50,11 +50,21 @@ async function request(path, options = {}) {
   return data;
 }
 
+function normalizeBundles(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.bundles)) return payload.bundles;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (payload?.bundles && typeof payload.bundles === "object") {
+    return Object.values(payload.bundles).filter((item) => item && typeof item === "object" && item.name);
+  }
+  return [];
+}
+
 export async function listBundles({ country } = {}) {
   const params = new URLSearchParams();
   if (country) params.set("countries", String(country).trim().toUpperCase());
   params.set("perPage", "100");
-  return request(`/catalogue?${params.toString()}`);
+  return normalizeBundles(await request(`/catalogue?${params.toString()}`));
 }
 
 export async function checkCoverage({ country, device } = {}) {
@@ -65,8 +75,7 @@ export async function checkCoverage({ country, device } = {}) {
     return { supported: false, reason: "country_required" };
   }
 
-  const catalogue = await listBundles({ country: normalizedCountry });
-  const bundles = Array.isArray(catalogue) ? catalogue : catalogue?.bundles || catalogue?.data || [];
+  const bundles = await listBundles({ country: normalizedCountry });
   const deviceLooksEsimCapable = /iphone|pixel|galaxy|ipad|esim/i.test(normalizedDevice);
 
   return {
