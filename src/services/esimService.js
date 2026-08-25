@@ -213,7 +213,7 @@ export async function provisionEsim(input = {}, { user = null } = {}) {
 
 export async function getEsimOrder(id, { refresh = false, userId = null } = {}) {
   const order = await findOrder(id);
-  if (!order || (userId && order.userId && order.userId !== userId)) return null;
+  if (!order || (order.userId && order.userId !== userId)) return null;
 
   if (refresh && order.providerOrderReference) {
     try {
@@ -234,7 +234,7 @@ export async function getEsimOrder(id, { refresh = false, userId = null } = {}) 
 
 export async function getEsimInstallDetails(id, { userId = null } = {}) {
   const order = await findOrder(id);
-  if (!order || (userId && order.userId && order.userId !== userId)) return null;
+  if (!order || (order.userId && order.userId !== userId)) return null;
   if (order.install) return order.install;
   if (!order.providerOrderReference) return null;
 
