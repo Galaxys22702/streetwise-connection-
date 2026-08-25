@@ -43,6 +43,8 @@ npm run db:migrate
 npm start
 ```
 
+Migrations are recorded in PostgreSQL's `schema_migrations` table and protected by a database lock, so it is safe to run `npm run db:migrate` again after a successful deploy.
+
 Open `http://localhost:3000`.
 
 The default eSIM and payment providers are `mock`, so local development does not charge a card or purchase carrier service.
