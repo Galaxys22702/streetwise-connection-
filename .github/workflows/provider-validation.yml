@@ -1,0 +1,74 @@
+name: Provider validation
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/providers/**"
+      - ".github/workflows/provider-validation.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/providers/**"
+      - ".github/workflows/provider-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  esim-go-connection:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      ESIM_API_KEY: ${{ secrets.ESIM_API_KEY }}
+      CONFIGURED_ESIM_PROVIDER: ${{ vars.ESIM_PROVIDER }}
+      CONFIGURED_LIVE_ORDERS_ENABLED: ${{ vars.ESIM_LIVE_ORDERS_ENABLED }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify safe provider configuration
+        run: |
+          test -n "$ESIM_API_KEY"
+          test "$CONFIGURED_ESIM_PROVIDER" = "esim-go"
+          test "$CONFIGURED_LIVE_ORDERS_ENABLED" = "false"
+
+      - name: Build production image
+        run: docker build --target production -t streetwise-connection:provider-test .
+
+      - name: Verify eSIM Go API connection and U.S. catalogue
+        run: |
+          docker run -d --name streetwise-provider-test -p 3001:3000 \
+            -e ESIM_PROVIDER="$CONFIGURED_ESIM_PROVIDER" \
+            -e ESIM_API_KEY="$ESIM_API_KEY" \
+            -e ESIM_LIVE_ORDERS_ENABLED=false \
+            -e PAYMENT_PROVIDER=mock \
+            streetwise-connection:provider-test
+
+          trap 'docker logs streetwise-provider-test 2>/dev/null || true; docker rm -f streetwise-provider-test 2>/dev/null || true' EXIT
+
+          for i in {1..15}; do
+            if curl --fail --silent http://127.0.0.1:3001/api/provider/status >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+
+          STATUS=$(curl --fail --silent http://127.0.0.1:3001/api/provider/status)
+          echo "$STATUS" | jq -e '.provider == "esim-go"'
+          echo "$STATUS" | jq -e '.configured == true'
+          echo "$STATUS" | jq -e '.liveOrdersEnabled == false'
+
+          CATALOGUE=$(curl --fail --silent 'http://127.0.0.1:3001/api/provider/catalogue?country=US')
+          BUNDLE_COUNT=$(echo "$CATALOGUE" | jq '.bundles | length')
+          test "$BUNDLE_COUNT" -gt 0
+
+          FIRST_BUNDLE=$(echo "$CATALOGUE" | jq -r '.bundles[0].name // empty')
+          test -n "$FIRST_BUNDLE"
+
+          echo "eSIM Go connection verified. U.S. catalogue bundles: $BUNDLE_COUNT"
+          echo "First available bundle: $FIRST_BUNDLE"
+          echo "Live ordering remained disabled throughout this test."
