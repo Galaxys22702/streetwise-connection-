@@ -45,6 +45,8 @@ npm start
 
 Migrations are recorded in PostgreSQL's `schema_migrations` table and protected by a database lock, so it is safe to run `npm run db:migrate` again after a successful deploy.
 
+On Render, migrations run automatically when the Docker service starts. This keeps the free-tier Blueprint compatible because Render free services do not support a separate pre-deploy command.
+
 Open `http://localhost:3000`.
 
 The default eSIM and payment providers are `mock`, so local development does not charge a card or purchase carrier service.
