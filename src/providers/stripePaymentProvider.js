@@ -21,6 +21,21 @@ function client() {
   return new Stripe(key, { maxNetworkRetries: 2 });
 }
 
+function deploymentBaseUrl() {
+  const explicit = String(process.env.APP_BASE_URL || "").trim();
+  if (explicit) return explicit.replace(/\/$/, "");
+
+  const renderUrl = String(process.env.RENDER_EXTERNAL_URL || "").trim();
+  if (renderUrl) return renderUrl.replace(/\/$/, "");
+
+  const vercelHost = String(
+    process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL || ""
+  ).trim();
+  if (vercelHost) return `https://${vercelHost.replace(/^https?:\/\//, "").replace(/\/$/, "")}`;
+
+  return "http://localhost:3000";
+}
+
 export function stripeStatus() {
   const key = stripeKey();
   return {
@@ -34,11 +49,7 @@ export function stripeStatus() {
 
 export async function createStripeCheckoutSession({ user, plan }) {
   const stripe = client();
-  const baseUrl = String(
-    process.env.APP_BASE_URL ||
-    process.env.RENDER_EXTERNAL_URL ||
-    "http://localhost:3000"
-  ).replace(/\/$/, "");
+  const baseUrl = deploymentBaseUrl();
   const configuredPrice = String(process.env.STRIPE_PRICE_ID || "").trim();
 
   const lineItem = configuredPrice
