@@ -13,7 +13,7 @@ function response() {
   };
 }
 
-test("health endpoint reports runtime dependencies without exposing secrets", async () => {
+test("health endpoint reports runtime dependencies and launch safety without exposing secrets", async () => {
   const res = response();
   await handler({ method: "GET" }, res);
 
@@ -24,6 +24,10 @@ test("health endpoint reports runtime dependencies without exposing secrets", as
   assert.equal(res.body.database.connected, false);
   assert.equal(res.body.payments.provider, "mock");
   assert.equal(res.body.provider.provider, "mock");
+  assert.equal(res.body.publicLaunchMode, "waitlist");
+  assert.equal(res.body.waitlist.open, false);
+  assert.ok(res.body.waitlist.consentVersion);
+  assert.equal(res.body.waitlist.storageConfigured, false);
   assert.equal(res.headers["cache-control"], "no-store");
 });
 
