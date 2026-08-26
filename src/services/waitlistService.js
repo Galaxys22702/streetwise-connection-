@@ -13,7 +13,9 @@ function isValidEmail(value) {
 }
 
 function isWaitlistEnabled() {
-  return String(process.env.WAITLIST_ENABLED || "").trim().toLowerCase() === "true";
+  const configured = String(process.env.WAITLIST_ENABLED || "").trim().toLowerCase();
+  if (configured) return configured === "true";
+  return process.env.VERCEL_ENV === "production";
 }
 
 export function waitlistStatus() {
