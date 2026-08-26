@@ -30,6 +30,7 @@ Build the software layer needed to sell and manage data plans on eSIM-capable ph
 - Mock usage simulation for dashboard testing
 - Purchase idempotency protection to prevent duplicate eSIM transactions
 - Separate live-payment and live-eSIM safety switches
+- Dedicated Supabase-backed public waitlist with durable rate limiting
 - Docker builder and production targets
 - GitHub Actions full-flow smoke tests
 
@@ -46,21 +47,31 @@ npm start
 
 ## Public launch mode
 
-The public application defaults to **waitlist-only**. In this mode, customer registration, sign-in, checkout, coverage checks, and eSIM ordering routes return `public_waitlist_only`; the public page offers only launch updates.
+The public application remains **waitlist-only**. In this mode, customer registration, sign-in, checkout, coverage checks, and eSIM ordering routes return `public_waitlist_only`; the public page offers only launch updates.
+
+The waitlist writes to a dedicated Supabase Edge Function and Supabase tables, separate from the application PostgreSQL database. Supabase enforces durable rate limiting and stores only the normalized email, consent-notice version, and consent timestamp. The production Vercel deployment opens this dedicated waitlist by default; setting `WAITLIST_ENABLED=false` explicitly closes collection without enabling any commercial routes.
 
 ```env
 PUBLIC_LAUNCH_MODE=waitlist
+# Optional emergency/maintenance override:
 WAITLIST_ENABLED=false
-SUPPORT_EMAIL=
 ```
 
-Do not set `WAITLIST_ENABLED=true` until `SUPPORT_EMAIL` is a working, monitored customer contact and the waitlist privacy notice has been approved for the business. Waitlist entries store only an email address plus the consent-notice version and timestamp. The endpoint has a small per-instance rate limit; also configure platform/WAF bot protection before accepting public traffic.
+The public waitlist privacy notice and support contact must remain available while collection is open. Continue using platform/WAF bot protection in addition to the Supabase-backed rate limit.
 
 Run the repository verification checks with:
 
 ```bash
 npm run verify
 ```
+
+Run the deployed production smoke check with:
+
+```bash
+npm run check:production
+```
+
+Set `SMOKE_TEST_EMAIL` only when you intentionally want that command to exercise a real production storage write. Validation and consent error handling are checked without writing a row.
 
 Migrations are recorded in PostgreSQL's `schema_migrations` table and protected by a database lock, so it is safe to run `npm run db:migrate` again after a successful deploy.
 
@@ -96,6 +107,7 @@ See:
 
 - [`docs/ACCOUNTS_AND_PAYMENTS.md`](docs/ACCOUNTS_AND_PAYMENTS.md)
 - [`docs/ESIM_PROVISIONING.md`](docs/ESIM_PROVISIONING.md)
+- [`docs/PROVIDER_ONBOARDING.md`](docs/PROVIDER_ONBOARDING.md)
 - [`docs/CUSTOMER_DASHBOARD.md`](docs/CUSTOMER_DASHBOARD.md)
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 
@@ -153,7 +165,7 @@ When live eSIM ordering is enabled, the order route also requires an authenticat
 
 ## Current production limitations
 
-The database now persists customer eSIM orders and usage snapshots and protects transactional eSIM orders with idempotency keys. Before a public launch, add real provider usage synchronization/webhooks, cancellation/refund workflows, secure HttpOnly cookie sessions, rate limiting, audit logs, monitoring/backups, and launch-market telecom/tax/privacy/consumer-disclosure review.
+The public waitlist is production-backed, but commercial service is still intentionally disabled. Before a commercial launch, add real provider usage synchronization/webhooks, cancellation/refund workflows, secure HttpOnly cookie sessions, broader application rate limiting, audit logs, monitoring/backups, and launch-market telecom/tax/privacy/consumer-disclosure review.
 
 ## Next milestones
 
@@ -165,5 +177,5 @@ The database now persists customer eSIM orders and usage snapshots and protects 
 6. Add data top-ups and low-data notifications.
 7. Add subscription cancellation, refunds, failed-payment handling, and customer support tools.
 8. Move browser authentication to secure HttpOnly cookies and add CSRF/rate-limit controls.
-9. Deploy PostgreSQL and the application to a managed production environment with secrets, backups, monitoring, and logging.
+9. Deploy PostgreSQL and the commercial application backend to a managed production environment with secrets, backups, monitoring, and logging.
 10. Complete launch-market telecom, tax, privacy, and consumer-disclosure review.
