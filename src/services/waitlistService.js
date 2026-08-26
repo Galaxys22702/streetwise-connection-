@@ -12,8 +12,12 @@ function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
+function isWaitlistEnabled() {
+  return String(process.env.WAITLIST_ENABLED || "").trim().toLowerCase() === "true";
+}
+
 export function waitlistStatus() {
-  const enabled = isPublicWaitlistOnly();
+  const enabled = isPublicWaitlistOnly() && isWaitlistEnabled();
 
   return {
     open: enabled,
@@ -23,7 +27,7 @@ export function waitlistStatus() {
     storageProvider: "supabase",
     message: enabled
       ? "Join the waitlist for launch updates. No payment or service activation is available."
-      : "The public waitlist is unavailable outside waitlist launch mode."
+      : "The public waitlist is currently closed."
   };
 }
 
