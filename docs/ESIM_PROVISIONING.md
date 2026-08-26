@@ -24,6 +24,7 @@ PORT=3000
 ESIM_PROVIDER=mock
 ESIM_API_BASE_URL=
 ESIM_API_KEY=
+ESIM_WEBHOOKS_ENABLED=false
 ESIM_LIVE_ORDERS_ENABLED=false
 ```
 
@@ -125,30 +126,37 @@ For a completed live eSIM Go order, the provider can return ICCID, SM-DP+ addres
 
 ## Important MVP limitation
 
-Streetwise order records currently use an in-memory `Map`. Restarting the Node process clears them.
+When `DATABASE_URL` is configured, Streetwise persists orders, installation metadata, provider ICCIDs, usage snapshots, and idempotency keys in PostgreSQL. The in-memory `Map` is only a local-development fallback and must not be used for live connectivity.
 
-Before production, replace the in-memory store with a durable database and persist at minimum:
+## Provider callbacks and usage synchronization
 
-- Streetwise order ID
-- provider order reference
-- customer ID
-- bundle SKU
-- amount/currency
-- status
-- ICCID
-- installation metadata
-- timestamps
-- idempotency key
+eSIM Go V3 callbacks update the matching Streetwise order using its ICCID and append an immutable usage snapshot. Callbacks are authenticated with `X-Signature-SHA256` over the **raw** request body; duplicate delivery bodies are acknowledged without creating a second usage event.
+
+The current MVP permits one live eSIM per order. This keeps one provider ICCID tied to one customer order until a dedicated multi-profile data model is added.
+
+Enable this separately from live orders so it can be tested safely:
+
+```env
+ESIM_PROVIDER=esim-go
+ESIM_API_KEY=your_provider_key
+ESIM_WEBHOOKS_ENABLED=true
+ESIM_LIVE_ORDERS_ENABLED=false
+```
+
+Configure this HTTPS endpoint in eSIM Go Portal → Account Settings → API Details, with Callback Version set to V3:
+
+```text
+https://YOUR_DOMAIN/api/providers/esim-go/webhook
+```
+
+Do not enable callbacks before the application has a production PostgreSQL database. The provider key is also the callback HMAC key, so keep it only in deployment secrets.
 
 ## Production work still required
 
 1. Create and fund the wholesale provider account.
 2. Map provider bundle SKUs to Streetwise retail plans.
-3. Add a database.
-4. Add authentication and customer accounts.
-5. Add payment authorization before telecom purchase.
-6. Add idempotency to prevent duplicate eSIM purchases.
-7. Add provider webhooks for order/profile/usage status.
-8. Add usage and top-up APIs.
-9. Add refund/cancellation/support procedures.
-10. Complete legal, tax, telecom, privacy, and consumer-disclosure review for each launch market.
+3. Create a Stripe test product/price and verify checkout plus webhooks end to end.
+4. Test V3 provider callback delivery against a real test eSIM.
+5. Add usage and top-up APIs.
+6. Add refund/cancellation/support procedures.
+7. Complete legal, tax, telecom, privacy, and consumer-disclosure review for each launch market.

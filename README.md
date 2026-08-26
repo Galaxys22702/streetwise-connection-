@@ -44,6 +44,18 @@ npm run db:migrate
 npm start
 ```
 
+## Public launch mode
+
+The public application defaults to **waitlist-only**. In this mode, customer registration, sign-in, checkout, coverage checks, and eSIM ordering routes return `public_waitlist_only`; the public page offers only launch updates.
+
+```env
+PUBLIC_LAUNCH_MODE=waitlist
+WAITLIST_ENABLED=false
+SUPPORT_EMAIL=
+```
+
+Do not set `WAITLIST_ENABLED=true` until `SUPPORT_EMAIL` is a working, monitored customer contact and the waitlist privacy notice has been approved for the business. Waitlist entries store only an email address plus the consent-notice version and timestamp. The endpoint has a small per-instance rate limit; also configure platform/WAF bot protection before accepting public traffic.
+
 Run the repository verification checks with:
 
 ```bash
@@ -74,6 +86,7 @@ STRIPE_LIVE_MODE_ENABLED=false
 ESIM_PROVIDER=mock
 ESIM_API_BASE_URL=
 ESIM_API_KEY=
+ESIM_WEBHOOKS_ENABLED=false
 ESIM_LIVE_ORDERS_ENABLED=false
 ```
 
@@ -112,6 +125,7 @@ GET  /api/provider/status
 GET  /api/provider/catalogue?country=US
 POST /api/coverage/check
 POST /api/esims/order
+POST /api/providers/esim-go/webhook
 GET  /api/esims
 GET  /api/esims/orders/{streetwiseOrderId}
 GET  /api/esims/orders/{streetwiseOrderId}?refresh=true
@@ -146,8 +160,8 @@ The database now persists customer eSIM orders and usage snapshots and protects 
 1. Open/configure the wholesale eSIM provider account and test API credentials.
 2. Create a Stripe test product/price and verify the webhook flow end to end.
 3. Map wholesale bundle costs to Streetwise retail pricing and margins.
-4. Add provider webhooks and usage synchronization.
-5. Add provider-order reconciliation and retry handling for transient API failures.
+4. Configure and test the eSIM Go V3 callback endpoint with a real test eSIM.
+5. Exercise live-order idempotency, provider reconciliation, and retry handling for transient API failures in staging.
 6. Add data top-ups and low-data notifications.
 7. Add subscription cancellation, refunds, failed-payment handling, and customer support tools.
 8. Move browser authentication to secure HttpOnly cookies and add CSRF/rate-limit controls.

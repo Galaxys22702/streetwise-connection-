@@ -55,7 +55,13 @@ input { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(-
 details { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 14px; }
 summary { cursor: pointer; font-weight: 700; }
 code { display: block; margin-top: 12px; padding: 12px; border-radius: 10px; background: #04100a; overflow-wrap: anywhere; color: #dfffea; }
-footer { border-top: 1px solid var(--line); padding: 36px 0 60px; color: var(--muted); }
+footer { border-top: 1px solid var(--line); padding: 36px 0 60px; color: var(--muted); display: flex; justify-content: space-between; gap: 18px; }
+.waitlist-form { align-self: start; }
+.consent { grid-template-columns: 20px 1fr; align-items: start; font-weight: 400; color: var(--muted); line-height: 1.5; }
+.consent input { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--accent); }
+.legal-page { width: min(760px, calc(100% - 40px)); margin: 0 auto; padding: 80px 0; }
+.legal-page h1 { font-size: clamp(42px, 7vw, 72px); }
+.legal-page h2 { font-size: 28px; margin-top: 42px; }
 @media (max-width: 900px) {
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
@@ -65,4 +71,5 @@ footer { border-top: 1px solid var(--line); padding: 36px 0 60px; color: var(--m
   .panel { padding: 40px 24px; }
   .hero-copy { padding: 76px 0 90px; }
   .usage-row { align-items: flex-start; flex-direction: column; gap: 4px; }
+  footer { align-items: flex-start; flex-direction: column; }
 }

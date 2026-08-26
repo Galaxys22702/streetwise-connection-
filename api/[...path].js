@@ -1,4 +1,5 @@
 import { plans } from "../src/config/plans.js";
+import { isCustomerServicePath, isPublicWaitlistOnly, publicLaunchMode } from "../src/config/launchMode.js";
 import { databaseStatus } from "../src/db/index.js";
 import {
   authenticateRequest,
@@ -24,6 +25,8 @@ import {
   provisionEsim,
   recordMockUsage
 } from "../src/services/esimService.js";
+import { enforceWaitlistRateLimit } from "../src/services/waitlistRateLimit.js";
+import { joinWaitlist, waitlistStatus } from "../src/services/waitlistService.js";
 
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
@@ -112,8 +115,31 @@ export default async function handler(req, res) {
       version: "0.4.0",
       database,
       payments: paymentProviderStatus(),
-      provider
+      provider,
+      publicLaunchMode: publicLaunchMode(),
+      waitlist: waitlistStatus()
     });
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/public-status") {
+    return sendJson(res, 200, {
+      publicLaunchMode: publicLaunchMode(),
+      waitlist: waitlistStatus()
+    });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/waitlist") {
+    try {
+      enforceWaitlistRateLimit(req);
+      return sendJson(res, 201, await joinWaitlist(await readJsonBody(req)));
+    } catch (error) {
+      if (error.retryAfterSeconds) res.setHeader("retry-after", String(error.retryAfterSeconds));
+      return sendError(res, error);
+    }
+  }
+
+  if (isPublicWaitlistOnly() && isCustomerServicePath(url.pathname)) {
+    return sendJson(res, 503, { error: "public_waitlist_only" });
   }
 
   if (req.method === "GET" && url.pathname === "/api/plans") {

@@ -4,6 +4,7 @@ function getConfig() {
   return {
     baseUrl: String(process.env.ESIM_API_BASE_URL || DEFAULT_BASE_URL).replace(/\/$/, ""),
     apiKey: String(process.env.ESIM_API_KEY || "").trim(),
+    webhooksEnabled: String(process.env.ESIM_WEBHOOKS_ENABLED || "false").toLowerCase() === "true",
     liveOrdersEnabled: String(process.env.ESIM_LIVE_ORDERS_ENABLED || "false").toLowerCase() === "true"
   };
 }
@@ -153,6 +154,7 @@ export function getProviderStatus() {
   return {
     provider: "esim-go",
     configured: Boolean(config.apiKey),
+    webhooksEnabled: config.webhooksEnabled,
     liveOrdersEnabled: config.liveOrdersEnabled,
     baseUrl: config.baseUrl
   };

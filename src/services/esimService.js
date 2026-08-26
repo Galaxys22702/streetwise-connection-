@@ -53,6 +53,7 @@ function rowToOrder(row) {
     userId: row.user_id,
     provider: row.provider,
     providerOrderReference: row.provider_order_reference,
+    esimIccid: row.esim_iccid || null,
     bundleName: row.bundle_name,
     quantity: row.quantity,
     country: row.country,
@@ -86,8 +87,8 @@ async function insertOrder(order) {
        id, user_id, provider, provider_order_reference, bundle_name, quantity,
        country, device, customer_email, requested_mode, status, total, currency,
        provider_mode, live_order_executed, install_json, error, data_limit_bytes,
-       data_used_bytes, activated_at, expires_at, created_at, updated_at, idempotency_key
-     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)`,
+       data_used_bytes, activated_at, expires_at, created_at, updated_at, idempotency_key, esim_iccid
+     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25)`,
     [
       order.id,
       order.userId,
@@ -112,7 +113,8 @@ async function insertOrder(order) {
       order.expiresAt,
       order.createdAt,
       order.updatedAt,
-      order.idempotencyKey
+      order.idempotencyKey,
+      order.esimIccid
     ]
   );
 }
@@ -125,7 +127,8 @@ async function updateOrder(order) {
   await query(
     `UPDATE esim_orders SET user_id=$2, provider_order_reference=$3, status=$4, total=$5, currency=$6,
        provider_mode=$7, live_order_executed=$8, install_json=$9, error=$10,
-       data_limit_bytes=$11, data_used_bytes=$12, activated_at=$13, expires_at=$14, updated_at=$15
+       data_limit_bytes=$11, data_used_bytes=$12, activated_at=$13, expires_at=$14, updated_at=$15,
+       esim_iccid=$16
      WHERE id=$1`,
     [
       order.id,
@@ -142,7 +145,8 @@ async function updateOrder(order) {
       order.dataUsedBytes,
       order.activatedAt,
       order.expiresAt,
-      order.updatedAt
+      order.updatedAt,
+      order.esimIccid
     ]
   );
 }
@@ -189,6 +193,11 @@ export async function provisionEsim(input = {}, { user = null, idempotencyKey = 
   const safeKey = String(idempotencyKey || "").trim().slice(0, 200) || null;
 
   if (!bundleName) throw new Error("bundle_name_required");
+  if (!validateOnly && getProviderName() === "esim-go" && quantity !== 1) {
+    const error = new Error("multi_esim_live_orders_not_supported");
+    error.statusCode = 409;
+    throw error;
+  }
 
   if (!validateOnly && user?.id && safeKey) {
     const existing = await findOrderByIdempotencyKey(user.id, safeKey);
@@ -230,6 +239,7 @@ export async function provisionEsim(input = {}, { user = null, idempotencyKey = 
     activatedAt: null,
     expiresAt: null,
     idempotencyKey: !validateOnly ? safeKey : null,
+    esimIccid: null,
     createdAt: now,
     updatedAt: now
   };
@@ -260,6 +270,7 @@ export async function provisionEsim(input = {}, { user = null, idempotencyKey = 
     order.total = result.total ?? null;
     order.currency = result.currency || null;
     order.install = result.install || null;
+    order.esimIccid = String(result.install?.iccid || "").trim() || null;
     order.providerMode = result.mode || null;
     order.liveOrderExecuted = Boolean(result.liveOrderExecuted);
     if (order.status === "completed" && !validateOnly) {
@@ -310,6 +321,7 @@ export async function getEsimInstallDetails(id, { userId = null } = {}) {
 
   const details = await getProvider().getInstallDetails(order.providerOrderReference);
   order.install = details;
+  order.esimIccid = String(details?.iccid || "").trim() || order.esimIccid || null;
   order.updatedAt = new Date().toISOString();
   await updateOrder(order);
   return details;

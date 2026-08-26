@@ -22,6 +22,29 @@ export async function query(text, params = []) {
   return pool.query(text, params);
 }
 
+export async function withTransaction(work) {
+  if (!pool) {
+    const error = new Error("database_not_configured");
+    error.statusCode = 503;
+    throw error;
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const result = await work(client);
+    await client.query("COMMIT");
+    return result;
+  } catch (error) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {}
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 export async function databaseStatus() {
   if (!pool) return { configured: false, connected: false };
 

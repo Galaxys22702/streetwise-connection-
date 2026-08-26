@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { plans } from "./config/plans.js";
+import { isCustomerServicePath, isPublicWaitlistOnly, publicLaunchMode } from "./config/launchMode.js";
 import { databaseStatus } from "./db/index.js";
 import {
   authenticateRequest,
@@ -28,6 +29,9 @@ import {
   provisionEsim,
   recordMockUsage
 } from "./services/esimService.js";
+import { handleEsimGoWebhook } from "./services/esimWebhookService.js";
+import { enforceWaitlistRateLimit } from "./services/waitlistRateLimit.js";
+import { joinWaitlist, waitlistStatus } from "./services/waitlistService.js";
 
 const PORT = Number(process.env.PORT || 3000);
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
@@ -141,8 +145,31 @@ const server = http.createServer(async (req, res) => {
       version: "0.4.0",
       database,
       payments: paymentProviderStatus(),
-      provider
+      provider,
+      publicLaunchMode: publicLaunchMode(),
+      waitlist: waitlistStatus()
     });
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/public-status") {
+    return sendJson(res, 200, {
+      publicLaunchMode: publicLaunchMode(),
+      waitlist: waitlistStatus()
+    });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/waitlist") {
+    try {
+      enforceWaitlistRateLimit(req);
+      return sendJson(res, 201, await joinWaitlist(await readJsonBody(req)));
+    } catch (error) {
+      if (error.retryAfterSeconds) res.setHeader("retry-after", String(error.retryAfterSeconds));
+      return sendError(res, error);
+    }
+  }
+
+  if (isPublicWaitlistOnly() && isCustomerServicePath(url.pathname)) {
+    return sendJson(res, 503, { error: "public_waitlist_only" });
   }
 
   if (req.method === "GET" && url.pathname === "/api/plans") {
@@ -239,6 +266,21 @@ const server = http.createServer(async (req, res) => {
       const signature = String(req.headers["stripe-signature"] || "");
       if (!signature) return sendJson(res, 400, { error: "stripe_signature_required" });
       return sendJson(res, 200, await handleStripeWebhook(await readRawBody(req), signature));
+    } catch (error) {
+      return sendError(res, error, 400);
+    }
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/providers/esim-go/webhook") {
+    try {
+      const enabled = process.env.ESIM_WEBHOOKS_ENABLED === "true";
+      const provider = String(process.env.ESIM_PROVIDER || "mock").toLowerCase();
+      if (!enabled || provider !== "esim-go") {
+        return sendJson(res, 404, { error: "esim_go_webhook_not_enabled" });
+      }
+      const signature = String(req.headers["x-signature-sha256"] || "");
+      if (!signature) return sendJson(res, 400, { error: "esim_go_signature_required" });
+      return sendJson(res, 200, await handleEsimGoWebhook(await readRawBody(req), signature));
     } catch (error) {
       return sendError(res, error, 400);
     }

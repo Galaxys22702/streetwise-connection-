@@ -3,112 +3,65 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Streetwise Connection affordable eSIM mobile data prototype" />
-  <title>Streetwise Connection</title>
+  <meta name="description" content="Streetwise Connection launch waitlist for affordable eSIM mobile data." />
+  <title>Streetwise Connection — Launch Waitlist</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <header class="hero">
     <nav>
       <strong>Streetwise Connection</strong>
-      <span class="badge">MVP 0.4</span>
+      <span class="badge">Launch waitlist</span>
     </nav>
     <div class="hero-copy">
-      <p class="eyebrow">Affordable mobile data, built differently</p>
-      <h1>Internet that travels with your device.</h1>
-      <p class="lead">A software platform for affordable eSIM-based mobile data—no separate hotspot required.</p>
-      <a class="button" href="#account">Create an account</a>
+      <p class="eyebrow">Coming soon</p>
+      <h1>Affordable data is on the way.</h1>
+      <p class="lead">Streetwise Connection is preparing an eSIM-based mobile-data service. Join for launch updates—there is no account, checkout, payment, or eSIM activation available today.</p>
+      <a class="button" href="#waitlist">Get launch updates</a>
     </div>
   </header>
 
   <main>
-    <section class="section">
+    <section id="waitlist" class="section panel">
       <div>
-        <p class="eyebrow">Target pricing</p>
-        <h2>Start at $10/month.</h2>
-        <p>Our first pricing target is a $10 monthly plan. Final data limits and countries depend on wholesale carrier agreements.</p>
+        <p class="eyebrow">Waitlist only</p>
+        <h2>Be first to hear when we are ready.</h2>
+        <p>We will share confirmed launch timing, availability, and final plan details. We will not ask for payment or device information on this page.</p>
+        <p id="waitlist-contact" class="result" hidden></p>
       </div>
-      <div id="plans" class="card-grid" aria-live="polite"></div>
-    </section>
-
-    <section id="account" class="section panel">
       <div>
-        <p class="eyebrow">Customer account</p>
-        <h2>Sign up, subscribe, connect.</h2>
-        <p>Create a Streetwise account before checkout. Test environments use mock payments unless Stripe is configured.</p>
-        <div id="account-summary" class="result" aria-live="polite">Not signed in.</div>
-        <button id="logout-button" class="button secondary" type="button" hidden>Sign out</button>
-      </div>
-      <div class="account-grid">
-        <form id="register-form" class="card">
-          <h3>Create account</h3>
-          <label>Email
-            <input name="email" type="email" autocomplete="email" required />
+        <form id="waitlist-form" class="card waitlist-form">
+          <h3>Join the waitlist</h3>
+          <label>Email address
+            <input name="email" type="email" autocomplete="email" inputmode="email" required />
           </label>
-          <label>Password
-            <input name="password" type="password" autocomplete="new-password" minlength="10" required />
+          <label class="consent">
+            <input name="consent" type="checkbox" required />
+            <span>I agree to receive Streetwise Connection launch updates and have read the <a href="/waitlist-privacy.html">waitlist privacy notice</a>.</span>
           </label>
-          <button class="button" type="submit">Create account</button>
+          <button id="waitlist-submit" class="button" type="submit">Join waitlist</button>
         </form>
-        <form id="login-form" class="card">
-          <h3>Sign in</h3>
-          <label>Email
-            <input name="email" type="email" autocomplete="email" required />
-          </label>
-          <label>Password
-            <input name="password" type="password" autocomplete="current-password" required />
-          </label>
-          <button class="button" type="submit">Sign in</button>
-        </form>
+        <div id="waitlist-result" class="result" aria-live="polite"></div>
       </div>
-      <div id="auth-result" class="result full-width" aria-live="polite"></div>
-    </section>
-
-    <section id="dashboard" class="section panel" hidden>
-      <div>
-        <p class="eyebrow">My Streetwise</p>
-        <h2>Your connection dashboard.</h2>
-        <p>See subscription state, active eSIMs, installation information, and data usage from one place.</p>
-        <button id="refresh-dashboard" class="button secondary" type="button">Refresh dashboard</button>
-      </div>
-      <div>
-        <div id="dashboard-summary" class="stats-grid" aria-live="polite"></div>
-        <div id="esim-list" class="esim-list" aria-live="polite"></div>
-      </div>
-    </section>
-
-    <section id="coverage" class="section panel">
-      <div>
-        <p class="eyebrow">Coverage prototype</p>
-        <h2>See how the service flow will work.</h2>
-        <p>This checker uses the configured provider. A live launch will query the eSIM/carrier partner in real time.</p>
-      </div>
-      <form id="coverage-form">
-        <label>Country code
-          <input name="country" placeholder="US" maxlength="2" required />
-        </label>
-        <label>Device
-          <input name="device" placeholder="iPhone 13" required />
-        </label>
-        <button class="button" type="submit">Check coverage</button>
-      </form>
-      <div id="coverage-result" class="result" aria-live="polite"></div>
     </section>
 
     <section class="section">
       <div>
-        <p class="eyebrow">How it becomes real</p>
-        <h2>Software + licensed network partners.</h2>
+        <p class="eyebrow">What to expect</p>
+        <h2>Clear details before service begins.</h2>
       </div>
       <div class="steps">
-        <article><span>01</span><h3>Account</h3><p>Create a customer account and choose a plan.</p></article>
-        <article><span>02</span><h3>Pay + provision</h3><p>Confirm subscription payment, then securely issue the eSIM profile.</p></article>
-        <article><span>03</span><h3>Manage</h3><p>Track usage, renewal state, installation details, and support from the dashboard.</p></article>
+        <article><span>01</span><h3>Confirmed launch details</h3><p>We will publish coverage, pricing, service terms, and support information before selling service.</p></article>
+        <article><span>02</span><h3>Customer choice</h3><p>You can decide whether the final offering is right for you before creating an account or paying.</p></article>
+        <article><span>03</span><h3>Service activation</h3><p>Accounts and eSIM activation will remain unavailable until the required business and production checks are complete.</p></article>
       </div>
     </section>
   </main>
 
-  <footer>Streetwise Connection · Prototype</footer>
+  <footer>
+    <span>Streetwise Connection · Launch waitlist</span>
+    <a href="/waitlist-privacy.html">Waitlist privacy notice</a>
+  </footer>
   <script type="module" src="/app.js"></script>
 </body>
 </html>

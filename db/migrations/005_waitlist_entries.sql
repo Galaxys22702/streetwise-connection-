@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS waitlist_entries (
+  id TEXT PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  consent_version TEXT NOT NULL,
+  consented_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

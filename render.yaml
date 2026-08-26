@@ -27,6 +27,8 @@ services:
         value: esim-go
       - key: ESIM_API_KEY
         sync: false
+      - key: ESIM_WEBHOOKS_ENABLED
+        value: "false"
       - key: ESIM_LIVE_ORDERS_ENABLED
         value: "false"
 
