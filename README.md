@@ -28,6 +28,7 @@ Build the software layer needed to sell and manage data plans on eSIM-capable ph
 - Customer-level order access controls
 - Data allowance/usage fields and usage-event history
 - Mock usage simulation for dashboard testing
+- Purchase idempotency protection to prevent duplicate eSIM transactions
 - Separate live-payment and live-eSIM safety switches
 - Docker builder and production targets
 - GitHub Actions full-flow smoke tests
@@ -41,6 +42,12 @@ docker compose up -d postgres
 npm install
 npm run db:migrate
 npm start
+```
+
+Run the repository verification checks with:
+
+```bash
+npm run verify
 ```
 
 Migrations are recorded in PostgreSQL's `schema_migrations` table and protected by a database lock, so it is safe to run `npm run db:migrate` again after a successful deploy.
@@ -132,7 +139,7 @@ When live eSIM ordering is enabled, the order route also requires an authenticat
 
 ## Current production limitations
 
-The database now persists customer eSIM orders and usage snapshots. Before a public launch, add real provider usage synchronization/webhooks, purchase idempotency keys, cancellation/refund workflows, secure HttpOnly cookie sessions, rate limiting, audit logs, monitoring/backups, and launch-market telecom/tax/privacy/consumer-disclosure review.
+The database now persists customer eSIM orders and usage snapshots and protects transactional eSIM orders with idempotency keys. Before a public launch, add real provider usage synchronization/webhooks, cancellation/refund workflows, secure HttpOnly cookie sessions, rate limiting, audit logs, monitoring/backups, and launch-market telecom/tax/privacy/consumer-disclosure review.
 
 ## Next milestones
 
@@ -140,7 +147,7 @@ The database now persists customer eSIM orders and usage snapshots. Before a pub
 2. Create a Stripe test product/price and verify the webhook flow end to end.
 3. Map wholesale bundle costs to Streetwise retail pricing and margins.
 4. Add provider webhooks and usage synchronization.
-5. Add idempotency protection against duplicate telecom purchases.
+5. Add provider-order reconciliation and retry handling for transient API failures.
 6. Add data top-ups and low-data notifications.
 7. Add subscription cancellation, refunds, failed-payment handling, and customer support tools.
 8. Move browser authentication to secure HttpOnly cookies and add CSRF/rate-limit controls.
