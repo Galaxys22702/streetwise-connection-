@@ -39,6 +39,7 @@ jobs:
       - name: Verify eSIM Go API connection and Starter plan economics
         run: |
           docker run -d --name streetwise-provider-test -p 3001:3000 \
+            -e PUBLIC_LAUNCH_MODE=internal \
             -e ESIM_PROVIDER=esim-go \
             -e ESIM_API_KEY="$ESIM_API_KEY" \
             -e ESIM_LIVE_ORDERS_ENABLED=false \
