@@ -13,6 +13,7 @@ const refreshDashboardButton = document.querySelector("#refresh-dashboard");
 
 const TOKEN_KEY = "streetwise_session_token";
 let token = sessionStorage.getItem(TOKEN_KEY) || "";
+let accountServiceReady = true;
 
 const HTML_ESCAPE = {
   "&": "&amp;",
@@ -52,6 +53,33 @@ async function api(path, options = {}) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error || `request_failed_${response.status}`);
   return data;
+}
+
+function setAccountServiceReady(ready) {
+  accountServiceReady = Boolean(ready);
+  for (const form of [registerForm, loginForm]) {
+    for (const control of form.querySelectorAll("input, button")) {
+      control.disabled = !accountServiceReady;
+    }
+  }
+
+  if (!accountServiceReady) {
+    accountSummaryEl.textContent = "Account service is temporarily unavailable while secure production storage is being connected.";
+    authResultEl.textContent = "Account creation and sign-in are temporarily disabled. Coverage and plan information remain available.";
+    logoutButton.hidden = true;
+    dashboardSection.hidden = true;
+  }
+}
+
+async function refreshServiceStatus() {
+  try {
+    const status = await api("/health");
+    setAccountServiceReady(Boolean(status.database?.configured && status.database?.connected));
+    return status;
+  } catch {
+    setAccountServiceReady(false);
+    return null;
+  }
 }
 
 function formatBytes(value) {
@@ -131,7 +159,7 @@ function renderDashboard(data) {
 }
 
 async function refreshDashboard() {
-  if (!token) {
+  if (!token || !accountServiceReady) {
     dashboardSection.hidden = true;
     return;
   }
@@ -141,6 +169,13 @@ async function refreshDashboard() {
 }
 
 async function refreshAccount() {
+  if (!accountServiceReady) {
+    accountSummaryEl.textContent = "Account service is temporarily unavailable while secure production storage is being connected.";
+    logoutButton.hidden = true;
+    dashboardSection.hidden = true;
+    return;
+  }
+
   if (!token) {
     accountSummaryEl.textContent = "Not signed in.";
     logoutButton.hidden = true;
@@ -164,6 +199,11 @@ async function refreshAccount() {
 }
 
 async function submitAuth(form, endpoint) {
+  if (!accountServiceReady) {
+    authResultEl.textContent = "Account service is temporarily unavailable while secure production storage is being connected.";
+    return;
+  }
+
   authResultEl.textContent = "Working…";
   const payload = Object.fromEntries(new FormData(form).entries());
   try {
@@ -228,6 +268,11 @@ esimListEl.addEventListener("click", async (event) => {
 plansEl.addEventListener("click", async (event) => {
   const button = event.target.closest(".subscribe-button");
   if (!button) return;
+  if (!accountServiceReady) {
+    authResultEl.textContent = "Checkout is temporarily unavailable while secure production storage is being connected.";
+    document.querySelector("#account").scrollIntoView({ behavior: "smooth" });
+    return;
+  }
   if (!token) {
     authResultEl.textContent = "Create an account or sign in before checkout.";
     document.querySelector("#account").scrollIntoView({ behavior: "smooth" });
@@ -275,6 +320,17 @@ if (checkoutState === "success") authResultEl.textContent = "Checkout completed.
 if (checkoutState === "cancelled") authResultEl.textContent = "Checkout was cancelled.";
 if (checkoutState === "mock") authResultEl.textContent = "Mock checkout opened successfully.";
 
-Promise.all([loadPlans(), refreshAccount()]).catch(() => {
+async function initialize() {
+  await refreshServiceStatus();
+  await refreshAccount();
+  try {
+    await loadPlans();
+  } catch {
+    plansEl.textContent = "Plans are temporarily unavailable.";
+  }
+}
+
+initialize().catch(() => {
+  setAccountServiceReady(false);
   plansEl.textContent = "Plans are temporarily unavailable.";
 });
