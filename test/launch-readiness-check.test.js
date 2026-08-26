@@ -9,8 +9,6 @@ function run(overrides = {}) {
     WAITLIST_ENABLED: "false",
     STRIPE_LIVE_MODE_ENABLED: "false",
     ESIM_LIVE_ORDERS_ENABLED: "false",
-    DATABASE_URL: "",
-    SUPPORT_EMAIL: "",
     ...overrides
   };
 
@@ -21,32 +19,23 @@ function run(overrides = {}) {
   });
 }
 
-test("safe closed waitlist passes without production storage", () => {
+test("safe closed waitlist passes without enabling collection", () => {
   const result = run();
   assert.equal(result.status, 0);
   assert.match(result.stdout, /safe waitlist-only mode/i);
 });
 
-test("open waitlist requires durable database storage", () => {
-  const result = run({ WAITLIST_ENABLED: "true", SUPPORT_EMAIL: "support@example.com" });
-  assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /waitlist_requires_database_url/);
-});
-
-test("open waitlist requires a valid support contact", () => {
-  const result = run({ WAITLIST_ENABLED: "true", DATABASE_URL: "postgres://example.invalid/db" });
-  assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /waitlist_requires_valid_support_email/);
-});
-
-test("open waitlist passes configuration checks with storage and support contact", () => {
-  const result = run({
-    WAITLIST_ENABLED: "true",
-    DATABASE_URL: "postgres://example.invalid/db",
-    SUPPORT_EMAIL: "support@example.com"
-  });
+test("enabled waitlist passes with the dedicated Supabase storage configuration", () => {
+  const result = run({ WAITLIST_ENABLED: "true" });
   assert.equal(result.status, 0);
-  assert.match(result.stdout, /waitlist can open/i);
+  assert.match(result.stdout, /public waitlist can open/i);
+  assert.match(result.stdout, /supabase/i);
+});
+
+test("production can use the waitlist default when the feature flag is not explicitly set", () => {
+  const result = run({ WAITLIST_ENABLED: "", VERCEL_ENV: "production" });
+  assert.equal(result.status, 0);
+  assert.match(result.stdout, /public waitlist can open/i);
 });
 
 test("live commerce stays blocked during waitlist launch", () => {
