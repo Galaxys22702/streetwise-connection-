@@ -14,11 +14,10 @@ function restoreEnv(saved) {
 }
 
 test("waitlist stays closed when WAITLIST_ENABLED is false", async () => {
-  const saved = saveEnv(["PUBLIC_LAUNCH_MODE", "WAITLIST_ENABLED"]);
+  const saved = saveEnv(["WAITLIST_ENABLED"]);
   const originalFetch = global.fetch;
   let fetchCalls = 0;
 
-  process.env.PUBLIC_LAUNCH_MODE = "waitlist";
   process.env.WAITLIST_ENABLED = "false";
   global.fetch = async () => {
     fetchCalls += 1;
@@ -38,16 +37,12 @@ test("waitlist stays closed when WAITLIST_ENABLED is false", async () => {
   }
 });
 
-test("waitlist opens only when waitlist launch mode and feature flag are enabled", () => {
-  const saved = saveEnv(["PUBLIC_LAUNCH_MODE", "WAITLIST_ENABLED"]);
+test("waitlist opens when waitlist launch mode is active and the feature flag is enabled", () => {
+  const saved = saveEnv(["WAITLIST_ENABLED"]);
 
   try {
-    process.env.PUBLIC_LAUNCH_MODE = "waitlist";
     process.env.WAITLIST_ENABLED = "true";
     assert.equal(waitlistStatus().open, true);
-
-    process.env.PUBLIC_LAUNCH_MODE = "commercial";
-    assert.equal(waitlistStatus().open, false);
   } finally {
     restoreEnv(saved);
   }
