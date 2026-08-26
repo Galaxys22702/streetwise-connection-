@@ -10,6 +10,7 @@ This directory contains Streetwise Connection's pre-launch business and regulato
 - [Regulatory Matrix](./REGULATORY-MATRIX.md) — Nevada, City, PUCN, FCC/USAC, and provider-of-record analysis
 - [Privacy Policy Draft](./PRIVACY-POLICY-DRAFT.md) — pre-launch customer privacy draft
 - [Terms of Service Draft](./TERMS-OF-SERVICE-DRAFT.md) — pre-launch customer terms draft
+- [Refund & Support Policy Draft](./REFUND-SUPPORT-POLICY-DRAFT.md) — failed activation, duplicate order, compatibility, outage, and support framework
 
 ## Important handling rule
 
