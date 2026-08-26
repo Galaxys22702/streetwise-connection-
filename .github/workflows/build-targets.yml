@@ -16,7 +16,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Run test suite with coverage
@@ -63,6 +63,7 @@ jobs:
 
           docker run -d --name streetwise-smoke --network streetwise-test -p 3000:3000 \
             -e DATABASE_URL="$DATABASE_URL" \
+            -e PUBLIC_LAUNCH_MODE=internal \
             -e PAYMENT_PROVIDER=mock \
             -e ESIM_PROVIDER=mock \
             streetwise-connection:production
