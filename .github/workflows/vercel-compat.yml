@@ -25,9 +25,10 @@ jobs:
       - name: Check Vercel configuration
         run: node scripts/vercel-config-check.js
 
-      - name: Check Vercel API syntax
+      - name: Check application syntax
         run: |
           node --check 'api/[...path].js'
+          node --check public/app.js
           node --check src/providers/stripePaymentProvider.js
 
       - name: Build Vercel static output
