@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { query } from "../db/index.js";
+import { databaseConfigured, query } from "../db/index.js";
 import { isPublicWaitlistOnly } from "../config/launchMode.js";
 
 const WAITLIST_CONSENT_VERSION = "2026-08-26";
@@ -19,14 +19,20 @@ function supportEmail() {
 
 export function waitlistStatus() {
   const contact = supportEmail();
-  const enabled = isPublicWaitlistOnly() && process.env.WAITLIST_ENABLED === "true" && Boolean(contact);
+  const enabled =
+    isPublicWaitlistOnly() &&
+    process.env.WAITLIST_ENABLED === "true" &&
+    Boolean(contact) &&
+    databaseConfigured;
+
   return {
     open: enabled,
     consentVersion: WAITLIST_CONSENT_VERSION,
     supportEmail: contact || null,
+    storageConfigured: databaseConfigured,
     message: enabled
       ? "Join the waitlist for launch updates. No payment or service activation is available."
-      : "The public waitlist is being prepared. No email addresses are collected until the support contact is configured."
+      : "The public waitlist is being prepared. No email addresses are collected until secure storage and the support contact are configured."
   };
 }
 
