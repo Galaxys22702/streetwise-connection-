@@ -18,6 +18,12 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
       - name: Require Stripe test secret
         run: |
           test -n "$STRIPE_SECRET_KEY"
@@ -27,7 +33,7 @@ jobs:
           esac
 
       - name: Install production dependencies
-        run: npm install --omit=dev
+        run: npm ci --omit=dev
 
       - name: Verify Streetwise Stripe safety state
         run: |
