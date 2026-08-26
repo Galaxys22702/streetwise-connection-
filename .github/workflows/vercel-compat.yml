@@ -17,9 +17,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
       - name: Install production dependencies
-        run: npm install --omit=dev
+        run: npm ci --omit=dev
+
+      - name: Check Vercel configuration
+        run: node scripts/vercel-config-check.js
 
       - name: Check Vercel API syntax
         run: |
