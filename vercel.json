@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "buildCommand": "if [ -n \"$DATABASE_URL\" ]; then node scripts/migrate.js; fi && rm -rf dist && mkdir -p dist && cp -R public/. dist/",
+  "buildCommand": "node scripts/launch-readiness-check.js && if [ -n \"$DATABASE_URL\" ]; then node scripts/migrate.js; fi && rm -rf dist && mkdir -p dist && cp -R public/. dist/",
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/health", "destination": "/api/health" }
