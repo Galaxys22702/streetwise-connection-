@@ -1,8 +1,8 @@
-import { randomUUID } from "node:crypto";
-import { databaseConfigured, query } from "../db/index.js";
 import { isPublicWaitlistOnly } from "../config/launchMode.js";
 
 const WAITLIST_CONSENT_VERSION = "2026-08-26";
+const WAITLIST_BACKEND_URL = "https://wzzreonjszvcldifoaod.supabase.co/functions/v1/streetwise-waitlist";
+const WAITLIST_SUPPORT_EMAIL = "iamgalaxy8484@gmail.com";
 
 function normalizeEmail(value) {
   return String(value || "").trim().toLowerCase();
@@ -12,27 +12,18 @@ function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-function supportEmail() {
-  const value = normalizeEmail(process.env.SUPPORT_EMAIL);
-  return isValidEmail(value) ? value : "";
-}
-
 export function waitlistStatus() {
-  const contact = supportEmail();
-  const enabled =
-    isPublicWaitlistOnly() &&
-    process.env.WAITLIST_ENABLED === "true" &&
-    Boolean(contact) &&
-    databaseConfigured;
+  const enabled = isPublicWaitlistOnly();
 
   return {
     open: enabled,
     consentVersion: WAITLIST_CONSENT_VERSION,
-    supportEmail: contact || null,
-    storageConfigured: databaseConfigured,
+    supportEmail: WAITLIST_SUPPORT_EMAIL,
+    storageConfigured: true,
+    storageProvider: "supabase",
     message: enabled
       ? "Join the waitlist for launch updates. No payment or service activation is available."
-      : "The public waitlist is being prepared. No email addresses are collected until secure storage and the support contact are configured."
+      : "The public waitlist is unavailable outside waitlist launch mode."
   };
 }
 
@@ -56,14 +47,37 @@ export async function joinWaitlist({ email, consentVersion }) {
     throw error;
   }
 
-  await query(
-    `INSERT INTO waitlist_entries (id, email, consent_version)
-     VALUES ($1, $2, $3)
-     ON CONFLICT (email) DO UPDATE SET
-       consent_version = EXCLUDED.consent_version,
-       consented_at = NOW()`,
-    [`wle_${randomUUID().replaceAll("-", "")}`, normalizedEmail, WAITLIST_CONSENT_VERSION]
-  );
+  let response;
+  try {
+    response = await fetch(WAITLIST_BACKEND_URL, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        accept: "application/json"
+      },
+      body: JSON.stringify({
+        email: normalizedEmail,
+        consentVersion: WAITLIST_CONSENT_VERSION
+      }),
+      signal: AbortSignal.timeout(10_000)
+    });
+  } catch {
+    const error = new Error("waitlist_storage_unavailable");
+    error.statusCode = 503;
+    throw error;
+  }
 
-  return { joined: true, message: "You’re on the waitlist. We’ll email you when launch details are ready." };
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(payload.error || "waitlist_storage_unavailable");
+    error.statusCode = response.status;
+    const retryAfter = response.headers.get("retry-after");
+    if (retryAfter) error.retryAfterSeconds = Number(retryAfter) || 900;
+    throw error;
+  }
+
+  return {
+    joined: true,
+    message: payload.message || "You’re on the waitlist. We’ll email you when launch details are ready."
+  };
 }
