@@ -38,4 +38,6 @@ databases:
     region: oregon
     databaseName: streetwise
     user: streetwise
-    ipAllowList: []
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: Vercel external access
