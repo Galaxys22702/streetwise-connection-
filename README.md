@@ -35,7 +35,7 @@ Build the software layer needed to sell and manage data plans on eSIM-capable ph
 
 ## Run locally
 
-Requires Node.js 20+ and Docker for the local PostgreSQL service.
+Requires Node.js 24.x and Docker for the local PostgreSQL service.
 
 ```bash
 docker compose up -d postgres
