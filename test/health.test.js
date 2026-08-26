@@ -14,23 +14,31 @@ function response() {
 }
 
 test("health endpoint reports runtime dependencies and launch safety without exposing secrets", async () => {
-  const res = response();
-  await handler({ method: "GET" }, res);
+  const previousWaitlistEnabled = process.env.WAITLIST_ENABLED;
+  process.env.WAITLIST_ENABLED = "true";
 
-  assert.equal(res.statusCode, 200);
-  assert.equal(res.body.ok, true);
-  assert.equal(res.body.runtime, "vercel");
-  assert.equal(res.body.database.configured, false);
-  assert.equal(res.body.database.connected, false);
-  assert.equal(res.body.payments.provider, "mock");
-  assert.equal(res.body.provider.provider, "mock");
-  assert.equal(res.body.publicLaunchMode, "waitlist");
-  assert.equal(res.body.waitlist.open, true);
-  assert.ok(res.body.waitlist.consentVersion);
-  assert.equal(res.body.waitlist.storageConfigured, true);
-  assert.equal(res.body.waitlist.storageProvider, "supabase");
-  assert.ok(res.body.waitlist.supportEmail);
-  assert.equal(res.headers["cache-control"], "no-store");
+  try {
+    const res = response();
+    await handler({ method: "GET" }, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.body.ok, true);
+    assert.equal(res.body.runtime, "vercel");
+    assert.equal(res.body.database.configured, false);
+    assert.equal(res.body.database.connected, false);
+    assert.equal(res.body.payments.provider, "mock");
+    assert.equal(res.body.provider.provider, "mock");
+    assert.equal(res.body.publicLaunchMode, "waitlist");
+    assert.equal(res.body.waitlist.open, true);
+    assert.ok(res.body.waitlist.consentVersion);
+    assert.equal(res.body.waitlist.storageConfigured, true);
+    assert.equal(res.body.waitlist.storageProvider, "supabase");
+    assert.ok(res.body.waitlist.supportEmail);
+    assert.equal(res.headers["cache-control"], "no-store");
+  } finally {
+    if (previousWaitlistEnabled === undefined) delete process.env.WAITLIST_ENABLED;
+    else process.env.WAITLIST_ENABLED = previousWaitlistEnabled;
+  }
 });
 
 test("health endpoint rejects unsupported methods", async () => {
