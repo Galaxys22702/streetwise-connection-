@@ -1,6 +1,8 @@
+import { publicLaunchMode } from "../src/config/launchMode.js";
 import { databaseStatus } from "../src/db/index.js";
 import { providerStatus } from "../src/services/esimService.js";
 import { paymentProviderStatus } from "../src/services/paymentService.js";
+import { waitlistStatus } from "../src/services/waitlistService.js";
 
 export default async function handler(req, res) {
   res.setHeader("x-content-type-options", "nosniff");
@@ -27,7 +29,9 @@ export default async function handler(req, res) {
     runtime: "vercel",
     database,
     payments: paymentProviderStatus(),
-    provider
+    provider,
+    publicLaunchMode: publicLaunchMode(),
+    waitlist: waitlistStatus()
   };
 
   return res.status(200).json(status);
