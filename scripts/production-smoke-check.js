@@ -48,6 +48,27 @@ if (publicStatus.body.waitlist.open) {
   assert.equal(publicStatus.body.waitlist.storageConfigured, true, "open waitlist requires configured production storage");
   assert.ok(publicStatus.body.waitlist.supportEmail, "open waitlist requires a public support contact");
 
+  const invalidEmail = await request("/api/waitlist", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      email: "not-an-email",
+      consentVersion: publicStatus.body.waitlist.consentVersion
+    })
+  });
+  assert.equal(invalidEmail.response.status, 400, "invalid waitlist email must be rejected");
+  assert.equal(invalidEmail.body?.error, "valid_email_required", "invalid email must return valid_email_required");
+
+  const missingConsent = await request("/api/waitlist", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ email: "smoke-validation@example.com" })
+  });
+  assert.equal(missingConsent.response.status, 400, "missing waitlist consent must be rejected");
+  assert.equal(missingConsent.body?.error, "waitlist_consent_required", "missing consent must return waitlist_consent_required");
+
+  console.log("Verified live waitlist validation and consent error handling.");
+
   if (smokeEmail) {
     const join = await request("/api/waitlist", {
       method: "POST",
