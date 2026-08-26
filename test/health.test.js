@@ -25,9 +25,11 @@ test("health endpoint reports runtime dependencies and launch safety without exp
   assert.equal(res.body.payments.provider, "mock");
   assert.equal(res.body.provider.provider, "mock");
   assert.equal(res.body.publicLaunchMode, "waitlist");
-  assert.equal(res.body.waitlist.open, false);
+  assert.equal(res.body.waitlist.open, true);
   assert.ok(res.body.waitlist.consentVersion);
-  assert.equal(res.body.waitlist.storageConfigured, false);
+  assert.equal(res.body.waitlist.storageConfigured, true);
+  assert.equal(res.body.waitlist.storageProvider, "supabase");
+  assert.ok(res.body.waitlist.supportEmail);
   assert.equal(res.headers["cache-control"], "no-store");
 });
 
