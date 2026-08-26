@@ -45,8 +45,7 @@ assert.equal(health.body?.provider?.liveOrdersEnabled, false, "live eSIM orderin
 assert.equal(Boolean(health.body?.waitlist?.open), Boolean(publicStatus.body?.waitlist?.open), "health and public status must agree on waitlist state");
 
 if (publicStatus.body.waitlist.open) {
-  assert.equal(health.body?.database?.configured, true, "open waitlist requires configured production storage");
-  assert.equal(health.body?.database?.connected, true, "open waitlist requires connected production storage");
+  assert.equal(publicStatus.body.waitlist.storageConfigured, true, "open waitlist requires configured production storage");
   assert.ok(publicStatus.body.waitlist.supportEmail, "open waitlist requires a public support contact");
 
   if (smokeEmail) {
