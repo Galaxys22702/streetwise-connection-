@@ -1,10 +1,21 @@
 # Streetwise Connection — Provider Economics Gate
 
-This document defines how Streetwise evaluates wholesale eSIM bundles before any live checkout or provider-funded transaction is enabled.
+This document defines how Streetwise evaluates wholesale connectivity bundles before any live checkout or provider-funded transaction is enabled.
+
+## Target retail pricing
+
+Streetwise's current target retail structure is:
+
+- Residential — Streetwise Home: `$25/month`
+- Commercial — Business Starter: `$20/month per line`
+- Commercial — Business Volume: `$15/month per line` for `3+ lines`
+- Commercial — Business Pro: `$30/month per line`
+
+These are target retail prices, not approved sellable offers. Data and hotspot are intended to be included, but Streetwise must not market any plan as unlimited until written provider terms confirm the actual allowance, throttling, hotspot rules, recurring U.S. usage rights, and commercial resale permissions.
 
 ## Decision rule
 
-A $10 retail plan is not considered viable merely because the wholesale bundle costs less than $10.
+A plan is not considered viable merely because its retail price exceeds the wholesale bundle cost.
 
 Streetwise must account for at least:
 
@@ -15,35 +26,37 @@ Streetwise must account for at least:
 - telecom/tax reserve once the launch model is legally classified
 - refunds, chargebacks, failed activations, and other provider-specific costs when known
 
-The repository now includes a catalogue analyser that calculates contribution margin from exported provider catalogue JSON.
+The repository includes a catalogue analyser that calculates contribution margin from exported provider catalogue JSON.
 
 ## Usage
 
-Export or save an account-specific provider catalogue response as JSON outside the repository, then run:
+Export or save an account-specific provider catalogue response as JSON outside the repository, then run the analyser separately for each target retail price.
 
 ```bash
+STREETWISE_RETAIL_PRICE=25 \
+STREETWISE_RETAIL_CURRENCY=USD \
 STREETWISE_PROVIDER_CURRENCY=USD \
-  npm run analyse:provider -- /secure/path/catalogue.json
+npm run analyse:provider -- /secure/path/catalogue.json
 ```
 
-Set `STREETWISE_PROVIDER_CURRENCY` from the provider account itself. eSIM Go documents catalogue prices in the organisation currency, while the organisation endpoint reports the selected currency. Catalogue rows that omit currency now fail the economics gate unless this value is supplied.
+Repeat with `20`, `15`, and `30` for the commercial tiers.
 
-Currency settings use three-letter codes such as `USD`, `EUR`, or `GBP`.
+Set `STREETWISE_PROVIDER_CURRENCY` from the provider account itself. Catalogue rows that omit currency fail the economics gate unless this value is supplied.
 
 Do not compare different currencies directly. The analyser rejects a provider currency that differs from `STREETWISE_RETAIL_CURRENCY` because no foreign-exchange conversion or exchange-rate buffer has been applied.
 
-Default assumptions:
+Planning inputs should include:
 
-- retail price: `$10.00`
-- card processing estimate: `2.9% + $0.30`
-- support reserve: `$0.50`
-- infrastructure reserve: `$0.25`
-- tax reserve: `0%` until an explicit estimate is supplied
+- target retail price for the tier being tested
+- card processing estimate
+- support/fraud reserve
+- infrastructure reserve
+- launch-specific telecom/tax reserve when known
 
-Override planning assumptions without changing source code:
+Example:
 
 ```bash
-STREETWISE_RETAIL_PRICE=10 \
+STREETWISE_RETAIL_PRICE=20 \
 STREETWISE_RETAIL_CURRENCY=USD \
 STREETWISE_PROVIDER_CURRENCY=USD \
 STREETWISE_SUPPORT_RESERVE=0.75 \
@@ -58,16 +71,11 @@ npm run analyse:provider -- /secure/path/catalogue.json
 
 Missing, blank, negative, or cross-currency inputs never qualify as viable. Invalid assumptions also fail closed rather than silently reverting to defaults.
 
-A positive contribution is only a screening result. It is **not** commercial approval. Streetwise must still confirm provider terms, domestic-use restrictions, taxes/telecom fees, refund exposure, support obligations, and real account-specific pricing.
+A positive contribution is only a screening result. It is **not** commercial approval. Streetwise must still confirm provider terms, domestic-use restrictions, taxes/telecom fees, refund exposure, support obligations, actual data/hotspot limits, and real account-specific pricing.
 
 ## Data handling
 
-Do not commit account-specific catalogue exports if they contain confidential pricing or provider terms. Keep them in a secure working location and commit only sanitized examples or derived non-confidential conclusions.
-
-Primary provider references:
-
-- https://docs.esim-go.com/api/v2_5/operations/catalogue/get/
-- https://www.docs.esim-go.com/api/v2_5/operations/organisation/get/
+Do not commit account-specific catalogue exports if they contain confidential pricing or provider terms. Keep them in a secure working location and commit only sanitised examples or derived non-confidential conclusions.
 
 ## Commercial gate
 
@@ -75,8 +83,11 @@ Before enabling `ESIM_LIVE_ORDERS_ENABLED=true`, Streetwise should have:
 
 1. verified provider credentials in staging;
 2. retrieved real U.S. catalogue data;
-3. ranked candidate bundles with this analyser;
-4. validated at least one candidate order without executing a transaction;
-5. confirmed long-term domestic-use permission in writing;
-6. documented taxes, refunds, support and provider-of-record responsibility;
-7. completed one controlled paid staging acceptance test only after approval.
+3. mapped provider bundles to each proposed Streetwise tier;
+4. validated contribution margin for `$15`, `$20`, `$25`, and `$30` targets using launch-specific costs;
+5. validated at least one candidate order without executing a transaction;
+6. confirmed recurring U.S. domestic-use and consumer/commercial resale permission in writing;
+7. documented taxes, refunds, hotspot/data limits, support and provider-of-record responsibility;
+8. completed one controlled paid staging acceptance test only after approval.
+
+Checkout, payments, and live provider orders remain disabled until these gates pass.
