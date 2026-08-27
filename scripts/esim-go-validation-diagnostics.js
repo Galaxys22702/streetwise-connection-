@@ -44,6 +44,11 @@ const hasTestCredit = Number.isFinite(testCredit) ? testCredit > 0 : null;
 const hasSufficientBalanceForQuote = hasKnownBalance && Number.isFinite(quotedTotal)
   ? balance >= quotedTotal
   : null;
+const readiness = validation.valid === true
+  ? "validated"
+  : hasSufficientBalanceForQuote === false
+    ? "balance_required_before_validation_can_pass"
+    : "validation_blocked_unknown_reason";
 
 const summary = {
   bundleName,
@@ -56,6 +61,7 @@ const summary = {
   hasPositiveBalance,
   hasTestCredit,
   hasSufficientBalanceForQuote,
+  readiness,
   providerMessage: safeMessage || null
 };
 
@@ -66,7 +72,11 @@ if (validation.liveOrderExecuted) {
   process.exit(4);
 }
 
-if (validation.valid !== true) {
-  console.error("Provider validation is not valid; diagnostic evidence above identifies the safe account/order state.");
+if (validation.valid !== true && hasSufficientBalanceForQuote !== false) {
+  console.error("Provider validation is blocked for a reason not explained by the safe balance check.");
   process.exit(5);
+}
+
+if (validation.valid !== true) {
+  console.log("Validation remains incomplete because the account balance does not cover the quoted validation cost. No top-up was attempted.");
 }
