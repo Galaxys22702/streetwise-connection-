@@ -36,6 +36,33 @@ test("calculates contribution margin without pretending unknown taxes are zero-c
   assert.equal(result.viable, true);
 });
 
+test("enforces the configured minimum contribution margin", () => {
+  const result = calculateUnitEconomics(
+    { name: "thin-margin", price: 6.50, currency: "USD" },
+    { minimumMarginPercent: 30, wholesaleStressRate: 0.15 }
+  );
+
+  assert.equal(Number(result.marginPercent.toFixed(1)), 21.6);
+  assert.equal(result.marginThresholdPassed, false);
+  assert.equal(result.stressTestPassed, true);
+  assert.equal(result.viable, false);
+  assert.equal(result.reason, "margin_below_threshold");
+});
+
+test("requires positive contribution after wholesale-cost stress", () => {
+  const result = calculateUnitEconomics(
+    { name: "stress-failure", price: 7, currency: "USD" },
+    { minimumMarginPercent: 0, wholesaleStressRate: 0.25 }
+  );
+
+  assert.equal(Number(result.contribution.toFixed(2)), 1.66);
+  assert.equal(Number(result.stressedContribution.toFixed(2)), -0.09);
+  assert.equal(result.marginThresholdPassed, true);
+  assert.equal(result.stressTestPassed, false);
+  assert.equal(result.viable, false);
+  assert.equal(result.reason, "stress_test_negative");
+});
+
 test("missing wholesale cost fails the viability check", () => {
   const result = calculateUnitEconomics({ name: "bundle-without-price", currency: "USD" });
   assert.equal(result.viable, false);
@@ -111,6 +138,20 @@ test("invalid assumptions fail closed instead of falling back silently", () => {
   );
   assert.equal(invalidRetailCurrency.viable, false);
   assert.equal(invalidRetailCurrency.reason, "invalid_economics_assumptions");
+
+  const invalidMarginThreshold = calculateUnitEconomics(
+    { name: "bundle-a", price: 2.50, currency: "USD" },
+    { minimumMarginPercent: 101 }
+  );
+  assert.equal(invalidMarginThreshold.viable, false);
+  assert.equal(invalidMarginThreshold.reason, "invalid_economics_assumptions");
+
+  const invalidStressRate = calculateUnitEconomics(
+    { name: "bundle-a", price: 2.50, currency: "USD" },
+    { wholesaleStressRate: -0.01 }
+  );
+  assert.equal(invalidStressRate.viable, false);
+  assert.equal(invalidStressRate.reason, "invalid_economics_assumptions");
 });
 
 test("ranks bundles by contribution", () => {

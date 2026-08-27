@@ -73,6 +73,8 @@ export function calculateUnitEconomics(bundle, options = {}) {
   const supportReserve = configuredNumber(options, "supportReserve", 0.50);
   const taxReserveRate = configuredNumber(options, "taxReserveRate", 0);
   const infrastructureReserve = configuredNumber(options, "infrastructureReserve", 0.25);
+  const minimumMarginPercent = configuredNumber(options, "minimumMarginPercent", 0);
+  const wholesaleStressRate = configuredNumber(options, "wholesaleStressRate", 0);
 
   const assumptionsValid = (
     /^[A-Z]{3}$/.test(retailCurrency) &&
@@ -81,7 +83,9 @@ export function calculateUnitEconomics(bundle, options = {}) {
     paymentFixedFee !== null && paymentFixedFee >= 0 &&
     supportReserve !== null && supportReserve >= 0 &&
     taxReserveRate !== null && taxReserveRate >= 0 && taxReserveRate <= 1 &&
-    infrastructureReserve !== null && infrastructureReserve >= 0
+    infrastructureReserve !== null && infrastructureReserve >= 0 &&
+    minimumMarginPercent !== null && minimumMarginPercent >= 0 && minimumMarginPercent <= 100 &&
+    wholesaleStressRate !== null && wholesaleStressRate >= 0 && wholesaleStressRate <= 1
   );
 
   if (!assumptionsValid) {
@@ -153,6 +157,26 @@ export function calculateUnitEconomics(bundle, options = {}) {
     - taxReserve
     - infrastructureReserve;
   const marginPercent = retailPrice > 0 ? (contribution / retailPrice) * 100 : null;
+  const stressedWholesaleCost = normalized.wholesaleCost * (1 + wholesaleStressRate);
+  const stressedContribution = retailPrice
+    - stressedWholesaleCost
+    - paymentFees
+    - supportReserve
+    - taxReserve
+    - infrastructureReserve;
+  const stressedMarginPercent = retailPrice > 0
+    ? (stressedContribution / retailPrice) * 100
+    : null;
+  const contributionPositive = contribution > 0;
+  const marginThresholdPassed = marginPercent >= minimumMarginPercent;
+  const stressTestPassed = stressedContribution > 0;
+  const viable = contributionPositive && marginThresholdPassed && stressTestPassed;
+
+  let reason = "commercial_gate_passed";
+  if (!contributionPositive) reason = "negative_contribution";
+  else if (!marginThresholdPassed) reason = "margin_below_threshold";
+  else if (!stressTestPassed) reason = "stress_test_negative";
+  else if (minimumMarginPercent === 0 && wholesaleStressRate === 0) reason = "positive_contribution";
 
   return {
     ...normalized,
@@ -164,8 +188,15 @@ export function calculateUnitEconomics(bundle, options = {}) {
     infrastructureReserve,
     contribution,
     marginPercent,
-    viable: contribution > 0,
-    reason: contribution > 0 ? "positive_contribution" : "negative_contribution"
+    minimumMarginPercent,
+    wholesaleStressRate,
+    stressedWholesaleCost,
+    stressedContribution,
+    stressedMarginPercent,
+    marginThresholdPassed,
+    stressTestPassed,
+    viable,
+    reason
   };
 }
 

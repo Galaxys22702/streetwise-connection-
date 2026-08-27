@@ -26,9 +26,9 @@ The current production posture is deliberately conservative:
 | Waitlist abuse protection | Ready | Durable Supabase-backed rate limiting is configured |
 | Customer accounts | Built, public access gated | Keep disabled during waitlist launch |
 | Stripe integration | Test-capable | Do not enable live billing yet |
-| eSIM provider integration | In progress | eSIM Go adapter/tests exist; real credentials and catalogue validation remain |
+| eSIM provider integration | Technical path verified; commercial selection blocked | eSIM Go authentication, 29 U.S. bundles and a $4 validation quote are verified; recurring U.S. rights and funding are unresolved; 1GLOBAL terms are pending |
 | Live eSIM ordering | Blocked by design | Keep `ESIM_LIVE_ORDERS_ENABLED=false` |
-| Unit economics | Not verified | Requires real wholesale catalogue and provider terms |
+| Unit economics | Preliminary screen only | The $4 eSIM Go quote gives 46.6% preliminary contribution before unresolved taxes, refunds, support and provider fees; final gate remains open |
 | Nevada formation | In progress | Filing and identity-gated steps remain outside code |
 | Telecom compliance | Not resolved | Provider-of-record, PUCN/FCC/USAC responsibilities must be determined |
 | Customer legal policies | Draft/in progress | Finalise against actual provider contract and production data flows |
@@ -50,19 +50,17 @@ The next commercial dependency is wholesale connectivity, not more storefront fe
 
 ### eSIM Go
 
-Current code includes an eSIM Go adapter and provider contract tests. Before any funding or live order:
+The eSIM Go technical route now authenticates, exposes 29 U.S. bundles and returns a $4 USD validation quote for `esim_3GB_30D_US_V2`. Validation remains `valid=false` because the available provider balance does not cover the quote. No top-up or live order was executed.
 
-1. Verify the business/provider account.
-2. Obtain credentials and store them only in deployment secrets.
-3. Pull the real catalogue.
-4. Validate bundle coverage, duration, domestic usage rules, and wholesale cost.
-5. Calculate Streetwise contribution margin.
-6. Perform one controlled staging eSIM purchase only after the economics are acceptable.
-7. Verify install details, persistence, idempotency, reconciliation, and usage sync.
+Published eSIM Go terms describe travel roaming and possible restriction after 60 days in one country. Therefore eSIM Go is not approved for recurring U.S. service unless a written exception or different domestic product resolves that conflict.
 
-### Backup provider
+Do not make the standard $1,000 top-up merely to close validation.
 
-Maintain 1GLOBAL or another suitable wholesale platform as a comparison path so the product is not commercially dependent on one supplier before pricing, API quality, reseller rights, and support obligations are understood.
+### 1GLOBAL
+
+1GLOBAL is now the priority commercial diligence path because its documented reseller and subscription architecture appears closer to Streetwise's intended model. A read-only client is prepared, but partner credentials, U.S. domestic rights, pricing, minimums and commercial responsibilities remain unknown.
+
+Send both providers the matched request in `docs/PROVIDER_OUTREACH.md`, then apply the pass/fail gates and scorecard in `docs/PROVIDER_DECISION_PACKET.md`. No provider is selected until written account-specific evidence is complete.
 
 ## Launch gates
 

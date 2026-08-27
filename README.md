@@ -203,7 +203,7 @@ Do not advertise unlimited service or enable billing until provider terms, cover
 
 The public waitlist is production-backed, but commercial service remains intentionally disabled. Before enabling paid service, the project still needs:
 
-1. Verified wholesale provider credentials and real catalogue pricing
+1. Written provider selection and account-specific commercial terms; eSIM Go's technical path is verified but recurring U.S. rights remain blocked
 2. One controlled staging purchase/provision/install/usage test
 3. Confirmed unit economics for the launch plan
 4. Provider-of-record and telecom regulatory determination
@@ -219,16 +219,20 @@ The public waitlist is production-backed, but commercial service remains intenti
 - [`docs/ACCOUNTS_AND_PAYMENTS.md`](docs/ACCOUNTS_AND_PAYMENTS.md)
 - [`docs/ESIM_PROVISIONING.md`](docs/ESIM_PROVISIONING.md)
 - [`docs/PROVIDER_ONBOARDING.md`](docs/PROVIDER_ONBOARDING.md)
+- [`docs/PROVIDER_DECISION_PACKET.md`](docs/PROVIDER_DECISION_PACKET.md)
+- [`docs/PROVIDER_COMPARISON.md`](docs/PROVIDER_COMPARISON.md)
+- [`docs/PROVIDER_OUTREACH.md`](docs/PROVIDER_OUTREACH.md)
+- [`docs/PROVIDER_ECONOMICS.md`](docs/PROVIDER_ECONOMICS.md)
 - [`docs/CUSTOMER_DASHBOARD.md`](docs/CUSTOMER_DASHBOARD.md)
 - [`docs/business/README.md`](docs/business/README.md)
 
 ## Next concrete milestones
 
 1. Complete the final production waitlist persistence smoke test.
-2. Obtain provider credentials without committing secrets.
-3. Pull and evaluate the real wholesale catalogue.
-4. Calculate retail margin from actual provider costs.
-5. Provision one controlled staging eSIM and validate retries/idempotency/usage.
-6. Resolve telecom and provider-of-record obligations before sales.
-7. Finalise customer policies and support procedures.
-8. Enable Stripe/eSIM live modes only after every launch gate passes.
+2. Send the matched eSIM Go and 1GLOBAL commercial requests.
+3. Resolve recurring U.S. rights, provider-of-record duties, pricing, minimums, refunds, support and data/security terms.
+4. Run final account-specific pricing through the 30% margin and 15% wholesale-stress gate.
+5. Select a provider through the documented pass/fail and weighted comparison.
+6. Provision one separately approved controlled staging eSIM and validate installation, retries, idempotency, reconciliation and usage.
+7. Finalise telecom, tax, customer policy, support, security and operational gates.
+8. Enable Stripe/eSIM live modes only after every launch gate passes and an explicit launch approval exists.

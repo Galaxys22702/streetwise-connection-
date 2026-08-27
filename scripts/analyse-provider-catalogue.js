@@ -33,6 +33,8 @@ const retailPrice = environmentNumber("STREETWISE_RETAIL_PRICE", 10);
 const supportReserve = environmentNumber("STREETWISE_SUPPORT_RESERVE", 0.50);
 const infrastructureReserve = environmentNumber("STREETWISE_INFRA_RESERVE", 0.25);
 const taxReserveRate = environmentNumber("STREETWISE_TAX_RESERVE_RATE", 0);
+const minimumMarginPercent = environmentNumber("STREETWISE_MIN_MARGIN_PERCENT", 30);
+const wholesaleStressRate = environmentNumber("STREETWISE_WHOLESALE_STRESS_RATE", 0.15);
 const retailCurrency = environmentCurrency("STREETWISE_RETAIL_CURRENCY", "USD");
 const providerCurrency = environmentCurrency("STREETWISE_PROVIDER_CURRENCY");
 
@@ -57,12 +59,17 @@ const results = rankBundles(bundles, {
   supportReserve,
   infrastructureReserve,
   taxReserveRate,
+  minimumMarginPercent,
+  wholesaleStressRate,
   retailCurrency,
   providerCurrency
 });
 
 console.log(`Streetwise provider economics at ${retailPrice.toFixed(2)} ${retailCurrency} retail`);
-console.log("SKU | Wholesale | Currency | Data GB | Days | Contribution | Margin | Viable | Reason");
+console.log(
+  `Commercial gate: minimum ${minimumMarginPercent.toFixed(1)}% base margin and positive contribution after ${(wholesaleStressRate * 100).toFixed(1)}% wholesale-cost stress`
+);
+console.log("SKU | Wholesale | Currency | Data GB | Days | Contribution | Margin | Stress Contribution | Stress Margin | Gate | Reason");
 for (const row of results) {
   const money = (value) => Number.isFinite(value) ? value.toFixed(2) : "n/a";
   const percent = (value) => Number.isFinite(value) ? `${value.toFixed(1)}%` : "n/a";
@@ -74,13 +81,16 @@ for (const row of results) {
     row.durationDays ?? "n/a",
     money(row.contribution),
     percent(row.marginPercent),
+    money(row.stressedContribution),
+    percent(row.stressedMarginPercent),
     row.viable ? "yes" : "no",
     row.reason
   ].join(" | "));
 }
 
 const viable = results.filter((row) => row.viable);
-console.log(`\n${viable.length}/${results.length} bundles have positive contribution before final telecom taxes, chargebacks, and unknown provider costs.`);
+console.log(`\n${viable.length}/${results.length} bundles pass the configured economics gate.`);
+console.log("A passing row is still not provider approval; domestic-use, contract, tax, support, refund, security and acceptance-test gates remain separate.");
 
 const blockedByCurrency = results.filter((row) => (
   row.reason === "provider_currency_missing" ||
@@ -97,4 +107,9 @@ if (blockedByCurrency.length) {
 if (results.some((row) => row.reason === "invalid_economics_assumptions")) {
   console.error("Economics assumptions are outside the permitted ranges; correct them before using this report.");
   process.exitCode = 4;
+}
+
+if (!viable.length && !process.exitCode) {
+  console.error("No catalogue bundle passes the configured margin and stress thresholds.");
+  process.exitCode = 5;
 }

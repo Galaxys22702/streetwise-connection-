@@ -83,7 +83,7 @@ A provider cannot be selected if any gate is failed, blocked, or undocumented.
 | G4. Acceptable cash commitment | Deposit, top-up, expiry, monthly minimum, volume commitment and exit terms acceptable under a separately approved budget | **Blocked for present test:** published $1,000 standard top-up is not approved | **Unknown** |
 | G5. U.S. service specification | Permitted networks, coverage, 4G/5G, throttling, hotspot/tethering, APN, fair-use and permanent-roaming enforcement | **Unknown** | **Unknown** |
 | G6. Support and remedies | First-line duties, escalation SLA, failed activation treatment, refunds, credits, outages and mis-provisioning remedies | **Unknown** | **Unknown** |
-| G7. Safe proof of concept | Sandbox or one low-cost controlled test path without enabling public sales | **Partial:** validation path works but positive balance is required | **Unknown** |
+| G7. Safe proof of concept | Sandbox or one low-cost controlled test path without enabling public sales | **Partial:** validation works, but positive balance is required; public support material says there is no dedicated sandbox and suggests a separate UAT organisation | **Unknown** |
 | G8. Operational controls | Ordering, idempotency, usage latency, webhooks/events, retries, reconciliation and incident escalation documented | **Partial** | **Partial from public docs only** |
 | G9. Data and security terms | DPA/security terms, data roles, breach notification, retention, sub-processors and any data-residency constraints reviewed | **Unknown** | **Unknown** |
 
@@ -91,6 +91,7 @@ A provider cannot be selected if any gate is failed, blocked, or undocumented.
 
 - G1 passes only with explicit wording covering continuous U.S. use beyond 60 days and repeated renewals. Silence or generic "U.S. coverage" does not pass.
 - G3 passes only when the $10 plan has at least **30% contribution margin** after wholesale cost, payment fees, support, infrastructure, launch-specific tax/fee reserve, expected refunds and chargebacks. It must also remain contribution-positive after a **15% wholesale-cost stress test**.
+- The analyser enforces those default thresholds through `STREETWISE_MIN_MARGIN_PERCENT=30` and `STREETWISE_WHOLESALE_STRESS_RATE=0.15`. A passing row is an economics result only.
 - The existing **$6 wholesale guardrail** is an initial screen, not final approval.
 - G4 requires a separate owner decision before any provider funding. This packet authorises **$0** of provider spend.
 - G7 passes only after a written test plan identifies the exact SKU, maximum spend, operator, time window, rollback, evidence to capture and post-test disablement.
@@ -118,6 +119,8 @@ Selection threshold:
 - weighted score of at least **75/100**;
 - final Streetwise legal/compliance review complete;
 - no unresolved contradiction between public documentation and account-specific terms.
+
+The 30% economics threshold, 15% stress rate and 75/100 comparison threshold are Streetwise internal approval rules. Change them only through an explicit reviewed revision, never to make a preferred provider appear to pass.
 
 Tie-break order:
 

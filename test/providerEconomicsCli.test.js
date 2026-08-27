@@ -17,6 +17,8 @@ function runAnalyser(overrides = {}) {
       STREETWISE_SUPPORT_RESERVE: "0.50",
       STREETWISE_INFRA_RESERVE: "0.25",
       STREETWISE_TAX_RESERVE_RATE: "0",
+      STREETWISE_MIN_MARGIN_PERCENT: "30",
+      STREETWISE_WHOLESALE_STRESS_RATE: "0.15",
       ...overrides
     }
   });
@@ -35,7 +37,8 @@ test("catalogue analyser accepts an explicitly confirmed matching currency", () 
 
   assert.equal(result.status, 0);
   assert.match(result.stdout, /esim_1GB_7D_US_V2/);
-  assert.match(result.stdout, /yes \| positive_contribution/);
+  assert.match(result.stdout, /minimum 30\.0% base margin/);
+  assert.match(result.stdout, /yes \| commercial_gate_passed/);
 });
 
 test("catalogue analyser rejects invalid numeric environment settings", () => {
@@ -61,4 +64,15 @@ test("catalogue analyser exits unsuccessfully for unsafe numeric assumptions", (
   assert.equal(result.status, 4);
   assert.match(result.stdout, /invalid_economics_assumptions/);
   assert.match(result.stderr, /outside the permitted ranges/);
+});
+
+test("catalogue analyser fails when no bundle passes the configured commercial gate", () => {
+  const result = runAnalyser({
+    STREETWISE_PROVIDER_CURRENCY: "USD",
+    STREETWISE_MIN_MARGIN_PERCENT: "80"
+  });
+
+  assert.equal(result.status, 5);
+  assert.match(result.stdout, /no \| margin_below_threshold/);
+  assert.match(result.stderr, /No catalogue bundle passes/);
 });

@@ -3,7 +3,7 @@
 Streetwise Connection now supports two eSIM provider modes:
 
 - `mock` — local development only. No telecom service is purchased or activated.
-- `esim-go` — live eSIM Go API integration.
+- `esim-go` - eSIM Go API adapter. It remains validation-only unless the separate live-order safety switch is explicitly enabled.
 
 ## Safety model
 
@@ -15,7 +15,7 @@ Even when `ESIM_PROVIDER=esim-go` and a valid API key is configured, Streetwise 
 ESIM_LIVE_ORDERS_ENABLED=true
 ```
 
-Do not enable that flag until catalogue mapping, pricing, checkout, refund handling, support procedures, and provider account funding have been verified.
+Do not enable that flag until a provider passes every commercial gate, a controlled test plan and maximum spend are separately approved, and pricing, checkout, refunds, support, security and regulatory responsibilities have been verified.
 
 ## Environment
 
@@ -153,10 +153,12 @@ Do not enable callbacks before the application has a production PostgreSQL datab
 
 ## Production work still required
 
-1. Create and fund the wholesale provider account.
-2. Map provider bundle SKUs to Streetwise retail plans.
-3. Create a Stripe test product/price and verify checkout plus webhooks end to end.
-4. Test V3 provider callback delivery against a real test eSIM.
-5. Add usage and top-up APIs.
-6. Add refund/cancellation/support procedures.
-7. Complete legal, tax, telecom, privacy, and consumer-disclosure review for each launch market.
+1. Obtain matched written commercial responses from eSIM Go and 1GLOBAL.
+2. Select a provider only through `docs/PROVIDER_DECISION_PACKET.md`.
+3. Do not fund either candidate until domestic rights, economics, minimums and responsibilities pass review.
+4. Map the selected provider SKU to an approved Streetwise retail plan.
+5. Approve one exact controlled test SKU, operator, maximum spend, time window and rollback.
+6. Test provisioning, installation, persistence, idempotency, callbacks, reconciliation and usage against that single test eSIM.
+7. Create a Stripe test product/price and verify checkout plus webhooks end to end without live billing.
+8. Add final usage, renewal, refund, cancellation and support procedures.
+9. Complete legal, tax, telecom, privacy, security and consumer-disclosure review for the U.S. launch.
