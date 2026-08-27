@@ -98,3 +98,23 @@ Next evidence required:
 5. Compare contribution margin, network coverage, renewal behaviour, usage latency, refunds, support obligations, taxes and provider-of-record responsibility.
 
 Until those facts are available, `PUBLIC_LAUNCH_MODE=waitlist` and `ESIM_LIVE_ORDERS_ENABLED=false` remain mandatory.
+
+## Machine-checkable evidence gate
+
+Copy `docs/provider-commercial-evidence.example.json` to a private working location and replace only facts supported by a written provider response, account-specific catalogue, written quote, signed terms, or completed test evidence. Store confidential source material outside this public repository and use `evidenceRecordId` only as a private record reference.
+
+Check whether the two-provider comparison is complete:
+
+```bash
+npm run check:provider-commercial -- /secure/path/provider-evidence.json
+```
+
+After a provider is selected, check the stricter pre-activation evidence set:
+
+```bash
+npm run check:provider-commercial -- \
+  /secure/path/provider-evidence.json \
+  --stage=activation
+```
+
+The command fails closed when commercial facts are missing. It also refuses to pass while waitlist mode, disabled checkout, disabled payments, and disabled live provider ordering are not explicitly recorded.
