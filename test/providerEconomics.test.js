@@ -20,7 +20,7 @@ test("normalizes common provider catalogue fields", () => {
 });
 
 test("calculates contribution margin without pretending unknown taxes are zero-cost facts", () => {
-  const result = calculateUnitEconomics({ name: "bundle-a", price: 2.50 }, {
+  const result = calculateUnitEconomics({ name: "bundle-a", price: 2.50, currency: "USD" }, {
     retailPrice: 10,
     paymentRate: 0.029,
     paymentFixedFee: 0.30,
@@ -37,15 +37,86 @@ test("calculates contribution margin without pretending unknown taxes are zero-c
 });
 
 test("missing wholesale cost fails the viability check", () => {
-  const result = calculateUnitEconomics({ name: "bundle-without-price" });
+  const result = calculateUnitEconomics({ name: "bundle-without-price", currency: "USD" });
   assert.equal(result.viable, false);
   assert.equal(result.reason, "wholesale_cost_missing");
 });
 
+test("null and blank provider values remain missing instead of becoming zero", () => {
+  for (const price of [null, "", "   "]) {
+    const result = calculateUnitEconomics({ name: "missing-price", price, currency: "USD" });
+    assert.equal(result.wholesaleCost, null);
+    assert.equal(result.viable, false);
+    assert.equal(result.reason, "wholesale_cost_missing");
+  }
+
+  const normalized = normalizeWholesaleBundle({ name: "missing-data", price: 2.5, currency: "USD" });
+  assert.equal(normalized.dataGb, null);
+});
+
+test("requires explicit provider currency when catalogue rows omit it", () => {
+  const blocked = calculateUnitEconomics({ name: "bundle-a", price: 2.50 });
+  assert.equal(blocked.viable, false);
+  assert.equal(blocked.reason, "provider_currency_missing");
+
+  const allowed = calculateUnitEconomics(
+    { name: "bundle-a", price: 2.50 },
+    { providerCurrency: "USD" }
+  );
+  assert.equal(allowed.currency, "USD");
+  assert.equal(allowed.viable, true);
+});
+
+test("does not compare provider and retail amounts in different currencies", () => {
+  const result = calculateUnitEconomics(
+    { name: "bundle-eur", price: 2.50, currency: "EUR" },
+    { retailCurrency: "USD" }
+  );
+
+  assert.equal(result.viable, false);
+  assert.equal(result.reason, "currency_conversion_required");
+  assert.equal(result.contribution, undefined);
+});
+
+test("rejects malformed currency codes and negative wholesale costs", () => {
+  const invalidCurrency = calculateUnitEconomics({
+    name: "bad-currency",
+    price: 2.50,
+    currency: "US dollars"
+  });
+  assert.equal(invalidCurrency.viable, false);
+  assert.equal(invalidCurrency.reason, "provider_currency_invalid");
+
+  const negativeCost = calculateUnitEconomics({
+    name: "negative-cost",
+    price: -2.50,
+    currency: "USD"
+  });
+  assert.equal(negativeCost.viable, false);
+  assert.equal(negativeCost.reason, "wholesale_cost_invalid");
+});
+
+test("invalid assumptions fail closed instead of falling back silently", () => {
+  const result = calculateUnitEconomics(
+    { name: "bundle-a", price: 2.50, currency: "USD" },
+    { retailPrice: "not-a-number" }
+  );
+
+  assert.equal(result.viable, false);
+  assert.equal(result.reason, "invalid_economics_assumptions");
+
+  const invalidRetailCurrency = calculateUnitEconomics(
+    { name: "bundle-a", price: 2.50, currency: "USD" },
+    { retailCurrency: "US dollars" }
+  );
+  assert.equal(invalidRetailCurrency.viable, false);
+  assert.equal(invalidRetailCurrency.reason, "invalid_economics_assumptions");
+});
+
 test("ranks bundles by contribution", () => {
   const results = rankBundles([
-    { name: "expensive", price: 8 },
-    { name: "cheap", price: 2 }
+    { name: "expensive", price: 8, currency: "USD" },
+    { name: "cheap", price: 2, currency: "USD" }
   ], { retailPrice: 10 });
 
   assert.equal(results[0].sku, "cheap");

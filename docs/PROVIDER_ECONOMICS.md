@@ -22,8 +22,15 @@ The repository now includes a catalogue analyser that calculates contribution ma
 Export or save an account-specific provider catalogue response as JSON outside the repository, then run:
 
 ```bash
-npm run analyse:provider -- /secure/path/catalogue.json
+STREETWISE_PROVIDER_CURRENCY=USD \
+  npm run analyse:provider -- /secure/path/catalogue.json
 ```
+
+Set `STREETWISE_PROVIDER_CURRENCY` from the provider account itself. eSIM Go documents catalogue prices in the organisation currency, while the organisation endpoint reports the selected currency. Catalogue rows that omit currency now fail the economics gate unless this value is supplied.
+
+Currency settings use three-letter codes such as `USD`, `EUR`, or `GBP`.
+
+Do not compare different currencies directly. The analyser rejects a provider currency that differs from `STREETWISE_RETAIL_CURRENCY` because no foreign-exchange conversion or exchange-rate buffer has been applied.
 
 Default assumptions:
 
@@ -37,6 +44,8 @@ Override planning assumptions without changing source code:
 
 ```bash
 STREETWISE_RETAIL_PRICE=10 \
+STREETWISE_RETAIL_CURRENCY=USD \
+STREETWISE_PROVIDER_CURRENCY=USD \
 STREETWISE_SUPPORT_RESERVE=0.75 \
 STREETWISE_INFRA_RESERVE=0.30 \
 STREETWISE_TAX_RESERVE_RATE=0.08 \
@@ -47,11 +56,18 @@ npm run analyse:provider -- /secure/path/catalogue.json
 
 `Contribution` is the amount left after the configured cost assumptions. `Margin` is contribution divided by retail price.
 
+Missing, blank, negative, or cross-currency inputs never qualify as viable. Invalid assumptions also fail closed rather than silently reverting to defaults.
+
 A positive contribution is only a screening result. It is **not** commercial approval. Streetwise must still confirm provider terms, domestic-use restrictions, taxes/telecom fees, refund exposure, support obligations, and real account-specific pricing.
 
 ## Data handling
 
 Do not commit account-specific catalogue exports if they contain confidential pricing or provider terms. Keep them in a secure working location and commit only sanitized examples or derived non-confidential conclusions.
+
+Primary provider references:
+
+- https://docs.esim-go.com/api/v2_5/operations/catalogue/get/
+- https://www.docs.esim-go.com/api/v2_5/operations/organisation/get/
 
 ## Commercial gate
 
