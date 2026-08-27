@@ -1,0 +1,33 @@
+name: Verify production waitlist
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  production-waitlist-smoke:
+    if: github.head_ref == 'verify-production-waitlist-2026-08-27'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run production waitlist persistence smoke test
+        env:
+          APP_BASE_URL: https://streetwise-connection.vercel.app
+          SMOKE_TEST_EMAIL: streetwise-smoke-20260827@example.com
+        run: npm run check:production
