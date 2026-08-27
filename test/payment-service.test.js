@@ -6,13 +6,13 @@ test("mock checkout is available without payment credentials", async () => {
   process.env.PAYMENT_PROVIDER = "mock";
   const checkout = await createCheckout(
     { id: "test-user-002", email: "checkout@streetwise.example" },
-    { planId: "starter-10" }
+    { planId: "residential-home-25" }
   );
 
   assert.equal(paymentProviderStatus().provider, "mock");
   assert.equal(checkout.provider, "mock");
   assert.equal(checkout.livemode, false);
-  assert.equal(checkout.planId, "starter-10");
+  assert.equal(checkout.planId, "residential-home-25");
 });
 
 test("checkout rejects an unknown plan", async () => {
