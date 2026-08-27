@@ -1,64 +1,116 @@
-# Streetwise Connection — Provider Comparison
+# Streetwise Connection - Provider Comparison
 
 Last reviewed: 2026-08-27
 
-This comparison is for provider selection only. It does not authorize live sales or eSIM transactions.
+This comparison supports provider selection only. It does not authorise funding, checkout, payments or eSIM transactions. The binding internal decision method and matched questionnaire are in `docs/PROVIDER_DECISION_PACKET.md`.
+
+## Current conclusion
+
+**No commercial provider is selected.**
+
+- Pursue **1GLOBAL first for commercial diligence** because its documented reseller and subscription architecture appears closer to Streetwise's intended recurring U.S. service.
+- Keep **eSIM Go as a technically proven conditional backup** for travel/short-duration service, or for recurring U.S. use only if a written contractual exception or a different domestic product resolves its published same-country restriction.
+- Do not make eSIM Go's standard $1,000 top-up simply to produce a valid validation response.
+- Keep `PUBLIC_LAUNCH_MODE=waitlist`, `STRIPE_LIVE_MODE_ENABLED=false` and `ESIM_LIVE_ORDERS_ENABLED=false`.
+
+## Evidence rules
+
+- Account observations prove only what the controlled check actually exercised.
+- Public provider documentation identifies capabilities and risks but does not establish account-specific commercial rights.
+- A written provider reply closes a gate only if it identifies the exact product and comes from an authorised representative.
+- Unknown or silent terms remain unapproved.
 
 ## eSIM Go
 
-Current public developer documentation and the live Streetwise provider check confirm:
+### Account-verified Streetwise evidence
 
-- API authentication uses `X-API-Key`.
-- The stored Streetwise API key authenticates successfully.
-- The account currently exposes 29 U.S. catalogue bundles.
-- `type: validate` checks an order without charging the provider balance, but the account must still satisfy the checks a transaction would require.
-- `esim_3GB_30D_US_V2` currently quotes at $4 USD for this account.
-- The current account balance does not cover that quote, so validation remains `valid=false`. No top-up was attempted.
-- The current standard minimum top-up documented by eSIM Go is $1,000, with a $5,000 default daily maximum; account managers can alter limits.
-- eSIM Go states its travel eSIMs are used in roaming mode, has permanent-roaming detection, and reserves the right to restrict a SIM used in the same country for more than 60 days.
-- eSIM Go states first-line end-customer support is handled by the commercial partner, with eSIM Go providing second- and third-line technical support.
+A controlled provider run established:
+
+- the stored API key authenticates;
+- the account exposes 29 U.S. bundles;
+- `esim_3GB_30D_US_V2` is present;
+- one unit currently quotes at $4 USD;
+- a live-order-disabled validation request reaches the provider;
+- validation currently returns `valid=false` because available balance does not cover the quote;
+- no top-up or live order was executed; and
+- exact balance and credentials were not exposed in public logs.
+
+### Current public provider facts
+
+Current eSIM Go documentation states:
+
+- API authentication uses `X-API-Key`;
+- catalogue and validation-before-order capabilities are available;
+- the operating model is prepaid;
+- the standard top-up minimum is $1,000 and the default daily maximum is $5,000, with account-manager adjustment possible;
+- Travel API eSIMs operate in roaming mode;
+- eSIM Go has permanent-roaming detection and reserves the right to restrict a SIM used in the same country for more than 60 days;
+- the commercial partner handles first-line customer support, while eSIM Go provides second- and third-line technical support; and
+- no dedicated sandbox is currently offered, with a second UAT organisation described as the workaround.
 
 Primary sources:
 
-- https://docs.esim-go.com/quick_start/
-- https://docs.esim-go.com/guides/authentication/
-- https://docs.esim-go.com/guides/setup_esimgo_account/
 - https://docs.esim-go.com/guides/getting_started/
+- https://docs.esim-go.com/guides/setup_esimgo_account/
+- https://docs.esim-go.com/quick_start/
+- https://help.esim-go.com/hc/en-gb/articles/19946520545937-Is-There-A-Sandbox-Test-Environment
+- https://help.esim-go.com/hc/en-gb/articles/14668061743121-First-Line-Troubleshooting-Guide
 
-### Streetwise implications
+### Economics screen
 
-Strengths:
+At the current $10 retail planning price:
+
+| Item | Amount |
+| --- | ---: |
+| Retail | $10.00 |
+| Current provider quote | -$4.00 |
+| Estimated card processing | -$0.59 |
+| Support reserve | -$0.50 |
+| Infrastructure reserve | -$0.25 |
+| Preliminary contribution | $4.66 |
+| Preliminary margin | 46.6% |
+
+This is only a first screen. It excludes unresolved telecom taxes/surcharges, refund and chargeback exposure, fraud, final support cost and any other provider/account fees. It does not pass the final economics gate.
+
+### Strengths
 
 - Existing Streetwise adapter is implemented and contract-tested.
-- Working credentials and real U.S. catalogue access are already verified.
-- The $4 candidate quote passes the initial $6 wholesale screening guardrail.
-- Validation-only ordering lets Streetwise test without executing a transaction.
+- Working credentials and real U.S. catalogue access are verified.
+- The $4 candidate quote passes the existing $6 wholesale screen.
+- Validation-only behaviour reached the provider while the transaction switch stayed off.
 
-Material constraint:
+### Blocking risks
 
-The published 60-day same-country restriction conflicts with Streetwise's intended recurring U.S. home-market service if customers are expected to keep using the same connectivity continuously. Therefore eSIM Go should **not** be treated as the default long-term U.S. provider unless eSIM Go provides a written contractual exception or a different non-travel product that permits the intended domestic usage.
+- Published same-country restrictions conflict with the intended recurring U.S. model.
+- The standard $1,000 top-up is not approved and is disproportionate to merely closing a validation check.
+- The validation request cannot currently return `valid=true` without sufficient balance.
+- The published UAT workaround does not prove that an installable eSIM can be tested without funded production service.
+- Provider-of-record, telecom/tax, support, refund, security and final fee allocation remain unresolved.
 
-Open risks:
+### Current fit
 
-- $1,000 standard funding minimum is substantial for an early-stage validation exercise.
-- A fully valid order check still requires enough provider balance to cover the quote.
-- Written clarification or exception is needed for recurring U.S. domestic use beyond 60 days.
-- Final taxes, refund exposure, support cost and provider-of-record responsibilities remain unresolved.
-
-Best current fit: travel/short-duration product evaluation, or a controlled technical test after commercial approval. Not approved as the recurring U.S. connectivity foundation.
+Technically proven for further evaluation. Commercially unapproved for recurring U.S. service. Potential fit for short-duration/travel use or if an explicit domestic exception or alternative product is incorporated into the contract.
 
 ## 1GLOBAL Connect
 
-Current 1GLOBAL Connect documentation confirms:
+### Repository evidence
 
-- Connect is designed for server-to-server partner integrations that sell eSIM-based cellular connectivity to end customers.
-- Data-only plans are supported.
-- A reseller role exists for product listing, orders, SIM/subscription management and usage data.
-- The API uses OAuth2 and supports `Idempotency-Key` on applicable requests.
-- Current API documentation is versioned `2026-02-05`.
-- The API includes accounts, subscribers, contracts, subscriptions, product offerings, coverage areas and service lifecycle resources.
-- Product offerings can be cached locally and refreshed rather than fetched for every customer transaction.
-- Contract resources explicitly include the United States as a supported legal-entity country in the current API reference.
+- A read-only OAuth2/catalogue client is prepared.
+- Credential placeholders exist without storing secrets.
+- The client is not wired to live provisioning.
+- No partner credential, account catalogue, wholesale quote or order has been tested.
+
+### Current public provider facts
+
+Current 1GLOBAL material states:
+
+- Connect supports server-to-server partner integrations;
+- data-only and reseller use cases exist;
+- account, subscriber, contract, subscription, product offering, coverage and lifecycle resources are documented;
+- OAuth2 is used;
+- idempotency is documented for applicable requests;
+- connectivity resellers are an explicit partnership category; and
+- the sales/partnership route accepts business enquiries.
 
 Primary sources:
 
@@ -66,35 +118,58 @@ Primary sources:
 - https://docs.connect-api.1global.com/overview/getstarted/
 - https://docs.connect-api.1global.com/api-reference
 - https://docs.connect-api.1global.com/api/idempotency
+- https://www.1global.com/partnerships
+- https://www.1global.com/contact/
 
-### Streetwise implications
+### Strengths
 
-Strengths:
-
-- Explicit reseller and subscription architecture aligns more closely with Streetwise's intended recurring-service model.
+- Reseller and subscription architecture appears closer to recurring service than a travel-bundle-only model.
 - Data-only connectivity is a documented use case.
-- OAuth2 and documented idempotency support fit a production-grade provider integration.
-- Account/subscriber/contract/subscription APIs suggest a deeper telco-as-a-service model than a travel-bundle-only integration.
-- A read-only Streetwise OAuth2/catalogue client is now prepared for credentials.
+- OAuth2 and documented idempotency fit a production integration.
+- Product offering and lifecycle resources could support catalogue caching and subscription management.
+- The repository can begin read-only evaluation when credentials arrive.
 
-Open risks:
+### Blocking risks
 
-- Streetwise does not yet have partner credentials or commercial pricing.
-- Public documentation alone does not prove that the specific U.S. product Streetwise needs permits indefinite domestic use.
-- Minimum commitments, U.S. network terms, reseller obligations, support duties and provider-of-record responsibilities must be confirmed directly.
+- No Streetwise partner approval or credentials.
+- No account-specific U.S. product, price or network schedule.
+- Public documentation does not prove indefinite same-country U.S. use for the proposed product.
+- Commercial minimums, contract term, proof-of-concept cost, support/refunds, provider-of-record, telecom/tax and data/security duties are unknown.
+- No staging catalogue, provisioning, installation, usage or retry evidence exists.
 
-## Current decision
+### Current fit
 
-**Provider priority has changed.**
+Higher-priority commercial candidate, but entirely unapproved until written product rights, commercial terms and account-specific technical evidence are received.
 
-For the intended recurring U.S. product, pursue 1GLOBAL or another provider with explicit domestic/MVNO-style rights **before** committing $1,000 to eSIM Go. Keep eSIM Go available as a technically proven backup for short-duration/travel use or if a written domestic-use exception is offered.
+## Side-by-side gate status
 
-Next evidence required:
+`PASS` requires written account-specific evidence. `PARTIAL`, `BLOCKED` and `UNKNOWN` do not qualify.
 
-1. Obtain 1GLOBAL partner/reseller commercial terms, credentials path and minimum commitments.
-2. Obtain written confirmation that the intended U.S. data-only service can be used continuously in-market, not merely as travel roaming.
-3. Obtain real U.S. pricing and run it through `npm run analyse:provider`.
-4. Ask eSIM Go whether Streetwise can receive an explicit contractual exception or alternative product for continuous U.S. use beyond 60 days.
-5. Compare contribution margin, network coverage, renewal behaviour, usage latency, refunds, support obligations, taxes and provider-of-record responsibility.
+| Gate | eSIM Go | 1GLOBAL |
+| --- | --- | --- |
+| Working credentials | PASS | UNKNOWN |
+| Account-specific U.S. catalogue | PASS | UNKNOWN |
+| Candidate wholesale quote | PASS: $4 USD screen | UNKNOWN |
+| Recurring U.S. domestic rights | BLOCKED | UNKNOWN |
+| Commercial/provider-of-record role | UNKNOWN | UNKNOWN |
+| Final economics with all reserves | PARTIAL | UNKNOWN |
+| Acceptable deposit/minimum commitment | BLOCKED pending alternative; no funding approved | UNKNOWN |
+| Networks and service specification | UNKNOWN | UNKNOWN |
+| Support and refund remedies | UNKNOWN | UNKNOWN |
+| Safe proof-of-concept path | PARTIAL | UNKNOWN |
+| Usage/events/reconciliation | PARTIAL | PARTIAL from public docs only |
+| Data/security terms | UNKNOWN | UNKNOWN |
+| Controlled installable eSIM test | NOT STARTED | NOT STARTED |
 
-Until those facts are available, `PUBLIC_LAUNCH_MODE=waitlist` and `ESIM_LIVE_ORDERS_ENABLED=false` remain mandatory.
+## Decision sequence
+
+1. Send the matched requests in `docs/PROVIDER_OUTREACH.md`.
+2. Capture both providers' written answers and private commercial artefacts.
+3. Apply every pass/fail gate in `docs/PROVIDER_DECISION_PACKET.md`.
+4. Run account-specific prices through `npm run analyse:provider`.
+5. Score only candidates that pass every mandatory gate.
+6. Create a separate provider-selection record.
+7. Approve a single controlled test plan and maximum spend only after selection.
+8. Keep transaction controls disabled until a later explicit launch approval.
+
+The immediate next action is provider outreach, not funding or live-order testing.
