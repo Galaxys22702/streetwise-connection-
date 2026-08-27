@@ -1,5 +1,7 @@
 function firstFinite(...values) {
   for (const value of values) {
+    if (value === null || value === undefined || typeof value === "boolean") continue;
+    if (typeof value === "string" && !value.trim()) continue;
     const number = Number(value);
     if (Number.isFinite(number)) return number;
   }
@@ -13,7 +15,17 @@ function firstText(...values) {
   return null;
 }
 
-export function normalizeWholesaleBundle(bundle = {}) {
+function configuredNumber(options, name, fallback) {
+  if (!Object.hasOwn(options, name)) return fallback;
+  return firstFinite(options[name]);
+}
+
+function normalizeCurrency(value) {
+  const currency = firstText(value);
+  return currency ? currency.toUpperCase() : null;
+}
+
+export function normalizeWholesaleBundle(bundle = {}, options = {}) {
   const price = firstFinite(
     bundle.price,
     bundle.cost,
@@ -41,7 +53,7 @@ export function normalizeWholesaleBundle(bundle = {}) {
   return {
     sku: firstText(bundle.name, bundle.sku, bundle.id, bundle.code) || "unknown",
     description: firstText(bundle.description, bundle.displayName, bundle.name) || "Unknown bundle",
-    currency: (firstText(bundle.currency, bundle.currencyCode) || "USD").toUpperCase(),
+    currency: normalizeCurrency(firstText(bundle.currency, bundle.currencyCode, options.providerCurrency)),
     wholesaleCost: price,
     dataGb,
     durationDays: firstFinite(bundle.duration, bundle.durationDays, bundle.validity, bundle.validityDays),
@@ -51,20 +63,84 @@ export function normalizeWholesaleBundle(bundle = {}) {
 }
 
 export function calculateUnitEconomics(bundle, options = {}) {
-  const normalized = normalizeWholesaleBundle(bundle);
-  const retailPrice = firstFinite(options.retailPrice, 10) ?? 10;
-  const paymentRate = firstFinite(options.paymentRate, 0.029) ?? 0.029;
-  const paymentFixedFee = firstFinite(options.paymentFixedFee, 0.30) ?? 0.30;
-  const supportReserve = firstFinite(options.supportReserve, 0.50) ?? 0.50;
-  const taxReserveRate = firstFinite(options.taxReserveRate, 0) ?? 0;
-  const infrastructureReserve = firstFinite(options.infrastructureReserve, 0.25) ?? 0.25;
+  const retailCurrency = normalizeCurrency(options.retailCurrency) || "USD";
+  const normalized = normalizeWholesaleBundle(bundle, {
+    providerCurrency: normalizeCurrency(options.providerCurrency)
+  });
+  const retailPrice = configuredNumber(options, "retailPrice", 10);
+  const paymentRate = configuredNumber(options, "paymentRate", 0.029);
+  const paymentFixedFee = configuredNumber(options, "paymentFixedFee", 0.30);
+  const supportReserve = configuredNumber(options, "supportReserve", 0.50);
+  const taxReserveRate = configuredNumber(options, "taxReserveRate", 0);
+  const infrastructureReserve = configuredNumber(options, "infrastructureReserve", 0.25);
+
+  const assumptionsValid = (
+    /^[A-Z]{3}$/.test(retailCurrency) &&
+    retailPrice !== null && retailPrice > 0 &&
+    paymentRate !== null && paymentRate >= 0 && paymentRate <= 1 &&
+    paymentFixedFee !== null && paymentFixedFee >= 0 &&
+    supportReserve !== null && supportReserve >= 0 &&
+    taxReserveRate !== null && taxReserveRate >= 0 && taxReserveRate <= 1 &&
+    infrastructureReserve !== null && infrastructureReserve >= 0
+  );
+
+  if (!assumptionsValid) {
+    return {
+      ...normalized,
+      retailCurrency,
+      retailPrice,
+      viable: false,
+      reason: "invalid_economics_assumptions"
+    };
+  }
 
   if (normalized.wholesaleCost === null) {
     return {
       ...normalized,
+      retailCurrency,
       retailPrice,
       viable: false,
       reason: "wholesale_cost_missing"
+    };
+  }
+
+  if (normalized.wholesaleCost < 0) {
+    return {
+      ...normalized,
+      retailCurrency,
+      retailPrice,
+      viable: false,
+      reason: "wholesale_cost_invalid"
+    };
+  }
+
+  if (!normalized.currency) {
+    return {
+      ...normalized,
+      retailCurrency,
+      retailPrice,
+      viable: false,
+      reason: "provider_currency_missing"
+    };
+  }
+
+  if (!/^[A-Z]{3}$/.test(normalized.currency)) {
+    return {
+      ...normalized,
+      retailCurrency,
+      retailPrice,
+      viable: false,
+      reason: "provider_currency_invalid"
+    };
+  }
+
+  if (normalized.currency !== retailCurrency) {
+    return {
+      ...normalized,
+      retailCurrency,
+      retailPrice,
+      viable: false,
+      reason: "currency_conversion_required"
     };
   }
 
@@ -80,6 +156,7 @@ export function calculateUnitEconomics(bundle, options = {}) {
 
   return {
     ...normalized,
+    retailCurrency,
     retailPrice,
     paymentFees,
     supportReserve,

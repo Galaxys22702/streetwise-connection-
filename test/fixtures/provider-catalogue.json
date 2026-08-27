@@ -1,0 +1,17 @@
+{
+  "bundles": [
+    {
+      "name": "esim_1GB_7D_US_V2",
+      "description": "United States 1 GB for 7 days",
+      "price": 2.5,
+      "dataAmount": 1024,
+      "duration": 7,
+      "countries": [
+        {
+          "name": "United States",
+          "iso": "US"
+        }
+      ]
+    }
+  ]
+}
