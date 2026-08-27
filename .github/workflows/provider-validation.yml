@@ -7,12 +7,14 @@ on:
     paths:
       - "src/providers/**"
       - "src/config/plans.js"
+      - "scripts/esim-go-validation-diagnostics.js"
       - ".github/workflows/provider-validation.yml"
   push:
     branches: [main]
     paths:
       - "src/providers/**"
       - "src/config/plans.js"
+      - "scripts/esim-go-validation-diagnostics.js"
       - ".github/workflows/provider-validation.yml"
 
 permissions:
@@ -32,6 +34,10 @@ jobs:
 
       - name: Verify API secret is configured
         run: test -n "$ESIM_API_KEY"
+
+      - name: Diagnose validation state without exposing account amounts
+        continue-on-error: true
+        run: node scripts/esim-go-validation-diagnostics.js
 
       - name: Build production image
         run: docker build --target production -t streetwise-connection:provider-test .
