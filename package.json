@@ -11,7 +11,8 @@
     "test": "node --test",
     "test:coverage": "node --test --experimental-test-coverage",
     "verify": "npm run test:coverage && node scripts/vercel-config-check.js && node scripts/launch-readiness-check.js",
-    "check:production": "node scripts/production-smoke-check.js"
+    "check:production": "node scripts/production-smoke-check.js",
+    "analyse:provider": "node scripts/analyse-provider-catalogue.js"
   },
   "dependencies": {
     "pg": "^8.13.0",
