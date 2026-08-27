@@ -38,13 +38,18 @@ jobs:
 
       - name: Verify eSIM Go API connection and Starter plan economics
         run: |
+          # The production image normally runs scripts/start.js, which intentionally
+          # requires DATABASE_URL for hosted commercial service migrations. Provider
+          # validation is read-only/validation-only and needs no customer database,
+          # so override the command and start only the HTTP server here.
           docker run -d --name streetwise-provider-test -p 3001:3000 \
             -e PUBLIC_LAUNCH_MODE=internal \
             -e ESIM_PROVIDER=esim-go \
             -e ESIM_API_KEY="$ESIM_API_KEY" \
             -e ESIM_LIVE_ORDERS_ENABLED=false \
             -e PAYMENT_PROVIDER=mock \
-            streetwise-connection:provider-test
+            streetwise-connection:provider-test \
+            node src/server.js
 
           trap 'docker logs streetwise-provider-test 2>/dev/null || true; docker rm -f streetwise-provider-test 2>/dev/null || true' EXIT
 
