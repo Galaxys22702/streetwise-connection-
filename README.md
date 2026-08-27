@@ -1,6 +1,8 @@
 # Streetwise Connection
 
-Streetwise Connection is an early-stage connectivity storefront and control plane for affordable eSIM-based mobile data. The product is designed to work through licensed carriers, MVNO platforms, or eSIM aggregators. It does **not** create a cellular network by itself.
+Streetwise Connection is an early-stage connectivity storefront and control plane for affordable residential and small-business connectivity using approved wholesale eSIM/network providers. The product is designed to combine plan access with compatibility guidance, setup help and practical support. It does **not** create or own a cellular network by itself.
+
+**Positioning:** Connection without the confusion.
 
 ## Current launch state
 
@@ -9,11 +11,29 @@ Streetwise Connection is an early-stage connectivity storefront and control plan
 **Live Stripe billing:** disabled  
 **Live eSIM ordering:** disabled  
 **Production waitlist backend:** Supabase  
-**Application database for future customer accounts/orders:** PostgreSQL
+**Application database for future customer/accounts/orders/compliance:** PostgreSQL
 
-The production deployment is intentionally constrained so that public visitors can join the waitlist, while registration, sign-in, checkout, coverage ordering, and eSIM activation remain unavailable until provider, legal, regulatory, support, and production-readiness gates are complete.
+The production deployment is intentionally constrained so public visitors can join the waitlist while registration, sign-in, checkout and eSIM activation remain unavailable until provider, legal, regulatory, support and production-readiness gates are complete.
 
-See [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md) for the current readiness snapshot and next concrete milestones.
+See [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md) for the current readiness snapshot and [`docs/OWNER_ACTIONS.md`](docs/OWNER_ACTIONS.md) for the work that genuinely requires the legal owner or an outside authority/provider.
+
+## Product direction
+
+Streetwise is being prepared for two customer groups:
+
+- **Residential:** simple plan choice, compatibility guidance, setup assistance and clear service terms.
+- **Commercial / small business:** multi-line planning, deployment guidance and support for small teams that may not have dedicated IT staff.
+
+Planned target pricing:
+
+- Streetwise Home — **$25/month** residential
+- Business Starter — **$20/month per line**
+- Business Volume — **$15/month per line for 3+ lines**
+- Business Pro — **$30/month per line**
+
+These are target prices, not approved sellable offers. They must pass provider mapping, taxes, support/refund exposure and contribution-margin validation before checkout can be enabled.
+
+A planned **Streetwise Connection Check** will help customers assess device compatibility, intended usage, hotspot needs, customer type and line count before purchase. It is specified in [`docs/CONNECTION_CHECK.md`](docs/CONNECTION_CHECK.md).
 
 ## What exists today
 
@@ -29,25 +49,43 @@ See [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md) for the current readiness
 
 ### Customer/account platform
 
-- Customer registration, login, logout, and sessions
+- Customer registration, login, logout and sessions
 - Scrypt password hashing
-- PostgreSQL schema for customers, subscriptions, eSIM orders, usage, and payments
+- PostgreSQL schema for customers, subscriptions, eSIM orders, usage and payments
+- Residential/commercial customer structure
+- Commercial organisations, members and service-line schema
 - Customer dashboard APIs
 - Mock payment provider for safe development
 - Stripe Checkout subscription adapter
 - Signed Stripe webhook handling and event deduplication
+
+### Business/compliance platform
+
+- Business formation and licensing packet
+- EIN worksheet
+- Operating agreement draft
+- Privacy, terms and refund/support drafts
+- Regulatory matrix
+- Database records for licences, registrations and renewal dates
+- Database records for provider commercial approvals and provider-of-record responsibilities
+- Database records for launch-plan approval, provider mapping and economics
+- Owner-only action checklist
 
 ### Connectivity platform
 
 - Provider abstraction layer
 - Mock eSIM provider
 - eSIM Go v2.5 provider adapter
-- Wholesale catalogue lookup
+- Working eSIM Go authentication
+- Real U.S. catalogue access demonstrated
+- Read-only 1GLOBAL preparation
+- Wholesale catalogue lookup and economics tooling
 - Coverage-check API
 - Persistent order/provider references
 - Installation details associated with customer orders
 - Usage history and mock usage simulation
 - Purchase idempotency protection
+- Provider commercial evidence gate
 - Separate live-payment and live-eSIM safety switches
 
 ### Delivery and verification
@@ -57,6 +95,7 @@ See [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md) for the current readiness
 - Production smoke checks
 - Launch-readiness guardrails
 - Vercel deployment compatibility
+- Serialized database migration runner with migration history
 
 ## Repository map
 
@@ -66,14 +105,14 @@ src/                  Application/server code
 db/migrations/        PostgreSQL schema migrations
 scripts/              Verification, migration, and smoke-check scripts
 public/               Public web assets
-docs/                 Architecture and technical documentation
-docs/business/        Formation, policy, and regulatory working documents
+docs/                 Architecture, product and technical documentation
+docs/business/        Formation, policy, licensing and regulatory working documents
 .github/workflows/    CI and provider/payment validation workflows
 ```
 
 ## Safety model
 
-The repository is built around explicit launch gates. Keep these values disabled until the corresponding commercial and compliance work is complete:
+Keep these values disabled until the corresponding commercial and compliance work is complete:
 
 ```env
 PUBLIC_LAUNCH_MODE=waitlist
@@ -83,7 +122,7 @@ ESIM_LIVE_ORDERS_ENABLED=false
 
 `ESIM_WEBHOOKS_ENABLED` may be enabled separately for controlled callback testing without enabling live eSIM purchases.
 
-Never commit provider API keys, Stripe secrets, database passwords, Supabase service-role keys, or other credentials. See [`SECURITY.md`](SECURITY.md).
+Never commit provider API keys, Stripe secrets, database passwords, Supabase service-role keys, SSNs/ITINs, identity documents, banking information or private licence paperwork. See [`SECURITY.md`](SECURITY.md).
 
 ## Local development
 
@@ -116,11 +155,11 @@ Run the deployed production smoke check with:
 npm run check:production
 ```
 
-Set `SMOKE_TEST_EMAIL` only when you intentionally want the smoke check to exercise a real production waitlist write. Validation and consent error handling can be tested without inserting a row.
+Set `SMOKE_TEST_EMAIL` only when intentionally exercising a real production waitlist write.
 
 ## Core configuration
 
-Copy `.env.example` and keep production secrets in your deployment platform, not in Git.
+Copy `.env.example` and keep production secrets in the deployment platform, not in Git.
 
 ```env
 APP_BASE_URL=http://localhost:3000
@@ -183,7 +222,7 @@ Authenticated endpoints use a bearer session token. The mock usage-simulation ro
 
 ## Commercial reality
 
-The target retail concept is approximately **$10/month**, but the final plan cannot be set until real wholesale pricing is known.
+Streetwise should compete on **clarity + affordability + support**, not price alone.
 
 Contribution margin must account for:
 
@@ -197,38 +236,43 @@ retail price
 = contribution margin
 ```
 
-Do not advertise unlimited service or enable billing until provider terms, coverage, economics, regulatory responsibilities, refund rules, and support obligations are verified.
+Do not advertise unlimited data, unlimited hotspot, guaranteed speeds or guaranteed coverage unless those claims are supported by the selected provider contract and final approved launch plan.
 
 ## Current production limitations
 
-The public waitlist is production-backed, but commercial service remains intentionally disabled. Before enabling paid service, the project still needs:
+The public waitlist is production-backed, but commercial service remains intentionally disabled. Before enabling paid service, the project still requires:
 
-1. Verified wholesale provider credentials and real catalogue pricing
-2. One controlled staging purchase/provision/install/usage test
-3. Confirmed unit economics for the launch plan
-4. Provider-of-record and telecom regulatory determination
-5. Final privacy, terms, refund, and support policies
-6. Secure HttpOnly browser sessions plus CSRF/rate-limit controls
-7. Production monitoring, backups, audit logging, and incident procedures
-8. Cancellation, failed-payment, refund, retry, and reconciliation workflows
+1. A selected wholesale provider with written recurring U.S. domestic-use and residential/commercial resale rights
+2. Final mapping of real provider bundles to the $15/$20/$25/$30 target tiers
+3. One controlled staging purchase/provision/install/usage/retry test
+4. Confirmed contribution margin for each launch plan
+5. Provider-of-record and telecom regulatory determination
+6. Final privacy, terms, refund and support policies reconciled to the provider agreement
+7. Production monitoring, backups, audit logging and incident procedures appropriate for commercial service
+8. Final owner approval before enabling live billing or live eSIM orders
 
 ## Documentation
 
 - [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md)
+- [`docs/PRODUCT_POSITIONING.md`](docs/PRODUCT_POSITIONING.md)
+- [`docs/CONNECTION_CHECK.md`](docs/CONNECTION_CHECK.md)
+- [`docs/OWNER_ACTIONS.md`](docs/OWNER_ACTIONS.md)
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 - [`docs/ACCOUNTS_AND_PAYMENTS.md`](docs/ACCOUNTS_AND_PAYMENTS.md)
 - [`docs/ESIM_PROVISIONING.md`](docs/ESIM_PROVISIONING.md)
 - [`docs/PROVIDER_ONBOARDING.md`](docs/PROVIDER_ONBOARDING.md)
-- [`docs/CUSTOMER_DASHBOARD.md`](docs/CUSTOMER_DASHBOARD.md)
+- [`docs/PROVIDER_ECONOMICS.md`](docs/PROVIDER_ECONOMICS.md)
+- [`docs/PROVIDER_COMPARISON.md`](docs/PROVIDER_COMPARISON.md)
+- [`docs/business/LICENSE_APPLICATION_PACKET.md`](docs/business/LICENSE_APPLICATION_PACKET.md)
 - [`docs/business/README.md`](docs/business/README.md)
 
 ## Next concrete milestones
 
-1. Complete the final production waitlist persistence smoke test.
-2. Obtain provider credentials without committing secrets.
-3. Pull and evaluate the real wholesale catalogue.
-4. Calculate retail margin from actual provider costs.
+1. Complete owner formation/licensing/EIN tasks using the prepared packet.
+2. Obtain written provider commercial terms and compare eSIM Go against 1GLOBAL/other suitable providers.
+3. Map real provider bundles to the residential and commercial pricing structure.
+4. Run contribution-margin validation for each proposed launch tier.
 5. Provision one controlled staging eSIM and validate retries/idempotency/usage.
-6. Resolve telecom and provider-of-record obligations before sales.
-7. Finalise customer policies and support procedures.
-8. Enable Stripe/eSIM live modes only after every launch gate passes.
+6. Resolve provider-of-record, PUCN/FCC/USAC and tax responsibilities.
+7. Finalise customer policies and support procedures against the selected provider agreement.
+8. Enable Stripe/eSIM live modes only after every launch gate passes and the owner explicitly authorises commercial launch.
