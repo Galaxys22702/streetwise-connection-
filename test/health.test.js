@@ -26,6 +26,11 @@ test("health endpoint reports runtime dependencies and launch safety without exp
     assert.equal(res.body.runtime, "vercel");
     assert.equal(res.body.database.configured, false);
     assert.equal(res.body.database.connected, false);
+    assert.equal(res.body.database.role, "customer-service");
+    assert.equal(res.body.database.requiredForPublicWaitlist, false);
+    assert.equal(res.body.storage.publicWaitlist.provider, "supabase");
+    assert.equal(res.body.storage.publicWaitlist.configured, true);
+    assert.equal(res.body.storage.publicWaitlist.required, true);
     assert.equal(res.body.payments.provider, "mock");
     assert.equal(res.body.provider.provider, "mock");
     assert.equal(res.body.publicLaunchMode, "waitlist");
