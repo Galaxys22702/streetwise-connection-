@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "method_not_allowed" });
   }
 
-  const [database, provider] = await Promise.all([
+  const [applicationDatabase, provider] = await Promise.all([
     databaseStatus(),
     providerStatus().catch((error) => ({
       configured: false,
@@ -21,17 +21,29 @@ export default async function handler(req, res) {
       error: error.message || "provider_status_unavailable"
     }))
   ]);
+  const waitlist = waitlistStatus();
 
   const status = {
     ok: true,
     service: "streetwise-connection",
     version: "0.4.0",
     runtime: "vercel",
-    database,
+    database: {
+      ...applicationDatabase,
+      role: "customer-service",
+      requiredForPublicWaitlist: false
+    },
+    storage: {
+      publicWaitlist: {
+        provider: waitlist.storageProvider,
+        configured: waitlist.storageConfigured,
+        required: waitlist.open
+      }
+    },
     payments: paymentProviderStatus(),
     provider,
     publicLaunchMode: publicLaunchMode(),
-    waitlist: waitlistStatus()
+    waitlist
   };
 
   return res.status(200).json(status);
