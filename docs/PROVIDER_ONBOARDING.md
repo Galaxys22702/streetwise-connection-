@@ -1,187 +1,184 @@
-# Streetwise Connection — Cellular Provider Onboarding Runbook
+# Streetwise Connection — AT&T-First Provider Onboarding Runbook
 
-This runbook tracks the external provider work required before Streetwise can move beyond public waitlist mode.
+Last reviewed: 2026-08-30
 
-## Current safety state
+Streetwise remains waitlist-only while AT&T commercial qualification, legal/regulatory allocation, pricing, API access and controlled technical acceptance are incomplete.
 
-Keep production waitlist-only until provider acceptance testing, economics, business compliance, customer-policy reconciliation, and payment testing are complete.
-
-Required posture:
+## Required safety state
 
 PUBLIC_LAUNCH_MODE=waitlist  
+PAYMENT_PROVIDER=mock  
+STRIPE_LIVE_MODE_ENABLED=false  
 ESIM_PROVIDER=mock  
 ESIM_WEBHOOKS_ENABLED=false  
 ESIM_LIVE_ORDERS_ENABLED=false  
-STRIPE_LIVE_MODE_ENABLED=false
+ATT_COMMERCIAL_CONTRACT_APPROVED=false  
+ATT_LIVE_PROVISIONING_ENABLED=false
 
-Provider credentials must exist only in deployment secret storage.
+AT&T credentials must never be committed to GitHub.
 
-## Provider priority
+## Provider order
 
-### Primary: 1GLOBAL or equivalent full-stack cellular provider
+### Primary: AT&T
 
-The cellular pivot requires more than data-only eSIM ordering.
+Evaluate both applicable AT&T routes:
 
-Streetwise should request a commercial path that can support as much of the following as possible:
+1. AT&T Partner Exchange
+2. AT&T Wholesale
 
-- recurring U.S. domestic cellular service
-- residential and commercial resale
-- data and hotspot
-- voice
-- SMS
-- local phone numbers
-- number porting
-- eSIM and physical SIM options
-- 5G
-- VoLTE
-- Wi-Fi calling
-- SIM swap/replacement lifecycle
-- suspend/resume
-- roaming/international
-- usage and lifecycle events
-- fraud/security controls or events
-- network/resilience options
+The final program path must come from AT&T. The repo uses the internal provider ID att-wholesale as the commercial candidate name; that internal label does not claim Streetwise already has a wholesale or MVNO contract.
 
-### Secondary: eSIM Go
+### Fallback: 1GLOBAL
 
-Keep the existing eSIM Go integration available for travel/short-duration data and controlled technical testing.
+Keep 1GLOBAL commercially active as the fallback until AT&T terms and technical access are fully accepted.
 
-Do not treat its Travel API as the recurring U.S. cellular foundation unless eSIM Go supplies a written exception or a different qualifying product that resolves the documented same-country/permanent-roaming limitation.
+### Travel/data: eSIM Go
 
-## Phase 1 — commercial qualification
+Keep eSIM Go for travel/short-duration data. It does not block domestic provider selection.
 
-Before writing new provider-specific production code:
+## Phase 1 — AT&T qualification packet
 
-- [ ] Confirm Streetwise commercial role
-- [ ] Confirm recurring U.S. domestic-use rights
-- [ ] Confirm residential resale/use
-- [ ] Confirm commercial resale/use
-- [ ] Obtain account-specific wholesale pricing
-- [ ] Confirm minimum deposit/funding/monthly/volume commitments
-- [ ] Confirm supported U.S. networks
-- [ ] Confirm data allowance/throttling
-- [ ] Confirm hotspot/tethering
-- [ ] Confirm voice
-- [ ] Confirm SMS
-- [ ] Confirm local number assignment
-- [ ] Confirm number porting
-- [ ] Confirm 5G
-- [ ] Confirm VoLTE
-- [ ] Confirm Wi-Fi calling
-- [ ] Confirm eSIM/physical-SIM lifecycle
-- [ ] Confirm suspend/resume and SIM-swap lifecycle
-- [ ] Confirm international/roaming products
-- [ ] Confirm provider webhook/event model
-- [ ] Confirm sandbox/test environment
-- [ ] Confirm provider-of-record allocation
-- [ ] Confirm E911, numbering/porting, taxes, FCC/USAC, Nevada PUCN and other regulatory responsibility
-- [ ] Confirm first-line/second-line support and SLA
-- [ ] Confirm refund/credit/failed-activation rules
-- [ ] Confirm treatment of active lines/numbers if the contract ends
+Prepare before submission:
 
-Do not enable public checkout during this phase.
+- legal/company name;
+- DBA;
+- company website;
+- business address;
+- company phone;
+- primary contact name/title/email/phone;
+- total employee bracket;
+- answer to whether Streetwise operates a 24/7/365 Tier 1 NOC;
+- answer to whether Streetwise currently bills end users;
+- FRN status;
+- current AT&T contract/customer relationship status;
+- business description;
+- intended residential/commercial wireless resale model;
+- support model;
+- projected launch geography and scale.
 
-## Phase 2 — API capability map
+The repo contains a prepared transfer sheet in docs/ATT_PROVIDER_APPLICATION_PACKET.md.
 
-Once the commercial offer is acceptable, map the provider's real API to the Streetwise capability model.
+## Phase 2 — AT&T written commercial gate
 
-Record only non-secret conclusions in GitHub.
+Obtain written answers for:
 
-Required implementation map:
+- [ ] program/path accepted;
+- [ ] exact contractual role;
+- [ ] provider of record;
+- [ ] recurring U.S. domestic service;
+- [ ] residential resale;
+- [ ] small-business/commercial resale;
+- [ ] wireless voice;
+- [ ] SMS;
+- [ ] mobile data;
+- [ ] hotspot/tethering;
+- [ ] local U.S. phone numbers;
+- [ ] number portability;
+- [ ] eSIM and/or physical SIM;
+- [ ] 5G;
+- [ ] VoLTE;
+- [ ] Wi-Fi calling;
+- [ ] suspend/resume;
+- [ ] SIM replacement/swap;
+- [ ] port-out controls/events;
+- [ ] roaming/international;
+- [ ] exact network/product disclosure requirements;
+- [ ] API access and authentication;
+- [ ] sandbox/test environment;
+- [ ] webhook/lifecycle events;
+- [ ] Tier 1 support requirement;
+- [ ] escalation/SLA;
+- [ ] end-user billing responsibility;
+- [ ] branding/co-branding rights;
+- [ ] minimum spend/deposit/commitment;
+- [ ] wholesale price schedule;
+- [ ] refund/failed-activation rules;
+- [ ] fraud/KYC responsibilities;
+- [ ] taxes/surcharges;
+- [ ] FRN/FCC/USAC responsibility;
+- [ ] Nevada PUCN/state responsibility;
+- [ ] E911 responsibility;
+- [ ] number administration/porting responsibility;
+- [ ] treatment of active lines/numbers on termination.
 
-| Streetwise capability | Provider API/resource | Supported? | Notes |
-| --- | --- | --- | --- |
-| Subscriber creation | Pending | Pending | |
-| SIM/eSIM provisioning | Pending | Pending | |
-| Data plan activation | Pending | Pending | |
-| Usage retrieval | Pending | Pending | |
-| Voice | Pending | Pending | |
-| SMS | Pending | Pending | |
-| Number assignment | Pending | Pending | |
-| Port eligibility | Pending | Pending | |
-| Port request/status | Pending | Pending | |
-| Suspend/resume | Pending | Pending | |
-| SIM swap/replacement | Pending | Pending | |
-| Roaming/international | Pending | Pending | |
-| Lifecycle webhooks | Pending | Pending | |
-| Security/fraud events | Pending | Pending | |
-| Network/resilience options | Pending | Pending | |
+Do not enable AT&T credentials or code-path provisioning before this phase produces a contract-defined technical specification.
 
-Only implement supported capabilities.
+## Phase 3 — technical contract mapping
 
-## Phase 3 — controlled staging acceptance
+After AT&T supplies approved API/portal documentation:
 
-After business/commercial/regulatory gates are sufficiently resolved:
+| Streetwise capability | AT&T resource/API | Status |
+| --- | --- | --- |
+| Subscriber/customer | Pending contract | Blocked |
+| Plan/product catalogue | Pending contract | Blocked |
+| SIM/eSIM issue | Pending contract | Blocked |
+| Line activation | Pending contract | Blocked |
+| Usage | Pending contract | Blocked |
+| Voice | Pending contract | Blocked |
+| SMS | Pending contract | Blocked |
+| Number assignment | Pending contract | Blocked |
+| Porting | Pending contract | Blocked |
+| Suspend/resume | Pending contract | Blocked |
+| SIM swap/replacement | Pending contract | Blocked |
+| Roaming | Pending contract | Blocked |
+| Lifecycle events | Pending contract | Blocked |
+| Fraud/security events | Pending contract | Blocked |
 
-- [ ] Configure staging credentials as deployment secrets
-- [ ] Keep public launch mode on waitlist
-- [ ] Verify provider status endpoint does not expose credentials
-- [ ] Retrieve approved catalogue/products
-- [ ] Validate one mapped plan
-- [ ] Run one controlled staging activation
-- [ ] Verify subscriber/service-line persistence
-- [ ] Verify eSIM/SIM install/provisioning data
-- [ ] Verify usage
-- [ ] Verify idempotency
-- [ ] Verify retry/failure paths
-- [ ] Verify suspend/resume if supported
-- [ ] Verify provider lifecycle webhooks
-- [ ] Verify refund/reconciliation process
-- [ ] Verify support escalation
+Do not invent URLs, payloads, SKU IDs or authentication schemes.
 
-If voice/numbering is part of the intended first launch:
+## Phase 4 — controlled AT&T staging
 
-- [ ] Assign one test number
-- [ ] Verify outbound/inbound voice
-- [ ] Verify SMS
-- [ ] Verify E911/provider-required address flow
-- [ ] Test porting only through a provider-approved controlled test process
-- [ ] Test SIM swap/replacement workflow
-- [ ] Test port-out/SIM-swap security controls where available
+Only after written approval and technical mapping:
 
-Disable any live-order switch again after controlled testing unless final commercial launch approval is complete.
+- [ ] store credentials in deployment secrets;
+- [ ] set ATT_PARTNER_PATH to the approved path;
+- [ ] set ATT_COMMERCIAL_CONTRACT_APPROVED=true only after evidence is recorded;
+- [ ] keep ATT_LIVE_PROVISIONING_ENABLED=false;
+- [ ] verify authentication without logging secrets;
+- [ ] retrieve only approved test/catalogue resources;
+- [ ] map one Streetwise test plan;
+- [ ] run validation/sandbox checks;
+- [ ] verify persistence and idempotency;
+- [ ] verify lifecycle events;
+- [ ] test one controlled line only when AT&T authorises it;
+- [ ] verify voice/SMS/number/E911/porting if part of the launch scope;
+- [ ] test SIM replacement and support escalation;
+- [ ] set ATT_LIVE_PROVISIONING_ENABLED=true only for the explicitly authorised production phase.
 
-## Phase 4 — security and resilience validation
+## Phase 5 — fallback verification
 
-Streetwise differentiators require their own acceptance criteria.
+Do not abandon 1GLOBAL until:
 
-### Security
-
-- [ ] Strong account authentication
-- [ ] Secure recovery
-- [ ] SIM-swap approval/alert workflow
-- [ ] Port-out protection workflow
-- [ ] Customer-visible line-change history
-- [ ] Fraud/support escalation
-- [ ] Scam/phishing/malicious-domain protection only if technically implemented and verified
-
-### Resilience
-
-- [ ] Document the actual networks available to each product
-- [ ] Document whether network/profile switching is manual or automatic
-- [ ] Verify supported device requirements
-- [ ] Test failure/recovery behaviour
-- [ ] Do not advertise automatic switching if the provider/device architecture does not support it
-
-### Emergency connectivity reserve
-
-- [ ] Identify provider-supported implementation
-- [ ] Define exact allowance/speed/eligible use
-- [ ] Verify depletion and reserve transition
-- [ ] Verify billing behaviour
-- [ ] Add customer disclosure
-- [ ] Do not market the feature until the test passes
-
-## Launch rule
-
-Streetwise remains waitlist-only until:
-
-- the selected provider contract is acceptable;
-- recurring U.S. use and resale rights are written;
-- first-launch capabilities are mapped to real provider products;
+- AT&T contract is signed;
+- AT&T technical access works;
 - economics pass;
-- staging acceptance passes;
-- regulatory responsibilities are resolved;
-- customer terms/privacy/refund/support are reconciled;
-- security/monitoring/incident procedures are ready;
-- live billing and live activation receive explicit owner approval.
+- staged lifecycle passes;
+- launch responsibilities are resolved.
+
+## Definition of coding complete
+
+The code is considered pre-provider complete when:
+
+- AT&T is the primary commercial candidate in configuration;
+- AT&T live provisioning fails closed;
+- commercial evidence requires AT&T-specific qualification facts;
+- 1GLOBAL remains fallback;
+- eSIM Go is optional/travel;
+- tests prove missing contracts/credentials cannot accidentally enable AT&T;
+- paperwork and signature templates are prepared;
+- production sales remain disabled.
+
+## Definition of commercial launch ready
+
+Commercial launch requires external facts the repository cannot manufacture:
+
+- accepted business entity/licences;
+- accepted AT&T or fallback provider agreement;
+- account-specific pricing;
+- approved API/product access;
+- regulatory allocation;
+- controlled technical acceptance;
+- final policies;
+- owner authorisation.
+
+Until then, waitlist mode stays on.
