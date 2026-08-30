@@ -1,6 +1,6 @@
 # Streetwise Connection — Refund & Customer Support Policy (Pre-Launch Draft)
 
-> Draft only. Final policy must match the wholesale eSIM/provider agreement and applicable consumer law before live sales begin.
+> Draft only. Final policy must match the wholesale cellular/provider agreement and applicable consumer law before live sales begin.
 
 ## Support principles
 
@@ -12,19 +12,19 @@ Customer support email: **[CREATE BEFORE LAUNCH]**
 
 ### Failed provisioning
 
-If Streetwise accepts payment but the eSIM provider fails to issue a usable profile and the failure cannot be corrected or replaced within the applicable support window, the order should normally be eligible for refund, subject to provider rules and applicable law.
+If Streetwise accepts payment but the cellular provider fails to provision a usable line, SIM/eSIM profile, or other required service element and the failure cannot be corrected or replaced within the applicable support window, the order should normally be eligible for refund, subject to provider rules and applicable law.
 
 ### Duplicate purchase
 
-Verified accidental duplicate purchases should be reviewed for cancellation/refund when the duplicate profile has not been consumed or otherwise made non-refundable by the upstream provider.
+Verified accidental duplicate purchases should be reviewed for cancellation/refund when the duplicate line, plan, or SIM/eSIM profile has not been consumed or otherwise made non-refundable by the upstream provider.
 
 ### Incompatible or carrier-locked device
 
-Streetwise should clearly require customers to verify that their device supports eSIM and is carrier-unlocked. The final policy must state whether unused profiles purchased for incompatible devices are refundable under the upstream provider contract.
+Streetwise should clearly require customers to verify that their device is carrier-unlocked and supports the required network bands, SIM/eSIM method, and planned voice/SMS features. The final policy must state whether unused profiles purchased for incompatible devices are refundable under the upstream provider contract.
 
-### Activated or partially used eSIM
+### Activated or partially used cellular service
 
-Once an eSIM has been installed, activated, or consumed data, upstream providers may restrict refunds. The final customer policy must mirror the rights Streetwise can actually provide and any stronger rights required by law.
+Once a cellular line or SIM/eSIM has been activated, used data, placed/received calls or messages, or initiated number-porting work, upstream providers may restrict refunds. The final customer policy must mirror the rights Streetwise can actually provide and any stronger rights required by law.
 
 ### Network outage
 
@@ -37,10 +37,10 @@ Streetwise may pause fulfillment when an order presents reasonable fraud or paym
 ## Required support workflow before launch
 
 - [ ] Create public support email address
-- [ ] Create ticket categories: account, billing, activation, coverage, usage, outage, refund, security
+- [ ] Create ticket categories: account, billing, activation, coverage, data/usage, voice/SMS, phone number/porting, SIM swap, outage, refund, security
 - [ ] Define target first-response times
 - [ ] Define provider escalation contact and SLA
-- [ ] Define how replacement eSIMs are authorized
+- [ ] Define how replacement SIM/eSIM profiles, SIM swaps, and line/number changes are authorised
 - [ ] Define refund approval authority
 - [ ] Define documentation required for device incompatibility claims
 - [ ] Define chargeback evidence retention
