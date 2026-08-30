@@ -1,6 +1,6 @@
 # Streetwise Connection LLC — Signature-Ready Owner Packet
 
-Prepared: 2026-08-27
+Prepared: 2026-08-30
 Status: PREPARED FOR OWNER COMPLETION AND SIGNATURE
 
 This packet consolidates the non-sensitive facts already established for Streetwise Connection. It is designed so the owner can transfer the information into the official Nevada, IRS, local licensing, tax, banking, and provider forms when those forms are presented. It is not itself a government-issued form or licence.
@@ -67,8 +67,8 @@ Complete only after Nevada accepts the LLC.
 - State of formation: Nevada
 - Responsible party: Robert Tursi
 - Reason: Started a new business
-- Principal activity: Telecommunications / mobile data / internet connectivity services
-- Description: eSIM/mobile-data connectivity reseller and customer account/support platform using contracted wholesale providers
+- Principal activity: Telecommunications / cellular connectivity services
+- Description: Branded cellular connectivity reseller and customer account/support platform using contracted licensed wholesale providers; planned service may include data, voice, SMS, phone-number features and SIM/eSIM activation subject to provider and regulatory approval
 - Accounting year end: December unless changed on tax advice
 
 Owner privately supplies SSN/ITIN, addresses, formation date, and any employee/payroll answers. Do not store those values in this public repository.
@@ -99,7 +99,7 @@ Date: ______________________________
 
 ## 6. Provider commercial onboarding declaration
 
-Streetwise Connection LLC seeks a commercial wholesale/reseller relationship supporting lawful recurring U.S. connectivity for residential and small-business customers. The intended customer experience includes plan selection, compatibility guidance, eSIM provisioning, account support, and permitted hotspot/tethering functionality.
+Streetwise Connection LLC seeks an AT&T-approved reseller/wholesale path as its primary domestic provider strategy, with 1GLOBAL retained as fallback. The intended service includes recurring U.S. cellular connectivity for residential and small-business customers, subject to written approval. The customer experience may include plan selection, compatibility guidance, SIM/eSIM provisioning, voice, SMS, phone-number features, hotspot, account support, security-focused controls and roaming where the selected provider agreement permits them.
 
 Requested written provider confirmations before launch:
 
@@ -114,6 +114,7 @@ Requested written provider confirmations before launch:
 9. Telecom tax/surcharge responsibility.
 10. FCC/USAC and Nevada regulatory responsibility allocation.
 11. Permission to market the provider-backed plans under the Streetwise Connection brand.
+12. For AT&T: approved program path, Tier 1 support model, end-user billing model, FRN requirement/status, API access and branding/co-branding rights.
 
 Streetwise target retail structure, subject to provider approval and economics:
 
@@ -141,6 +142,8 @@ Title: ______________________________
 Signature: ______________________________
 
 Date: ______________________________
+
+AT&T-specific transfer and signature fields are prepared separately in `docs/business/AT&T-SIGNATURE-READY-PACKET.md`.
 
 ## 7. Internal launch authorisation
 

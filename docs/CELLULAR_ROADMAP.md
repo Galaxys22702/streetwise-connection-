@@ -39,6 +39,17 @@ Disabled:
 - public customer accounts
 - cellular line activation
 
+## Current provider strategy
+
+- Primary domestic commercial candidate: AT&T
+- Domestic fallback: 1GLOBAL
+- Travel/data path: eSIM Go
+- Runtime order provider before approval: mock
+- Public carrier-brand claim: disabled
+- Live AT&T provisioning: disabled
+
+The provider strategy may change if the written commercial evidence changes. The architecture remains provider-agnostic.
+
 ## Phase 1 — domestic cellular foundation
 
 Target:

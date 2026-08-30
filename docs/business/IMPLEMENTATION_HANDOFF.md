@@ -11,7 +11,7 @@ For each completed item, provide the non-sensitive facts and retain the original
 - EIN: confirmation that issued (do not commit the number to this public repo)
 - Nevada tax registration: account/permit type and status; sensitive identifiers remain private
 - Local business licence/home occupation approval: jurisdiction, status, effective/renewal dates
-- Provider agreement: provider name, contractual role, effective date, approved residential/commercial rights, recurring U.S. rights, supported networks, voice/SMS/numbering/porting capabilities, SIM/eSIM lifecycle, roaming, and provider-of-record allocation
+- Provider agreement: provider name, AT&T program path if selected, contractual role, effective date, approved residential/commercial rights, recurring U.S. rights, supported networks, voice/SMS/numbering/porting capabilities, SIM/eSIM lifecycle, roaming, branding rights, Tier 1 support model, end-user billing model, FRN status/requirement, API access, and provider-of-record allocation
 - Regulatory determination: which party owns FCC/USAC/PUCN obligations
 - Approved plan terms: provider bundle/product IDs, data limits, throttling, hotspot/tethering rules, voice/SMS/number charges, numbering/porting terms, 5G/VoLTE/Wi-Fi-calling availability, roaming, support/SLA and wholesale cost
 
@@ -19,12 +19,12 @@ For each completed item, provide the non-sensitive facts and retain the original
 
 1. Run all PostgreSQL migrations, including business/compliance schema.
 2. Create/update business compliance records for each issued licence/registration.
-3. Create/update provider commercial approval record.
+3. Create/update provider commercial approval record, including AT&T-specific partner path/support/billing/FRN/API/branding evidence when AT&T is selected.
 4. Map provider bundles to planned Streetwise plans only after written approval.
 5. Re-run provider economics at $15, $20, $25, and $30 retail targets.
 6. Finalise customer-facing plan descriptions from verified provider terms.
 7. Finalise Terms, Privacy, Refund/Support documents against the signed provider agreement.
-8. Configure production secrets only in the deployment platform.
+8. Configure production secrets only in the deployment platform. For AT&T, keep `ATT_COMMERCIAL_CONTRACT_APPROVED=false` and `ATT_LIVE_PROVISIONING_ENABLED=false` until the signed agreement and controlled acceptance evidence justify changing them.
 9. Run repository verification and production smoke checks.
 10. Enable a single controlled staging cellular activation.
 11. Validate idempotency, subscriber/line persistence, provisioning, SIM/eSIM install details, usage sync, suspend/resume where supported, failure handling, refund/reconciliation, lifecycle webhooks and support escalation. If voice/numbering is in the initial launch, also validate number assignment, voice, SMS, E911 workflow, controlled porting and SIM-swap/port-out security.
@@ -41,7 +41,7 @@ STRIPE_LIVE_MODE_ENABLED=false
 ESIM_LIVE_ORDERS_ENABLED=false
 ```
 
-No signed licence or provider agreement automatically changes these flags.
+No signed licence or provider agreement automatically changes these flags. AT&T also remains locked until `ATT_COMMERCIAL_CONTRACT_APPROVED` and later `ATT_LIVE_PROVISIONING_ENABLED` are explicitly changed in secure deployment configuration after evidence review.
 
 ## Definition of ready to implement
 
@@ -50,6 +50,7 @@ The repo is ready for post-licensing implementation when:
 - database migrations exist for compliance, business organisations, lines, and provider approvals;
 - pricing and product positioning match the current residential/commercial strategy;
 - provider activation fails closed without commercial evidence;
+- AT&T commercial/API/live-provisioning gates fail closed independently;
 - paperwork transfer sheets identify all owner/external inputs;
 - sensitive identity data is excluded from public GitHub;
 - production verification workflows pass.

@@ -1,110 +1,86 @@
 # Streetwise Connection — Provider Outreach
 
-Use this document when opening provider conversations. Do not send secrets, banking details, government identifiers, or private contracts through GitHub.
+Last reviewed: 2026-08-30
 
-## Core description
+Do not send API secrets, banking information, SSN/ITIN, private identity records, or signed contracts through GitHub.
 
-Streetwise Connection is building an affordable, security-focused cellular service brand for residential customers and small businesses in the United States, with international/travel expansion planned.
+## AT&T primary outreach
 
-Streetwise intends to launch through licensed wholesale carrier/MVNO/MVNE/Telco-as-a-Service infrastructure rather than owning towers or spectrum.
-
-The public product remains waitlist-only while provider, pricing, compliance, support, security, and payment acceptance work is completed.
-
-## Questions every full-cellular candidate must answer in writing
-
-1. What commercial role would Streetwise hold?
-2. Do you permit recurring same-country U.S. domestic service?
-3. Do you permit residential resale?
-4. Do you permit commercial/small-business resale?
-5. Which U.S. networks are available?
-6. What data plans, throttling and hotspot/tethering rules apply?
-7. Is native mobile voice supported?
-8. Is SMS supported?
-9. Are local U.S. mobile numbers available?
-10. Is mobile-number portability supported?
-11. What are the porting costs, SLAs and failure processes?
-12. Is 5G supported?
-13. Is VoLTE supported?
-14. Is Wi-Fi calling supported?
-15. Are eSIM and physical SIM supported?
-16. What SIM swap/replacement, suspend/resume, and line-lifecycle APIs/events are available?
-17. Are port-out or SIM-swap security controls/events available?
-18. What roaming/international products are available?
-19. Can one subscriber keep the same domestic identity/number while travelling?
-20. Are multi-network selection, fallback, or alternate-profile options available?
-21. How quickly is usage data updated?
-22. What webhook/event and idempotency mechanisms are available?
-23. Is a sandbox/test environment available?
-24. What minimum deposit, funding, monthly spend, or volume commitment applies?
-25. Can we receive account-specific wholesale pricing before major funding?
-26. What refund/credit rules apply to failed or mis-provisioned activations?
-27. What support duties remain with Streetwise?
-28. Who is provider of record?
-29. Who handles E911 obligations?
-30. Who handles number administration/porting obligations?
-31. Who handles FCC Form 499/USAC obligations?
-32. Which Nevada/state telecom registrations remain Streetwise's responsibility?
-33. Which taxes and telecom surcharges must Streetwise collect/remit?
-34. What fraud, KYC, sanctions and abuse responsibilities apply?
-35. What happens to active lines and customer numbers if the agreement terminates?
-
-## Priority outreach — 1GLOBAL / full-stack provider
-
-Subject: Streetwise Connection U.S. cellular MVNO/Telco-as-a-Service partnership request
+Subject: Streetwise Connection wireless reseller / wholesale partnership qualification
 
 Hello,
 
-Streetwise Connection is preparing an affordable, security-focused cellular service for residential customers and small businesses in the United States. We are seeking a wholesale/Telco-as-a-Service partner that can support a recurring domestic mobile product under the Streetwise brand.
+Streetwise Connection is preparing a branded cellular service for residential customers and small businesses in the United States. We are currently pre-launch and waitlist-only while provider, regulatory, pricing and technical acceptance work is completed.
 
-Our intended long-term service is broader than travel data. We are evaluating support for mobile data, hotspot, native voice, SMS, local U.S. phone numbers, number portability, eSIM/SIM lifecycle, 5G, VoLTE, Wi-Fi calling, roaming, and line-management APIs.
+We are evaluating the appropriate AT&T relationship for our model, including AT&T Partner Exchange and AT&T Wholesale.
 
-We are also interested in any capabilities that can support stronger SIM-swap/port-out security, lifecycle alerts, network resilience/fallback, and an emergency-connectivity reserve or separate protected data allowance.
+Our intended service requires recurring U.S. wireless connectivity and, where supported by the approved AT&T product, mobile data, hotspot, native voice, SMS, local phone numbers, number portability, SIM/eSIM activation, 5G, VoLTE, Wi-Fi calling, roaming and line-management capabilities.
 
-Before we build the next provider-specific layer, please provide information on:
+We intend to own the Streetwise customer experience and provide first-line support as required by the final agreement. We will not market AT&T-backed service, charge customers, or activate live lines until AT&T confirms our contractual role and permitted products in writing.
 
-- U.S. domestic mobile products and supported networks
-- residential and commercial resale rights
-- account-specific wholesale pricing
-- minimum commitments/funding
-- voice/SMS/number/porting capability
-- 5G/VoLTE/Wi-Fi calling
-- eSIM/physical-SIM lifecycle
-- sandbox/test credentials
-- webhooks/events/idempotency
-- roaming/international options
-- security/fraud/line-change controls
-- support and SLA responsibilities
-- provider-of-record, E911, numbering/porting, taxes, FCC/USAC and state-regulatory allocation
+Please advise which AT&T program is the correct fit and provide the qualification/commercial requirements for:
 
-Streetwise will remain waitlist-only and will not enable public billing or live line activation until the commercial, technical and regulatory model is validated.
+- residential and small-business wireless resale;
+- recurring U.S. domestic use;
+- branding or co-branding rights;
+- provider-of-record responsibilities;
+- supported wireless products and networks;
+- voice, SMS, number assignment and number porting;
+- SIM/eSIM lifecycle;
+- 5G, VoLTE and Wi-Fi calling;
+- roaming/international options;
+- API or portal access, authentication, test/sandbox options and lifecycle events;
+- Tier 1 support and escalation responsibilities;
+- end-user billing requirements;
+- account minimums/commitments and account-specific wholesale pricing;
+- refund, fraud and failed-activation rules;
+- FCC/USAC, FRN, E911, numbering/porting, taxes/surcharges and Nevada/state regulatory allocation.
+
+Streetwise has prepared its software to fail closed until the commercial and technical requirements are complete.
 
 Thank you,
 Streetwise Connection
 
-## Secondary outreach — eSIM Go
+## AT&T follow-up questions
 
-Subject: Streetwise Connection recurring U.S. product and full-cellular capability clarification
+1. Should Streetwise apply through Partner Exchange, Wholesale, or another AT&T route?
+2. Is residential wireless resale permitted under that route?
+3. Is small-business wireless resale permitted?
+4. May Streetwise own the end-customer relationship?
+5. What Tier 1 support capability is required?
+6. Is a 24/7/365 NOC mandatory for the selected route or product?
+7. Must Streetwise already bill live end users before qualification?
+8. Is an FCC FRN required before application approval or only before certain services launch?
+9. Which wireless voice/data/messaging products are resellable?
+10. Are phone numbers and number porting included?
+11. What API/portal capabilities are provided?
+12. Is test/sandbox access available before production?
+13. What minimum spend, deposit or volume applies?
+14. What branding/co-branding language is permitted?
+15. Which legal/regulatory duties stay with AT&T and which transfer to Streetwise?
 
-Hello,
+## 1GLOBAL fallback outreach
 
-Streetwise Connection currently has a working technical integration with eSIM Go for eSIM/data evaluation. Our product direction has expanded toward a recurring U.S. cellular service.
+Streetwise should maintain a parallel request for a recurring U.S. full-cellular offer covering data, voice, SMS, numbers, porting, SIM/eSIM, 5G, VoLTE, Wi-Fi calling, roaming, APIs, pricing, support and regulatory allocation.
 
-Your Travel API documentation describes roaming-mode travel eSIMs and a potential restriction on SIMs used in the same country for more than 60 days.
+Do not close the fallback path until AT&T is commercially and technically accepted.
 
-Before treating eSIM Go as anything beyond a travel/short-duration data path, please confirm whether you can offer Streetwise:
+## eSIM Go travel path
 
-1. a product or contractual exception that permits continuous recurring U.S. domestic use; and
-2. any wholesale capability for native voice, SMS, U.S. phone numbers, number portability, 5G/VoLTE/Wi-Fi calling, or broader MVNO enablement.
-
-Please also confirm applicable pricing, minimum funding, support, refund, provider-of-record, tax and regulatory responsibilities.
-
-We will not enable customer sales or live orders until those terms are resolved.
-
-Thank you,
-Streetwise Connection
+Keep eSIM Go discussions limited to travel/short-duration data unless a separate written product resolves the recurring domestic-use limitation.
 
 ## Recordkeeping
 
-Store confidential provider replies, quotes and signed terms outside the public repository.
+Store confidential provider replies and signed terms in private company storage.
 
-GitHub should contain only non-confidential engineering conclusions and evidence flags needed for launch decisions.
+Record in GitHub only:
+
+- provider name;
+- evidence record ID;
+- response date;
+- non-confidential capability conclusions;
+- pricing status, not private quote documents;
+- contract approval status;
+- technical test status.
+
+No public Streetwise page should name AT&T as the service provider until branding/resale rights are approved.

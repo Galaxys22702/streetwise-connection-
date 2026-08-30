@@ -1,6 +1,6 @@
 # Streetwise Connection — Nevada Licensing Application Packet
 
-Prepared: 2026-08-27
+Prepared: 2026-08-30
 
 This is an owner-ready filing worksheet. It is **not** a filed licence and does not replace instructions shown in the official filing portals. Sensitive identity information must never be committed to this public repository.
 
@@ -96,6 +96,8 @@ If the final location is home-based, current City guidance states that a home-oc
 
 ## Telecom-specific approval packet
 
+AT&T is the primary domestic provider candidate. Use `../ATT_PROVIDER_APPLICATION_PACKET.md` for AT&T qualification and `AT&T-SIGNATURE-READY-PACKET.md` for signature transfer. Keep 1GLOBAL as fallback until AT&T commercial and technical acceptance is complete.
+
 Before live cellular sales, phone-number assignment/porting, or SIM/eSIM activation, obtain written answers to each item below from the selected wholesale provider and, where necessary, the relevant regulator/adviser:
 
 - Streetwise contractual role: agent, retailer, reseller, MVNO/MVNE customer, or other
@@ -136,7 +138,7 @@ These prices are targets, not filed tariff rates or guaranteed sellable offers. 
 3. Obtain IRS EIN.
 4. Register required Nevada tax accounts/permits.
 5. Confirm local jurisdiction and file the applicable local business licence/home-occupation approval.
-6. Complete provider commercial onboarding and obtain written U.S./residential/commercial rights.
+6. Complete AT&T qualification/commercial onboarding, or the documented fallback path, and obtain written U.S./residential/commercial rights.
 7. Resolve PUCN/FCC/USAC responsibilities for the final contractual role.
 8. Approve one controlled paid staging cellular activation and, if included in the first launch, controlled voice/SMS/numbering lifecycle tests.
 9. Approve final customer legal policies and launch-plan mappings.

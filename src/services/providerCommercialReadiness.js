@@ -1,6 +1,10 @@
-const REQUIRED_PROVIDERS = ["esim-go", "1global"];
+import { domesticProviderCandidates } from "../config/providerStrategy.js";
+
+const REQUIRED_PROVIDERS = [...domesticProviderCandidates];
+const OPTIONAL_PROVIDERS = ["esim-go"];
 const COMMERCIAL_ROLES = new Set(["reseller", "agent", "mvno", "customer", "other"]);
 const PRICING_SOURCES = new Set(["account-specific-catalogue", "written-quote", "signed-terms"]);
+const ATT_PARTNER_PATHS = new Set(["partner-exchange", "wholesale", "both", "other"]);
 
 function hasText(value) {
   return typeof value === "string" && Boolean(value.trim());
@@ -42,6 +46,15 @@ function assessProvider(providerId, evidence = {}) {
   if (!/^[A-Z]{3}$/.test(pricing.currency || "")) missing.push(`${providerId}.pricing.currency`);
   if (!PRICING_SOURCES.has(pricing.source)) missing.push(`${providerId}.pricing.source`);
 
+  if (providerId === "att-wholesale") {
+    if (!ATT_PARTNER_PATHS.has(evidence.partnerPath)) missing.push("att-wholesale.partnerPath");
+    requireTrue("tier1SupportModelDocumented");
+    requireTrue("endUserBillingModelDocumented");
+    requireTrue("frnStatusDocumented");
+    requireTrue("apiAccessDocumented");
+    requireTrue("brandingRightsDocumented");
+  }
+
   return {
     providerId,
     commercialEvidenceComplete: missing.length === 0,
@@ -60,6 +73,10 @@ export function assessProviderCommercialReadiness(input = {}) {
   const providerResults = REQUIRED_PROVIDERS.map((providerId) => (
     assessProvider(providerId, input.providers?.[providerId])
   ));
+  const optionalProviderResults = OPTIONAL_PROVIDERS
+    .filter((providerId) => input.providers?.[providerId])
+    .map((providerId) => assessProvider(providerId, input.providers?.[providerId]));
+
   const comparisonReady = (
     safetyFailures.length === 0 &&
     providerResults.every((provider) => provider.commercialEvidenceComplete)
@@ -83,6 +100,7 @@ export function assessProviderCommercialReadiness(input = {}) {
     safetyGatePassed: safetyFailures.length === 0,
     safetyFailures,
     providerResults,
+    optionalProviderResults,
     comparisonReady,
     selectedProvider: selectedProvider || null,
     activationReady: comparisonReady && activationMissing.length === 0,

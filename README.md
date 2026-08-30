@@ -67,17 +67,32 @@ Final pricing must be validated against wholesale connectivity, voice/SMS/number
 
 ## Provider strategy
 
-### Primary path: full cellular/MVNO-style provider
+### Primary domestic path: AT&T
 
-Streetwise should prioritise a provider capable of supporting recurring U.S. domestic service and, ideally, voice, SMS, phone numbers, porting, 5G/VoLTE/Wi-Fi calling, branded SIM/eSIM lifecycle, and international roaming through a production-grade API.
+AT&T is the primary U.S. domestic commercial evaluation path.
 
-1GLOBAL is currently the priority provider candidate because its public Telco-as-a-Service materials describe a fuller cellular stack than a travel-eSIM-only product. Public documentation is not commercial approval. Streetwise still needs account-specific U.S. terms, pricing, network details, minimum commitments, support responsibilities, provider-of-record allocation, and regulatory responsibilities in writing.
+Streetwise is evaluating the correct AT&T route, including AT&T Partner Exchange and AT&T Wholesale. Current AT&T public materials show reseller/wholesale wireless voice, data, and messaging opportunities, but public material is not an approval for Streetwise.
 
-### Secondary path: eSIM Go
+The repository therefore treats AT&T as **commercially targeted but technically fail-closed**:
 
-The existing eSIM Go adapter remains technically useful for travel/short-duration data products and controlled testing. Current eSIM Go Travel API documentation describes roaming use and a permanent-roaming restriction risk for same-country use beyond 60 days, so it should not be treated as the recurring U.S. cellular foundation without a written exception or different qualifying product.
+- internal provider candidate: att-wholesale
+- public AT&T affiliation claim: disabled
+- AT&T commercial-contract flag: false
+- AT&T live-provisioning flag: false
+- AT&T API endpoints/SKUs: intentionally undefined until supplied by AT&T
+- AT&T credentials: secret-storage only after approval
 
-See docs/PROVIDER_COMPARISON.md and docs/PROVIDER_ONBOARDING.md.
+Streetwise must not advertise itself as an AT&T reseller, AT&T MVNO, AT&T partner, or AT&T-powered service until the applicable rights are granted in writing.
+
+See docs/ATT_PROVIDER_APPLICATION_PACKET.md for the prepared qualification transfer sheet.
+
+### Domestic fallback: 1GLOBAL
+
+1GLOBAL remains the full-stack fallback so Streetwise can compare AT&T's actual commercial/technical offer against another provider and avoid provider lock-in before launch.
+
+### Travel/data path: eSIM Go
+
+The existing eSIM Go integration remains useful for travel/short-duration data products and controlled technical testing. It no longer blocks domestic provider selection.
 
 ## Existing platform foundation
 
@@ -91,7 +106,8 @@ The repository already contains:
 - Provider abstraction layer
 - Mock connectivity provider
 - eSIM Go adapter and controlled diagnostics
-- Read-only 1GLOBAL preparation
+- AT&T-first commercial strategy and fail-closed AT&T provider gate
+- Read-only 1GLOBAL fallback preparation
 - Provider economics tooling
 - Provider commercial-evidence gate
 - Idempotency protections
@@ -181,8 +197,8 @@ The default payment and connectivity providers remain mocks during local develop
 
 ## Next concrete milestones
 
-1. Obtain a written 1GLOBAL or equivalent full-cellular commercial offer for recurring U.S. service.
-2. Confirm voice, SMS, local number, number-porting, Wi-Fi calling/VoLTE, domestic use, roaming, network, and support capabilities.
+1. Submit the prepared AT&T qualification packet and obtain the correct AT&T Partner Exchange/Wholesale path plus written commercial terms.
+2. Confirm AT&T residential/commercial resale, voice, SMS, local number, number-porting, SIM/eSIM, Wi-Fi calling/VoLTE, domestic use, roaming, network, support, branding and API capabilities.
 3. Resolve provider-of-record, Nevada PUCN, FCC/USAC, E911, taxes/surcharges, number-porting, and customer-disclosure responsibilities for the final model.
 4. Map real wholesale products to the existing target pricing.
 5. Validate contribution margin.

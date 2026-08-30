@@ -13,7 +13,7 @@ const examplePath = fileURLToPath(
 test("example evidence fails comparison while provider facts remain unknown", () => {
   const result = spawnSync(process.execPath, [scriptPath, examplePath], { encoding: "utf8" });
   assert.equal(result.status, 4);
-  assert.match(result.stdout, /esim-go: incomplete/);
+  assert.match(result.stdout, /att-wholesale: incomplete/);
   assert.match(result.stdout, /1global: incomplete/);
   assert.match(result.stdout, /Comparison ready: no/);
 });
