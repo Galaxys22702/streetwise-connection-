@@ -8,26 +8,32 @@
   "selectedProvider": null,
   "legalApprovalRecorded": false,
   "providers": {
-    "esim-go": {
+    "att-wholesale": {
       "evidenceRecordId": "",
       "responseDate": "",
       "termsApprovedForUseCase": false,
       "domesticUsePermitted": false,
       "commercialRole": "",
       "providerOfRecord": "",
-      "minimumCommitmentUsd": 1000,
+      "minimumCommitmentUsd": null,
       "networkCoverageConfirmed": false,
       "refundRulesDocumented": false,
       "supportResponsibilitiesDocumented": false,
       "taxResponsibilitiesDocumented": false,
+      "partnerPath": "",
+      "tier1SupportModelDocumented": false,
+      "endUserBillingModelDocumented": false,
+      "frnStatusDocumented": false,
+      "apiAccessDocumented": false,
+      "brandingRightsDocumented": false,
       "pricing": {
-        "candidateSku": "esim_3GB_30D_US_V2",
-        "wholesaleCost": 4,
-        "currency": "USD",
-        "source": "account-specific-catalogue"
+        "candidateSku": "",
+        "wholesaleCost": null,
+        "currency": "",
+        "source": ""
       },
-      "credentialsVerified": true,
-      "catalogueImported": true,
+      "credentialsVerified": false,
+      "catalogueImported": false,
       "validationPassed": false,
       "stagingLifecycleTestPassed": false
     },
@@ -51,6 +57,29 @@
       },
       "credentialsVerified": false,
       "catalogueImported": false,
+      "validationPassed": false,
+      "stagingLifecycleTestPassed": false
+    },
+    "esim-go": {
+      "evidenceRecordId": "",
+      "responseDate": "",
+      "termsApprovedForUseCase": false,
+      "domesticUsePermitted": false,
+      "commercialRole": "",
+      "providerOfRecord": "",
+      "minimumCommitmentUsd": 1000,
+      "networkCoverageConfirmed": false,
+      "refundRulesDocumented": false,
+      "supportResponsibilitiesDocumented": false,
+      "taxResponsibilitiesDocumented": false,
+      "pricing": {
+        "candidateSku": "esim_3GB_30D_US_V2",
+        "wholesaleCost": 4,
+        "currency": "USD",
+        "source": "account-specific-catalogue"
+      },
+      "credentialsVerified": true,
+      "catalogueImported": true,
       "validationPassed": false,
       "stagingLifecycleTestPassed": false
     }
