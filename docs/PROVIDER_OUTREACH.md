@@ -4,67 +4,107 @@ Use this document when opening provider conversations. Do not send secrets, bank
 
 ## Core description
 
-Streetwise Connection is building a data-only eSIM connectivity service and is evaluating wholesale/API providers for an initial recurring U.S. launch with possible international expansion. The public product remains waitlist-only while provider, pricing, compliance, support and payment acceptance work is completed.
+Streetwise Connection is building an affordable, security-focused cellular service brand for residential customers and small businesses in the United States, with international/travel expansion planned.
 
-## Questions that must be answered in writing
+Streetwise intends to launch through licensed wholesale carrier/MVNO/MVNE/Telco-as-a-Service infrastructure rather than owning towers or spectrum.
 
-Ask every candidate provider:
+The public product remains waitlist-only while provider, pricing, compliance, support, security, and payment acceptance work is completed.
 
-1. Do you permit recurring or long-term same-country use in the United States, and are there permanent-roaming or fair-use limits?
-2. Can the same subscriber remain continuously active in the U.S. beyond 60 days and across repeated monthly renewals?
-3. What commercial role would Streetwise hold: reseller, agent, MVNO customer, or another category?
-4. Who is provider of record to the end customer?
-5. What are the minimum deposit, top-up, monthly spend or volume commitments?
-6. Are account-specific wholesale prices available before funding?
-7. Which U.S. networks are included and can network availability vary by bundle?
-8. What data-only plans, durations, renewals and top-ups are available?
-9. How quickly is usage data updated?
-10. What refund/credit rules apply to failed, unused, partially used or mis-provisioned eSIMs?
-11. What first-line customer support obligations fall on Streetwise?
-12. What webhook/event and idempotency mechanisms are available?
-13. Which telecom taxes, registrations, reporting or customer disclosures remain Streetwise's responsibility?
-14. Is a sandbox/test environment available without a funded production balance?
-15. Can one controlled low-cost test eSIM be purchased after validation?
+## Questions every full-cellular candidate must answer in writing
 
-## eSIM Go request
+1. What commercial role would Streetwise hold?
+2. Do you permit recurring same-country U.S. domestic service?
+3. Do you permit residential resale?
+4. Do you permit commercial/small-business resale?
+5. Which U.S. networks are available?
+6. What data plans, throttling and hotspot/tethering rules apply?
+7. Is native mobile voice supported?
+8. Is SMS supported?
+9. Are local U.S. mobile numbers available?
+10. Is mobile-number portability supported?
+11. What are the porting costs, SLAs and failure processes?
+12. Is 5G supported?
+13. Is VoLTE supported?
+14. Is Wi-Fi calling supported?
+15. Are eSIM and physical SIM supported?
+16. What SIM swap/replacement, suspend/resume, and line-lifecycle APIs/events are available?
+17. Are port-out or SIM-swap security controls/events available?
+18. What roaming/international products are available?
+19. Can one subscriber keep the same domestic identity/number while travelling?
+20. Are multi-network selection, fallback, or alternate-profile options available?
+21. How quickly is usage data updated?
+22. What webhook/event and idempotency mechanisms are available?
+23. Is a sandbox/test environment available?
+24. What minimum deposit, funding, monthly spend, or volume commitment applies?
+25. Can we receive account-specific wholesale pricing before major funding?
+26. What refund/credit rules apply to failed or mis-provisioned activations?
+27. What support duties remain with Streetwise?
+28. Who is provider of record?
+29. Who handles E911 obligations?
+30. Who handles number administration/porting obligations?
+31. Who handles FCC Form 499/USAC obligations?
+32. Which Nevada/state telecom registrations remain Streetwise's responsibility?
+33. Which taxes and telecom surcharges must Streetwise collect/remit?
+34. What fraud, KYC, sanctions and abuse responsibilities apply?
+35. What happens to active lines and customer numbers if the agreement terminates?
 
-Subject: Streetwise Connection U.S. domestic-use exception and reseller review
+## Priority outreach — 1GLOBAL / full-stack provider
+
+Subject: Streetwise Connection U.S. cellular MVNO/Telco-as-a-Service partnership request
 
 Hello,
 
-Streetwise Connection is evaluating eSIM Go for a data-only eSIM service. Our current technical integration is working: our API credentials authenticate, the U.S. catalogue is accessible, and we have completed a validation-only pricing check without enabling live ordering.
+Streetwise Connection is preparing an affordable, security-focused cellular service for residential customers and small businesses in the United States. We are seeking a wholesale/Telco-as-a-Service partner that can support a recurring domestic mobile product under the Streetwise brand.
 
-Our intended product is a recurring U.S. service rather than a short travel product. Your current developer documentation states that travel eSIMs operate in roaming mode and that eSIM Go reserves the right to restrict a SIM used in the same country for more than 60 days.
+Our intended long-term service is broader than travel data. We are evaluating support for mobile data, hotspot, native voice, SMS, local U.S. phone numbers, number portability, eSIM/SIM lifecycle, 5G, VoLTE, Wi-Fi calling, roaming, and line-management APIs.
 
-Before we fund the account, please confirm in writing whether eSIM Go can offer Streetwise either:
+We are also interested in any capabilities that can support stronger SIM-swap/port-out security, lifecycle alerts, network resilience/fallback, and an emergency-connectivity reserve or separate protected data allowance.
 
-1. a contractual exception permitting continuous same-country U.S. use beyond 60 days and repeated renewals; or
-2. another wholesale product/profile designed for long-term domestic U.S. service rather than travel roaming.
+Before we build the next provider-specific layer, please provide information on:
 
-Please also confirm the applicable commercial classification, account-specific U.S. pricing, minimum funding requirement, first-line support obligations, refund/failed-activation rules, provider-of-record responsibilities, and any U.S. telecom/tax obligations that remain with Streetwise.
+- U.S. domestic mobile products and supported networks
+- residential and commercial resale rights
+- account-specific wholesale pricing
+- minimum commitments/funding
+- voice/SMS/number/porting capability
+- 5G/VoLTE/Wi-Fi calling
+- eSIM/physical-SIM lifecycle
+- sandbox/test credentials
+- webhooks/events/idempotency
+- roaming/international options
+- security/fraud/line-change controls
+- support and SLA responsibilities
+- provider-of-record, E911, numbering/porting, taxes, FCC/USAC and state-regulatory allocation
 
-We will not enable customer sales or live eSIM orders until these terms are resolved.
+Streetwise will remain waitlist-only and will not enable public billing or live line activation until the commercial, technical and regulatory model is validated.
 
 Thank you,
 Streetwise Connection
 
-## 1GLOBAL Connect request
+## Secondary outreach — eSIM Go
 
-Subject: Streetwise Connection recurring U.S. reseller/API access request
+Subject: Streetwise Connection recurring U.S. product and full-cellular capability clarification
 
 Hello,
 
-Streetwise Connection is evaluating 1GLOBAL Connect for a recurring data-only eSIM service. We are seeking reseller/API access for an initial U.S. launch with potential international expansion.
+Streetwise Connection currently has a working technical integration with eSIM Go for eSIM/data evaluation. Our product direction has expanded toward a recurring U.S. cellular service.
 
-Our key requirement is **continuous same-country U.S. service**, not a short-duration travel-roaming product. Please confirm whether your reseller products permit a subscriber to remain active in the United States beyond 60 days and through repeated monthly renewals without a permanent-roaming restriction that would make the service unsuitable for ongoing domestic use.
+Your Travel API documentation describes roaming-mode travel eSIMs and a potential restriction on SIMs used in the same country for more than 60 days.
 
-We would also like information on partner onboarding, test or sandbox credentials, U.S. wholesale pricing, commercial minimums, supported U.S. networks, renewal/top-up behaviour, usage reporting, webhooks, idempotency, support responsibilities, refund terms, and provider-of-record/regulatory responsibilities.
+Before treating eSIM Go as anything beyond a travel/short-duration data path, please confirm whether you can offer Streetwise:
 
-Our software architecture is server-to-server and we are specifically interested in the Connect reseller model, data-only product catalogue, subscriber/subscription lifecycle APIs and any U.S.-specific product or contractual requirements.
+1. a product or contractual exception that permits continuous recurring U.S. domestic use; and
+2. any wholesale capability for native voice, SMS, U.S. phone numbers, number portability, 5G/VoLTE/Wi-Fi calling, or broader MVNO enablement.
+
+Please also confirm applicable pricing, minimum funding, support, refund, provider-of-record, tax and regulatory responsibilities.
+
+We will not enable customer sales or live orders until those terms are resolved.
 
 Thank you,
 Streetwise Connection
 
 ## Recordkeeping
 
-Store provider replies and signed terms outside the public repository. In GitHub, record only non-confidential conclusions needed for engineering and launch decisions.
+Store confidential provider replies, quotes and signed terms outside the public repository.
+
+GitHub should contain only non-confidential engineering conclusions and evidence flags needed for launch decisions.

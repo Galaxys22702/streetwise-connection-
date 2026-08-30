@@ -6,7 +6,7 @@
 
 - Business: Streetwise Connection
 - Launch market: Las Vegas, Nevada
-- Initial model: eSIM/mobile-data reseller using licensed wholesale network partners
+- Initial model: branded cellular/MVNO reseller or Telco-as-a-Service business using licensed wholesale network partners
 - Ownership plan for formation: single-member Nevada LLC, with ownership changes documented separately if added later
 - No towers, spectrum ownership, fiber construction, or public right-of-way infrastructure in the initial MVP
 

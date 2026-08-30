@@ -4,7 +4,7 @@
 
 **Last draft update:** August 25, 2026
 
-Streetwise Connection ("Streetwise," "we," "us," or "our") is developing a platform for eSIM-based mobile-data services. This draft explains the categories of information the service is expected to process and the purposes for that processing.
+Streetwise Connection ("Streetwise," "we," "us," or "our") is developing a platform for branded cellular connectivity services delivered through licensed wholesale network partners. This draft explains the categories of information the service is expected to process and the purposes for that processing.
 
 ## 1. Information we may collect
 
@@ -19,15 +19,18 @@ We may collect information such as:
 
 Passwords should be stored only as cryptographic password hashes. Session credentials should be protected and should not be logged or exposed publicly.
 
-### Service and eSIM information
+### Cellular service, SIM/eSIM, and phone-number information
 
-We may process information needed to provide mobile-data service, including:
+We may process information needed to provide cellular service, including:
 
-- selected plan and country;
+- selected plan, service area, and roaming/travel options;
 - device description supplied by the customer;
-- eSIM order identifiers and activation status;
-- installation information such as ICCID, SM-DP+ address, or activation data when necessary to deliver the service;
-- usage and allowance information supplied by the network/eSIM provider.
+- subscriber, line, SIM/eSIM order identifiers, ICCID and activation status;
+- installation information such as SM-DP+ address or activation data when necessary to deliver the service;
+- assigned phone number and number-porting status when those services are offered;
+- usage and allowance information supplied by the network provider;
+- limited voice/SMS routing or usage metadata where necessary to provide, bill, secure, troubleshoot, or legally administer those services;
+- SIM-swap, porting, line-change, fraud, and security events where applicable.
 
 ### Payment and subscription information
 
@@ -44,7 +47,7 @@ Information may be used to:
 - create and secure accounts;
 - authenticate users;
 - process subscriptions and payments;
-- provision and manage eSIM/mobile-data service;
+- provision and manage cellular lines, SIM/eSIM service, phone-number features, and usage;
 - display service status, installation details, and usage;
 - provide customer support;
 - prevent fraud, abuse, duplicate orders, and unauthorized access;
@@ -56,7 +59,7 @@ Information may be used to:
 Streetwise may share information with vendors only as reasonably necessary to operate the service. Expected categories include:
 
 - payment processors;
-- wholesale eSIM/mobile-network providers;
+- wholesale carrier, MVNO/MVNE, Telco-as-a-Service, SIM/eSIM, numbering, and mobile-network providers;
 - cloud hosting and database providers;
 - email/support providers;
 - security, monitoring, and fraud-prevention providers;
@@ -86,7 +89,7 @@ The service is not intended to knowingly collect personal information from child
 
 ## 9. International use
 
-Because eSIM services may be used while traveling, information may be processed by network and service providers in multiple jurisdictions. The final policy should describe cross-border processing based on the actual provider contracts and launch countries.
+Because cellular and roaming services may be used across multiple networks and countries, information may be processed by network and service providers in multiple jurisdictions. The final policy should describe cross-border processing based on the actual provider contracts and launch countries.
 
 ## 10. Changes
 

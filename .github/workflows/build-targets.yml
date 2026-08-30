@@ -105,7 +105,7 @@ jobs:
             -X POST http://127.0.0.1:3000/api/payments/checkout \
             -H 'Content-Type: application/json' \
             -H "Authorization: Bearer $TOKEN" \
-            -d '{"planId":"starter-10"}' | grep '"provider":"mock"'
+            -d '{"planId":"residential-home-25"}' | grep '"provider":"mock"'
 
           curl --fail --silent 'http://127.0.0.1:3000/api/provider/catalogue?country=US' | grep 'mock_1GB_7D_GLOBAL'
 

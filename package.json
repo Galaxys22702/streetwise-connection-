@@ -2,7 +2,7 @@
   "name": "streetwise-connection",
   "version": "0.4.0",
   "private": true,
-  "description": "MVP control plane and storefront for affordable eSIM-based mobile data service.",
+  "description": "Control plane and waitlist foundation for affordable, security-focused cellular/MVNO service.",
   "type": "module",
   "scripts": {
     "start": "node src/server.js",

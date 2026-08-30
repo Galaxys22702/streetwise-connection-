@@ -1,6 +1,6 @@
 # Streetwise Connection — Owner Actions Only
 
-This file intentionally contains only work that cannot be completed safely by repository automation alone because it requires the legal owner, identity verification, signature, payment, regulator interaction, confidential account access, or provider approval.
+This file contains work that cannot be completed safely by repository automation alone because it requires the legal owner, identity verification, signature, payment, regulator interaction, confidential account access, or provider approval.
 
 ## Business formation and licensing
 
@@ -12,54 +12,78 @@ This file intentionally contains only work that cannot be completed safely by re
 - [ ] Complete required Nevada Department of Taxation registration.
 - [ ] Confirm the exact local jurisdiction for the operating address.
 - [ ] Obtain the applicable City of Las Vegas or Clark County business licence.
-- [ ] Complete any required home-occupation approval for the final address.
+- [ ] Complete any required home-occupation approval.
 - [ ] Sign and retain the final operating agreement outside the public repository.
 - [ ] Open a business bank account and keep business and personal funds separate.
 
-## Provider commercial approval
+## Full-cellular provider commercial approval
 
-- [ ] Complete business-account verification with the preferred wholesale provider.
-- [ ] Obtain a written commercial offer from 1GLOBAL and/or another suitable provider for comparison.
-- [ ] Obtain written confirmation that recurring U.S. domestic use is permitted for the intended Streetwise model.
-- [ ] Obtain written confirmation that both residential and commercial resale/use are permitted.
-- [ ] Confirm provider-of-record responsibilities.
-- [ ] Confirm actual data allowances, throttling and hotspot rules for every proposed launch tier.
-- [ ] Confirm refunds, cancellations, support escalation, SLA, fraud and failed-activation responsibilities.
-- [ ] Confirm taxes, telecom surcharges and who collects/remits them.
-- [ ] Approve provider funding only after the commercial comparison passes.
+- [ ] Obtain a written commercial offer from 1GLOBAL and/or another suitable full-stack cellular/MVNO/MVNE provider.
+- [ ] Confirm the exact contractual role Streetwise would hold.
+- [ ] Confirm recurring U.S. domestic-use rights.
+- [ ] Confirm residential resale/use.
+- [ ] Confirm commercial/small-business resale/use.
+- [ ] Confirm supported U.S. networks.
+- [ ] Confirm data allowance, throttling and hotspot/tethering.
+- [ ] Confirm native voice.
+- [ ] Confirm SMS.
+- [ ] Confirm U.S. local phone numbers.
+- [ ] Confirm number portability.
+- [ ] Confirm 5G, VoLTE and Wi-Fi calling.
+- [ ] Confirm eSIM and/or physical-SIM lifecycle.
+- [ ] Confirm SIM swap/replacement and suspend/resume capability.
+- [ ] Confirm roaming/international products.
+- [ ] Confirm network selection/failover/resilience options, if any.
+- [ ] Confirm security/fraud/port-out/SIM-swap events or controls.
+- [ ] Confirm refunds, failed activations, SLA and support escalation.
+- [ ] Confirm minimum funding, deposit, monthly spend or volume commitments.
+- [ ] Confirm wholesale pricing and all per-number/per-message/per-minute/per-GB or other applicable charges.
+- [ ] Confirm treatment of active lines and phone numbers if the provider relationship ends.
 
 ## Regulatory decisions / filings
 
-- [ ] Resolve whether the final reseller model requires Nevada PUCN CMRS registration or another state telecom filing.
-- [ ] Resolve whether Streetwise requires an FCC FRN, Form 499 registration or USAC contributions for the final provider-of-record model.
-- [ ] Complete any required filings before enabling live Nevada service.
+- [ ] Resolve Streetwise/provider-of-record status.
+- [ ] Resolve Nevada PUCN CMRS or other applicable state telecom registration.
+- [ ] Resolve FCC FRN/Form 499/USAC responsibility.
+- [ ] Resolve E911 responsibility for any voice/number service.
+- [ ] Resolve number-assignment and number-portability responsibility.
+- [ ] Resolve telecom taxes/surcharges and collection/remittance.
+- [ ] Resolve customer disclosure requirements for underlying networks/carriers.
+- [ ] Resolve any KYC/identity-verification obligations imposed by the provider or applicable law.
+- [ ] Complete required filings before enabling live Nevada cellular service.
 
 ## Final controlled acceptance
 
-Complete these only after formation, provider approval and regulatory responsibilities are sufficiently resolved:
+Complete only after the formation, provider, regulatory and economic gates are sufficiently resolved:
 
-- [ ] Authorise one controlled paid staging eSIM transaction.
-- [ ] Verify install/QR delivery, persistence, idempotency, retries and usage synchronisation.
-- [ ] Approve final launch bundle mapping for each sellable Streetwise plan.
-- [ ] Approve final customer Terms, Privacy, refund/cancellation and support policies after provider reconciliation.
+- [ ] Authorise one controlled staging cellular activation.
+- [ ] Verify subscriber/line persistence.
+- [ ] Verify eSIM/SIM install and activation.
+- [ ] Verify usage synchronisation.
+- [ ] Verify idempotency, retries and failure handling.
+- [ ] Verify suspend/resume if part of launch.
+- [ ] Verify refund/reconciliation.
+- [ ] If voice/numbering launches: test number assignment, inbound/outbound voice, SMS and required E911 workflow.
+- [ ] Test SIM swap/replacement security workflow.
+- [ ] Test number porting only with provider-approved controlled data.
+- [ ] Approve final launch bundle mapping.
+- [ ] Approve final customer Terms, Privacy, refund/cancellation, security and support policies.
 - [ ] Configure live payment settlement to the business bank account.
-- [ ] Explicitly approve the production switch from waitlist-only mode to commercial service.
+- [ ] Explicitly approve the switch from waitlist-only mode to commercial service.
 
-## Target pricing to validate, not yet promise
+## Planning prices to validate, not promise
 
-- Residential — Streetwise Home: **$25/month**
-- Commercial — Business Starter: **$20/month per line**
-- Commercial — Business Volume: **$15/month per line for 3+ lines**
-- Commercial — Business Pro: **$30/month per line**
+- Residential — Streetwise Home: $25/month
+- Commercial — Business Starter: $20/month per line
+- Commercial — Business Volume: $15/month per line for 3+ lines
+- Commercial — Business Pro: $30/month per line
 
-Do not approve public claims of unlimited data or unlimited hotspot unless the selected provider contract explicitly supports those claims for the relevant tier.
+Do not approve public claims for unlimited data/hotspot, voice/SMS, phone numbers, porting, automatic network switching, emergency reserve, security filtering, 5G, VoLTE, Wi-Fi calling, roaming, or any specific carrier until each claim is supported by the selected provider contract and verified implementation.
 
 ## Safety rule
 
-Until every applicable launch gate is complete, production must remain:
+Until every applicable launch gate is complete:
 
-```env
-PUBLIC_LAUNCH_MODE=waitlist
-STRIPE_LIVE_MODE_ENABLED=false
+PUBLIC_LAUNCH_MODE=waitlist  
+STRIPE_LIVE_MODE_ENABLED=false  
 ESIM_LIVE_ORDERS_ENABLED=false
-```

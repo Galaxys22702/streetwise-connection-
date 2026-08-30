@@ -9,7 +9,7 @@ This is an owner-ready filing worksheet. It is **not** a filed licence and does 
 - Legal entity type: Nevada limited liability company (LLC)
 - Proposed legal name: **Streetwise Connection LLC**
 - Public/trade name: **Streetwise Connection**
-- Primary business model: residential and commercial connectivity services using approved wholesale eSIM/network providers
+- Primary business model: residential and commercial cellular connectivity services using approved wholesale carrier/MVNO/MVNE/Telco-as-a-Service providers
 - Launch market: Nevada / United States, subject to provider and telecom regulatory approval
 - Public launch before approval: waitlist only
 
@@ -17,7 +17,7 @@ This is an owner-ready filing worksheet. It is **not** a filed licence and does 
 
 Use this description unless the licensing authority requests a more specific classification:
 
-> Streetwise Connection provides technology-enabled connectivity services for residential and commercial customers. The business plans to resell or facilitate approved mobile data/eSIM connectivity obtained through contracted wholesale telecommunications providers, together with customer support, device/eSIM setup guidance, account servicing and related connectivity support. No live telecommunications service will be sold until required provider agreements, licences, registrations and regulatory responsibilities are confirmed.
+> Streetwise Connection plans to provide branded cellular connectivity services for residential and commercial customers through contracted licensed wholesale telecommunications providers. The planned service may include mobile data, hotspot, voice, SMS, local mobile numbers, number portability, SIM/eSIM activation, roaming/international options, account-security controls, customer support, device setup guidance and related line-management services where supported by the final provider agreement. Streetwise will not own or claim to own licensed spectrum or facilities-based radio infrastructure unless that later becomes factually and legally true. No live cellular service will be sold until required provider agreements, licences, registrations, technical acceptance tests and regulatory responsibilities are confirmed.
 
 Do **not** claim to own spectrum, operate a facilities-based wireless network, or be a licensed carrier unless that later becomes factually and legally true.
 
@@ -96,7 +96,7 @@ If the final location is home-based, current City guidance states that a home-oc
 
 ## Telecom-specific approval packet
 
-Before live eSIM or connectivity sales, obtain written answers to each item below from the selected wholesale provider and, where necessary, the relevant regulator/adviser:
+Before live cellular sales, phone-number assignment/porting, or SIM/eSIM activation, obtain written answers to each item below from the selected wholesale provider and, where necessary, the relevant regulator/adviser:
 
 - Streetwise contractual role: agent, retailer, reseller, MVNO/MVNE customer, or other
 - Provider of record to the end customer
@@ -106,6 +106,13 @@ Before live eSIM or connectivity sales, obtain written answers to each item belo
 - Permission for commercial resale/use
 - Data allowance and throttling for every launch plan
 - Hotspot/tethering permission and limits
+- Native voice and SMS capability
+- U.S. local-number assignment and number-portability capability
+- 5G, VoLTE and Wi-Fi-calling capability
+- SIM/eSIM replacement, suspend/resume and SIM-swap lifecycle
+- E911 and numbering/porting responsibility
+- Network-selection/failover/resilience options, if any
+- Roaming/international capability
 - Tax and telecom surcharge collection/remittance responsibility
 - FCC Form 499 / USAC responsibility
 - Nevada PUCN CMRS or other state registration responsibility
@@ -131,7 +138,7 @@ These prices are targets, not filed tariff rates or guaranteed sellable offers. 
 5. Confirm local jurisdiction and file the applicable local business licence/home-occupation approval.
 6. Complete provider commercial onboarding and obtain written U.S./residential/commercial rights.
 7. Resolve PUCN/FCC/USAC responsibilities for the final contractual role.
-8. Approve one controlled paid staging transaction.
+8. Approve one controlled paid staging cellular activation and, if included in the first launch, controlled voice/SMS/numbering lifecycle tests.
 9. Approve final customer legal policies and launch-plan mappings.
 10. Explicitly authorise production commercial launch.
 

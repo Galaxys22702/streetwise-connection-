@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { plans } from "./config/plans.js";
+import { cellularCapabilities } from "./config/cellularCapabilities.js";
 import { isCustomerServicePath, isPublicWaitlistOnly, publicLaunchMode } from "./config/launchMode.js";
 import { databaseStatus } from "./db/index.js";
 import {
@@ -154,7 +155,9 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && url.pathname === "/api/public-status") {
     return sendJson(res, 200, {
       publicLaunchMode: publicLaunchMode(),
-      waitlist: waitlistStatus()
+      serviceModel: "cellular-mvno",
+      waitlist: waitlistStatus(),
+      cellularCapabilities
     });
   }
 

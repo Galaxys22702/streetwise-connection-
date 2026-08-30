@@ -11,12 +11,15 @@ It must remain informational until provider coverage, device compatibility rules
 Collect only the minimum information needed for suitability:
 
 1. customer type: residential or commercial;
-2. device manufacturer/model or eSIM capability confirmation;
+2. device manufacturer/model plus SIM/eSIM and cellular-feature compatibility confirmation;
 3. intended U.S. usage area;
 4. expected usage level;
 5. hotspot/tethering need;
-6. number of business lines, when commercial;
-7. whether setup assistance is needed.
+6. voice and messaging need;
+7. phone-number service need;
+8. international/travel need;
+9. number of business lines, when commercial;
+10. whether setup assistance is needed.
 
 Do not collect payment details in the Connection Check.
 
@@ -27,7 +30,8 @@ The flow may return:
 - likely compatible / needs manual review / not currently supported;
 - recommended Streetwise tier;
 - confirmed provider-backed allowance and hotspot terms, once available;
-- any device or coverage caveats;
+- confirmed voice, messaging and phone-number availability, once available;
+- any device, network, roaming or coverage caveats;
 - setup-support path;
 - a clear statement that final availability is confirmed at checkout only after launch gates pass.
 
@@ -51,6 +55,8 @@ Before this flow can recommend a live sellable plan, the selected plan must have
 - residential/commercial resale permission as applicable;
 - verified data allowance and throttling terms;
 - verified hotspot rules;
+- verified voice, messaging and phone-number terms when included;
+- verified network and roaming terms;
 - approved contribution margin;
 - approved customer disclosures.
 

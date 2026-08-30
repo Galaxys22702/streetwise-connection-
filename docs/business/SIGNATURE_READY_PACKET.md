@@ -21,11 +21,11 @@ This packet consolidates the non-sensitive facts already established for Streetw
 
 **Short form**
 
-Technology-enabled residential and commercial connectivity services using approved wholesale eSIM/mobile-data providers, with customer account servicing, compatibility guidance, setup assistance, and connectivity support.
+Branded residential and commercial cellular connectivity services using approved licensed wholesale network providers, with customer account servicing, compatibility guidance, SIM/eSIM setup, line management, security-focused support, and related connectivity assistance.
 
 **Long form**
 
-Streetwise Connection provides technology-enabled connectivity services for residential and commercial customers. The company plans to resell or facilitate approved mobile-data/eSIM connectivity obtained through contracted wholesale telecommunications providers, together with customer support, device/eSIM setup guidance, compatibility checks, account servicing, and related connectivity support. The company will not sell live telecommunications service until required provider agreements, licences, registrations, and regulatory responsibilities are confirmed.
+Streetwise Connection provides technology-enabled connectivity services for residential and commercial customers. The company plans to resell or facilitate approved cellular connectivity obtained through contracted licensed wholesale telecommunications providers. Planned capabilities may include mobile data, hotspot, voice, SMS, local phone numbers, number portability, SIM/eSIM activation, roaming, account-security controls, customer support, device setup guidance, compatibility checks, and related line-management services where supported by the final provider agreement. The company will not sell live telecommunications service until required provider agreements, licences, registrations, and regulatory responsibilities are confirmed.
 
 ## 3. Nevada formation transfer sheet
 

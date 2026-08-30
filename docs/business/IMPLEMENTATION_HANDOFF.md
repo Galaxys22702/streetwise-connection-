@@ -11,9 +11,9 @@ For each completed item, provide the non-sensitive facts and retain the original
 - EIN: confirmation that issued (do not commit the number to this public repo)
 - Nevada tax registration: account/permit type and status; sensitive identifiers remain private
 - Local business licence/home occupation approval: jurisdiction, status, effective/renewal dates
-- Provider agreement: provider name, contractual role, effective date, approved residential/commercial rights
+- Provider agreement: provider name, contractual role, effective date, approved residential/commercial rights, recurring U.S. rights, supported networks, voice/SMS/numbering/porting capabilities, SIM/eSIM lifecycle, roaming, and provider-of-record allocation
 - Regulatory determination: which party owns FCC/USAC/PUCN obligations
-- Approved plan terms: provider bundle IDs, data limits, throttling, hotspot/tethering rules, wholesale cost
+- Approved plan terms: provider bundle/product IDs, data limits, throttling, hotspot/tethering rules, voice/SMS/number charges, numbering/porting terms, 5G/VoLTE/Wi-Fi-calling availability, roaming, support/SLA and wholesale cost
 
 ## Backend implementation sequence
 
@@ -26,12 +26,12 @@ For each completed item, provide the non-sensitive facts and retain the original
 7. Finalise Terms, Privacy, Refund/Support documents against the signed provider agreement.
 8. Configure production secrets only in the deployment platform.
 9. Run repository verification and production smoke checks.
-10. Enable a single controlled paid staging transaction.
-11. Validate purchase idempotency, provisioning, install details, usage sync, failure handling, refund/reconciliation, and support escalation.
+10. Enable a single controlled staging cellular activation.
+11. Validate idempotency, subscriber/line persistence, provisioning, SIM/eSIM install details, usage sync, suspend/resume where supported, failure handling, refund/reconciliation, lifecycle webhooks and support escalation. If voice/numbering is in the initial launch, also validate number assignment, voice, SMS, E911 workflow, controlled porting and SIM-swap/port-out security.
 12. Record test evidence.
 13. Run launch-readiness gate.
 14. Obtain owner launch authorisation.
-15. Only then consider enabling live payment and eSIM-order switches.
+15. Only then consider enabling live payment and cellular activation/order switches.
 
 ## Required safety state before final authorisation
 

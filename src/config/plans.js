@@ -11,7 +11,18 @@ export const plans = [
     provider: null,
     providerBundle: null,
     status: "planned",
-    description: "Residential target plan at $25/month. Data and hotspot are intended to be included, but final allowance, throttling, hotspot limits, provider mapping, taxes, and launch terms remain subject to written provider approval and commercial validation."
+    serviceModel: "cellular-mvno",
+    plannedCapabilities: [
+      "mobile-data",
+      "hotspot",
+      "voice",
+      "sms",
+      "local-number",
+      "security-controls",
+      "emergency-connectivity-reserve",
+      "international-options"
+    ],
+    description: "Residential cellular target at $25/month. Data, hotspot, voice, SMS, local-number support, security controls, emergency-connectivity features, network options, allowances, throttling, taxes, and launch terms remain subject to written provider approval, technical implementation, regulatory allocation, and commercial validation."
   },
   {
     id: "business-starter-20",
@@ -25,7 +36,17 @@ export const plans = [
     provider: null,
     providerBundle: null,
     status: "planned",
-    description: "Commercial starter target at $20/month per line. Data and hotspot are intended to be included, subject to provider approval, final usage limits, taxes, support obligations, and unit-economics validation."
+    serviceModel: "cellular-mvno",
+    plannedCapabilities: [
+      "mobile-data",
+      "hotspot",
+      "voice",
+      "sms",
+      "local-number",
+      "multi-line-management",
+      "security-controls"
+    ],
+    description: "Commercial cellular starter target at $20/month per line. Final voice, SMS, number, data, hotspot, security, network, support, tax, and lifecycle capabilities require provider approval and unit-economics validation."
   },
   {
     id: "business-volume-15",
@@ -41,7 +62,16 @@ export const plans = [
     provider: null,
     providerBundle: null,
     status: "planned",
-    description: "Commercial volume target at $15/month per line for 3 or more lines. Data and hotspot are intended to be included, subject to provider approval, final usage limits, taxes, support obligations, and unit-economics validation."
+    serviceModel: "cellular-mvno",
+    plannedCapabilities: [
+      "mobile-data",
+      "hotspot",
+      "voice",
+      "sms",
+      "local-number",
+      "multi-line-management"
+    ],
+    description: "Commercial volume target at $15/month per line for 3 or more lines. This is a planning price, not a sellable offer. Final cellular capabilities and economics require a mapped wholesale product and written commercial approval."
   },
   {
     id: "business-pro-30",
@@ -56,6 +86,19 @@ export const plans = [
     provider: null,
     providerBundle: null,
     status: "planned",
-    description: "Higher-service commercial target at $30/month per line. Final features, data allowance, hotspot limits, support level, provider mapping, and commercial terms remain subject to written provider approval and economics validation."
+    serviceModel: "cellular-mvno",
+    plannedCapabilities: [
+      "mobile-data",
+      "hotspot",
+      "voice",
+      "sms",
+      "local-number",
+      "number-porting",
+      "multi-line-management",
+      "security-controls",
+      "network-resilience-options",
+      "international-options"
+    ],
+    description: "Higher-service commercial cellular target at $30/month per line. Final network, voice/SMS, number-porting, security, roaming, hotspot, support, and SLA capabilities remain subject to provider contract, implementation, testing, and economics validation."
   }
 ];

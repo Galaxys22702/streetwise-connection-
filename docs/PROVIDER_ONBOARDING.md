@@ -1,124 +1,187 @@
-# Streetwise Connection — Provider Onboarding Runbook
+# Streetwise Connection — Cellular Provider Onboarding Runbook
 
 This runbook tracks the external provider work required before Streetwise can move beyond public waitlist mode.
 
 ## Current safety state
 
-Keep these values unchanged until provider acceptance testing, pricing review, business compliance, and payment testing are complete:
+Keep production waitlist-only until provider acceptance testing, economics, business compliance, customer-policy reconciliation, and payment testing are complete.
 
-```env
-PUBLIC_LAUNCH_MODE=waitlist
-ESIM_PROVIDER=mock
-ESIM_WEBHOOKS_ENABLED=false
-ESIM_LIVE_ORDERS_ENABLED=false
-```
+Required posture:
 
-Provider credentials must be stored only as deployment secrets. Never commit a real API key to GitHub.
+PUBLIC_LAUNCH_MODE=waitlist  
+ESIM_PROVIDER=mock  
+ESIM_WEBHOOKS_ENABLED=false  
+ESIM_LIVE_ORDERS_ENABLED=false  
+STRIPE_LIVE_MODE_ENABLED=false
 
-## Repository readiness
+Provider credentials must exist only in deployment secret storage.
 
-The repository is ready to accept an eSIM Go test key without enabling a paid transaction.
+## Provider priority
 
-- Provider status does not expose the API key.
-- Catalogue requests use the `X-API-Key` header and normalize country filters.
-- Order requests remain `type=validate` while `ESIM_LIVE_ORDERS_ENABLED=false`, even if a caller asks for a transaction.
-- A real transaction requires both `ESIM_LIVE_ORDERS_ENABLED=true` and `validateOnly=false`.
-- Install details use `/esims/assignments` with `additionalFields=installUrl`.
-- Missing credentials fail closed.
-- The normal Vercel build runs these provider contract tests along with the rest of the repository tests.
+### Primary: 1GLOBAL or equivalent full-stack cellular provider
 
-## Primary technical test: eSIM Go
+The cellular pivot requires more than data-only eSIM ordering.
 
-### Verified external constraints — 2026-08-26
+Streetwise should request a commercial path that can support as much of the following as possible:
 
-Before funding or selecting eSIM Go as the initial commercial provider, resolve these points directly with the provider:
+- recurring U.S. domestic cellular service
+- residential and commercial resale
+- data and hotspot
+- voice
+- SMS
+- local phone numbers
+- number porting
+- eSIM and physical SIM options
+- 5G
+- VoLTE
+- Wi-Fi calling
+- SIM swap/replacement lifecycle
+- suspend/resume
+- roaming/international
+- usage and lifecycle events
+- fraud/security controls or events
+- network/resilience options
 
-- eSIM Go describes its Travel API eSIMs as roaming products and states that it may restrict eSIMs used in the same country for more than 60 days. That is a material risk for a recurring U.S. domestic-internet product.
-- Current eSIM Go setup/API documentation shows a standard first card top-up of $1,000, while newer balance guidance says limits can vary by account. Confirm the exact Streetwise minimum in the portal or with the account manager before funding.
-- First-line customer support belongs to the commercial partner, so Streetwise needs its own customer-support process before launch.
-- The provider API is rate-limited at the account level; catalogue data should be cached rather than polled continuously.
+### Secondary: eSIM Go
 
-Do not fund the account until eSIM Go confirms in writing that the intended Streetwise U.S. usage pattern is permitted and the economics fit the target retail price.
+Keep the existing eSIM Go integration available for travel/short-duration data and controlled technical testing.
 
-### Account setup
+Do not treat its Travel API as the recurring U.S. cellular foundation unless eSIM Go supplies a written exception or a different qualifying product that resolves the documented same-country/permanent-roaming limitation.
 
-- [ ] Create the Streetwise business account in the eSIM Go portal
-- [ ] Complete provider account verification
-- [ ] Record the provider agreement/terms outside this public repository
-- [ ] Obtain the API key from Account Settings → API Details
-- [ ] Store the API key in staging deployment secrets only
-- [ ] Do not enable live orders
+## Phase 1 — commercial qualification
 
-### Commercial review before funding
+Before writing new provider-specific production code:
 
-- [ ] Confirm the current minimum account top-up directly in the provider portal
-- [ ] Obtain written clarification on the 60-day same-country/permanent-roaming restriction for the intended U.S. use case
-- [ ] Review U.S. bundle pricing, duration, allowance, network coverage, and usage restrictions
-- [ ] Confirm whether intended long-term U.S. domestic use is permitted
-- [ ] Calculate Streetwise gross margin at the proposed $10 retail price
-- [ ] Do not fund the provider account until the commercial fit is acceptable
+- [ ] Confirm Streetwise commercial role
+- [ ] Confirm recurring U.S. domestic-use rights
+- [ ] Confirm residential resale/use
+- [ ] Confirm commercial resale/use
+- [ ] Obtain account-specific wholesale pricing
+- [ ] Confirm minimum deposit/funding/monthly/volume commitments
+- [ ] Confirm supported U.S. networks
+- [ ] Confirm data allowance/throttling
+- [ ] Confirm hotspot/tethering
+- [ ] Confirm voice
+- [ ] Confirm SMS
+- [ ] Confirm local number assignment
+- [ ] Confirm number porting
+- [ ] Confirm 5G
+- [ ] Confirm VoLTE
+- [ ] Confirm Wi-Fi calling
+- [ ] Confirm eSIM/physical-SIM lifecycle
+- [ ] Confirm suspend/resume and SIM-swap lifecycle
+- [ ] Confirm international/roaming products
+- [ ] Confirm provider webhook/event model
+- [ ] Confirm sandbox/test environment
+- [ ] Confirm provider-of-record allocation
+- [ ] Confirm E911, numbering/porting, taxes, FCC/USAC, Nevada PUCN and other regulatory responsibility
+- [ ] Confirm first-line/second-line support and SLA
+- [ ] Confirm refund/credit/failed-activation rules
+- [ ] Confirm treatment of active lines/numbers if the contract ends
 
-### Safe staging configuration
+Do not enable public checkout during this phase.
 
-After credentials are issued, use:
+## Phase 2 — API capability map
 
-```env
-PUBLIC_LAUNCH_MODE=waitlist
-ESIM_PROVIDER=esim-go
-ESIM_API_BASE_URL=
-ESIM_API_KEY=<deployment-secret>
-ESIM_WEBHOOKS_ENABLED=false
-ESIM_LIVE_ORDERS_ENABLED=false
-```
+Once the commercial offer is acceptable, map the provider's real API to the Streetwise capability model.
 
-With live ordering disabled, Streetwise should use validation-only order behavior.
+Record only non-secret conclusions in GitHub.
 
-### Technical acceptance test
+Required implementation map:
 
-- [ ] Confirm `GET /api/provider/status` reports configured provider without exposing the API key
-- [ ] Pull `GET /api/provider/catalogue?country=US`
-- [ ] Record candidate wholesale bundle SKUs and prices from the account-specific catalogue
-- [ ] Validate one current catalogue SKU with `validateOnly=true`
-- [ ] Verify no provider balance was charged
-- [ ] Confirm order persistence and idempotency behavior
-- [ ] Configure V3 callback only after a persistent staging/production database is available
-- [ ] Test callback signature verification
-- [ ] Enable live ordering only for one controlled acceptance transaction after commercial approval
-- [ ] Purchase one test eSIM
-- [ ] Verify ICCID, SM-DP+ / matching ID or install URL, and QR/install flow
-- [ ] Verify order refresh, failure handling, retry handling, and usage synchronization
-- [ ] Disable live ordering again after the controlled test unless launch approval is complete
+| Streetwise capability | Provider API/resource | Supported? | Notes |
+| --- | --- | --- | --- |
+| Subscriber creation | Pending | Pending | |
+| SIM/eSIM provisioning | Pending | Pending | |
+| Data plan activation | Pending | Pending | |
+| Usage retrieval | Pending | Pending | |
+| Voice | Pending | Pending | |
+| SMS | Pending | Pending | |
+| Number assignment | Pending | Pending | |
+| Port eligibility | Pending | Pending | |
+| Port request/status | Pending | Pending | |
+| Suspend/resume | Pending | Pending | |
+| SIM swap/replacement | Pending | Pending | |
+| Roaming/international | Pending | Pending | |
+| Lifecycle webhooks | Pending | Pending | |
+| Security/fraud events | Pending | Pending | |
+| Network/resilience options | Pending | Pending | |
 
-## Parallel provider path: 1GLOBAL Connect
+Only implement supported capabilities.
 
-Because long-term U.S. domestic use is a core Streetwise requirement, keep an alternative provider path active until that requirement is contractually resolved.
+## Phase 3 — controlled staging acceptance
 
-- [ ] Request partner/reseller access
-- [ ] Request API credentials for data-only eSIM connectivity
-- [ ] Confirm sandbox or test-environment availability
-- [ ] Ask explicitly whether recurring same-country U.S. use is permitted and under what roaming/permanent-roaming limits
-- [ ] Compare U.S. coverage and product duration with eSIM Go
-- [ ] Compare wholesale pricing and commercial minimums
-- [ ] Compare subscription/renewal behavior
-- [ ] Compare webhook/events and usage APIs
-- [ ] Compare customer/account responsibilities and provider-of-record terms
+After business/commercial/regulatory gates are sufficiently resolved:
 
-## Provider decision gate
+- [ ] Configure staging credentials as deployment secrets
+- [ ] Keep public launch mode on waitlist
+- [ ] Verify provider status endpoint does not expose credentials
+- [ ] Retrieve approved catalogue/products
+- [ ] Validate one mapped plan
+- [ ] Run one controlled staging activation
+- [ ] Verify subscriber/service-line persistence
+- [ ] Verify eSIM/SIM install/provisioning data
+- [ ] Verify usage
+- [ ] Verify idempotency
+- [ ] Verify retry/failure paths
+- [ ] Verify suspend/resume if supported
+- [ ] Verify provider lifecycle webhooks
+- [ ] Verify refund/reconciliation process
+- [ ] Verify support escalation
 
-Choose the initial commercial provider only after documenting:
+If voice/numbering is part of the intended first launch:
 
-| Requirement | eSIM Go | 1GLOBAL |
-| --- | --- | --- |
-| Account approved | Pending | Pending |
-| API credentials | Pending | Pending |
-| U.S. catalogue tested | Pending | Pending |
-| Long-term domestic use confirmed | **At risk — written clarification required** | Pending |
-| $10 plan margin viable | Pending | Pending |
-| Test eSIM provisioned | Pending | Pending |
-| Usage synchronization verified | Pending | Pending |
-| Refund/cancellation terms reviewed | Pending | Pending |
-| Regulatory responsibility documented | Pending | Pending |
+- [ ] Assign one test number
+- [ ] Verify outbound/inbound voice
+- [ ] Verify SMS
+- [ ] Verify E911/provider-required address flow
+- [ ] Test porting only through a provider-approved controlled test process
+- [ ] Test SIM swap/replacement workflow
+- [ ] Test port-out/SIM-swap security controls where available
+
+Disable any live-order switch again after controlled testing unless final commercial launch approval is complete.
+
+## Phase 4 — security and resilience validation
+
+Streetwise differentiators require their own acceptance criteria.
+
+### Security
+
+- [ ] Strong account authentication
+- [ ] Secure recovery
+- [ ] SIM-swap approval/alert workflow
+- [ ] Port-out protection workflow
+- [ ] Customer-visible line-change history
+- [ ] Fraud/support escalation
+- [ ] Scam/phishing/malicious-domain protection only if technically implemented and verified
+
+### Resilience
+
+- [ ] Document the actual networks available to each product
+- [ ] Document whether network/profile switching is manual or automatic
+- [ ] Verify supported device requirements
+- [ ] Test failure/recovery behaviour
+- [ ] Do not advertise automatic switching if the provider/device architecture does not support it
+
+### Emergency connectivity reserve
+
+- [ ] Identify provider-supported implementation
+- [ ] Define exact allowance/speed/eligible use
+- [ ] Verify depletion and reserve transition
+- [ ] Verify billing behaviour
+- [ ] Add customer disclosure
+- [ ] Do not market the feature until the test passes
 
 ## Launch rule
 
-Streetwise must remain waitlist-only until the selected provider is contractually approved, staging acceptance testing passes, long-term domestic use is explicitly permitted, pricing is viable, payments are tested, required business/regulatory steps are complete, and support/refund/privacy procedures are adopted.
+Streetwise remains waitlist-only until:
+
+- the selected provider contract is acceptable;
+- recurring U.S. use and resale rights are written;
+- first-launch capabilities are mapped to real provider products;
+- economics pass;
+- staging acceptance passes;
+- regulatory responsibilities are resolved;
+- customer terms/privacy/refund/support are reconciled;
+- security/monitoring/incident procedures are ready;
+- live billing and live activation receive explicit owner approval.

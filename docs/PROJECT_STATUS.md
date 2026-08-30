@@ -1,24 +1,41 @@
 # Project Status
 
-Last reviewed: 2026-08-27
+Last reviewed: 2026-08-30
 
 ## Executive summary
 
-Streetwise Connection has a production-backed public waitlist and a substantial commercial backend foundation for both residential and business connectivity. It is **not yet authorised for commercial eSIM sales** because several owner-, regulator-, and provider-gated items remain.
+Streetwise Connection has pivoted from a primarily data-only eSIM connectivity concept to a broader **cellular/MVNO service company** direction.
 
-The current production posture is deliberately conservative:
+The existing waitlist, account, payment, eSIM, provider, economics, compliance, and database work remains useful. It now becomes the foundation for a larger product that may eventually include data, hotspot, voice, SMS, local numbers, number portability, security controls, network-resilience options, emergency-connectivity features, and international service.
+
+Streetwise is **not yet authorised or technically complete for commercial cellular sales**.
+
+Current production posture:
 
 - Public waitlist: enabled
 - Customer accounts: built but disabled publicly
 - Stripe live billing: disabled
-- Live eSIM ordering: disabled
+- Live SIM/eSIM ordering: disabled
+- Voice/SMS: not enabled
+- Phone number assignment/porting: not enabled
+- Multi-network/failover: not enabled
+- Security suite: not enabled
+- Emergency connectivity reserve: not enabled
 - Public waitlist storage: Supabase
-- Future customer/order storage: PostgreSQL
-- Provider commercial-readiness gate: merged and fail-closed
+- Future customer/service/order storage: PostgreSQL
+- Provider commercial-readiness gate: fail-closed
 
-## Target retail structure
+## Product objective
 
-These are planning targets only. They are not approved sellable offers until real wholesale bundles, usage rules, taxes, and provider rights are mapped and accepted.
+Streetwise should compete on:
+
+**affordability + security + resilience + clarity + practical support**
+
+rather than attempting to win on price alone.
+
+## Planning retail structure
+
+These remain planning targets only:
 
 | Market | Plan | Target price |
 | --- | --- | ---: |
@@ -27,100 +44,125 @@ These are planning targets only. They are not approved sellable offers until rea
 | Commercial | Business Volume | $15/month per line for 3+ lines |
 | Commercial | Business Pro | $30/month per line |
 
-Data and hotspot are intended to be included. Do not market any tier as unlimited until the selected provider confirms allowances, throttling, hotspot rules, recurring U.S. domestic-use rights, and residential/commercial resale permissions in writing.
+Final service features and prices require real provider mapping and economics.
 
-## Readiness matrix
+## Cellular capability status
 
-| Area | Status | Evidence / remaining work |
+| Capability | Current status | Gate |
 | --- | --- | --- |
-| Public site | Ready for waitlist | Production deployment remains waitlist-only |
-| Waitlist validation | Ready | Server-side validation and consent checks exist |
-| Waitlist production write path | Verified by smoke test | Direct Supabase row inspection remains the final administrative confirmation before closing the persistence issue |
-| Waitlist abuse protection | Ready | Durable Supabase-backed rate limiting is configured |
-| Customer accounts | Built, public access gated | Keep disabled until commercial launch approval |
-| Stripe integration | Test-capable | Keep live billing disabled until provider/legal gates pass |
-| eSIM Go API authentication | Verified | Stored API key authenticates successfully |
-| eSIM Go U.S. catalogue | Verified | Real account returned 29 U.S.-relevant bundles during controlled validation |
-| eSIM Go candidate quote | Verified | Candidate 3 GB / 30 day U.S. bundle returned a $4 USD validation quote |
-| eSIM Go validation | Blocked externally | Current account balance is insufficient; do not fund merely to make validation pass |
-| 1GLOBAL integration foundation | Ready for credentials | Read-only OAuth2/catalogue client exists; partner credentials and commercial offer are external dependencies |
-| Provider commercial evidence gate | Ready | Fails closed unless domestic-use, commercial-role, pricing/support and launch-safety evidence is recorded |
-| Target retail pricing | Configured | $15/$20/$25/$30 targets are in the plan configuration; no provider bundle is falsely mapped yet |
-| Unit economics tooling | Ready | Catalogue analyser supports provider-specific wholesale comparison; final economics require real mapped bundles and taxes/fees |
-| Nevada formation | Owner-gated | Filing, identity, signature, payment and EIN steps are outside code |
-| Telecom compliance | External/owner-gated | Provider-of-record, Nevada PUCN and FCC/USAC responsibilities require final provider model and, where necessary, filings/advice |
-| Customer legal policies | Drafted | Final Terms, Privacy and refund/support language must be reconciled to the signed provider contract and actual production vendors |
-| Production observability | Partial | Monitoring/backups/audit/incident procedures need final pre-sales verification |
+| Public waitlist | Ready | Production-backed |
+| Mobile data provisioning foundation | Built/test-capable | Provider approval and staging acceptance still required |
+| Hotspot | Product intent only | Provider plan rules required |
+| Voice | Planned | Full-cellular provider/API/contract required |
+| SMS | Planned | Full-cellular provider/API/contract required |
+| Local mobile number | Planned | Numbering capability and regulatory allocation required |
+| Number portability | Planned | Provider porting capability/process required |
+| 5G | Provider-dependent | Must be confirmed per product/network/device |
+| VoLTE | Planned/provider-dependent | Must be confirmed and tested |
+| Wi-Fi calling | Planned/provider-dependent | Must be confirmed and tested |
+| SIM/eSIM lifecycle | eSIM foundation built | Full line-lifecycle expansion required |
+| SIM-swap protection | Planned | Provider event/action support plus Streetwise security workflow |
+| Port-out protection | Planned | Provider capability plus Streetwise security workflow |
+| Scam/phishing filtering | Planned | Network/DNS/security implementation required |
+| Multi-network/failover | Planned | Commercial/network/device/technical support required |
+| Emergency connectivity reserve | Planned | Provider plan/billing mechanics required |
+| International/travel data | Existing provider path available for evaluation | Commercial approval required |
+| Commercial multi-line model | Database foundation built | Full cellular line lifecycle required |
+
+## Provider direction
+
+### Priority: 1GLOBAL or equivalent full-stack provider
+
+The provider search is now centred on a recurring U.S. cellular product, not merely data-only travel eSIM.
+
+The preferred provider must be evaluated for:
+
+- recurring U.S. domestic-use rights
+- data
+- hotspot rules
+- voice
+- SMS
+- local mobile numbers
+- number portability
+- 5G
+- VoLTE
+- Wi-Fi calling
+- SIM/eSIM lifecycle
+- network footprint/resilience options
+- roaming/international
+- SIM-swap and lifecycle events
+- pricing/minimum commitments
+- support and SLA
+- provider-of-record/regulatory allocation
+- taxes/surcharges
+- E911/numbering responsibilities
+
+Public 1GLOBAL materials indicate a fuller Telco-as-a-Service capability set, but Streetwise still lacks account-specific commercial approval, pricing, credentials, and U.S. product terms.
+
+### Secondary: eSIM Go
+
+The existing adapter remains technically proven for data/eSIM work. Current Travel API documentation describes roaming use and a same-country permanent-roaming restriction risk beyond 60 days, making it unsuitable as the assumed recurring U.S. cellular foundation without a written exception or different product.
 
 ## Backend work completed or prepared
 
-The repository now contains or supports:
+The repository contains or supports:
 
-- residential and commercial target plan configuration
+- residential/commercial planning configuration
 - public plan API
-- customer account and payment architecture
+- customer accounts and sessions
 - Stripe test-mode integration foundations
-- eSIM order and usage persistence models
+- eSIM order and usage persistence
 - idempotency protections
-- provider webhook infrastructure
-- eSIM Go provider adapter and controlled diagnostics
-- real eSIM Go U.S. catalogue access evidence
-- provider economics normalisation and contribution-margin analysis
-- read-only 1GLOBAL Connect OAuth2/catalogue integration
-- provider comparison and outreach documentation
-- machine-checkable provider commercial-readiness evidence gate
-- production waitlist health and smoke checks
-- business formation checklist and EIN worksheet
-- draft operating agreement
+- provider webhooks
+- eSIM Go provider adapter
+- real eSIM Go catalogue/authentication evidence from earlier controlled validation
+- provider economics normalisation
+- read-only 1GLOBAL integration preparation
+- provider comparison/outreach documentation
+- provider commercial evidence gate
+- public waitlist health and smoke checks
+- formation/licensing/EIN working documents
 - regulatory matrix
-- draft Terms of Service, Privacy Policy, and refund/support policy
-- launch-mode safety controls that keep payments and live provider orders disabled
+- draft customer policies
+- launch safety controls
+
+## Important gap created by the pivot
+
+The current codebase does not yet implement a complete cellular line stack for:
+
+- voice/SMS
+- phone number inventory/assignment
+- number portability
+- E911-related lifecycle
+- Wi-Fi calling/VoLTE entitlement
+- SIM-swap/port-out security controls
+- automatic network failover
+- emergency connectivity reserve
+
+That work should not be guessed into existence before the selected wholesale provider's real API, contract, and regulatory allocation are known.
 
 ## External / owner-gated work remaining
 
-Only actions requiring the legal owner, payment, identity verification, signature, regulator interaction, or provider approval should remain as launch blockers:
-
-1. Complete Nevada entity formation, Initial List and State Business Licence.
-2. Obtain the IRS EIN.
-3. Complete applicable Nevada/local licensing and tax registration.
-4. Sign and retain the final operating agreement outside the public repository.
-5. Complete provider business-account verification and commercial onboarding.
-6. Obtain written recurring U.S. domestic-use and residential/commercial resale rights.
-7. Confirm provider-of-record, telecom tax/surcharge, PUCN and FCC/USAC responsibilities.
-8. Select the provider only after real commercial terms are compared.
-9. Approve provider funding only after the provider decision is economically and legally acceptable.
-10. Run one controlled paid staging eSIM acceptance test after approval.
-11. Open the business bank account and configure live payment settlement only when legally ready.
-
-See `docs/OWNER_ACTIONS.md` for the handoff checklist.
-
-## Launch gates
-
-Do not enable commercial service until all of the following are true:
-
-- Wholesale provider agreement signed and responsibilities documented
-- Real wholesale bundle mapped to every plan offered at launch
-- Contribution margin verified at the intended $15/$20/$25/$30 retail tier as applicable
-- Actual data, throttling and hotspot terms documented
-- One full staging purchase/provision/install/usage/retry flow passes
-- Stripe test checkout and signed webhook flow pass end to end
-- Provider-of-record and telecom compliance responsibilities are resolved
-- Taxes/surcharges and remittance responsibility are documented
-- Privacy Policy, Terms, refunds/cancellations and support process are finalised
-- Monitoring, backups, audit logging and incident-response procedures are verified
-- Live-mode configuration receives a final explicit review
+1. Complete Nevada entity formation, Initial List, State Business Licence, EIN, and applicable local/tax registration.
+2. Obtain a written full-cellular provider offer.
+3. Confirm residential and commercial resale rights.
+4. Confirm recurring U.S. domestic use.
+5. Confirm voice/SMS/number/porting/5G/VoLTE/Wi-Fi-calling capability.
+6. Confirm networks and any multi-network/resilience options.
+7. Confirm provider-of-record, E911, numbering/porting, taxes, PUCN, FCC/USAC, and other telecom responsibilities.
+8. Obtain real wholesale pricing and minimum commitments.
+9. Validate target retail contribution margin.
+10. Run controlled staging line provisioning and lifecycle tests.
+11. Reconcile Terms, Privacy, refund/support, security, and disclosures to the selected provider agreement.
+12. Explicitly approve live billing and live service only after all gates pass.
 
 ## Required safety configuration
 
-Keep these values until every commercial gate is complete:
+Production remains:
 
-```env
-PUBLIC_LAUNCH_MODE=waitlist
-STRIPE_LIVE_MODE_ENABLED=false
+PUBLIC_LAUNCH_MODE=waitlist  
+STRIPE_LIVE_MODE_ENABLED=false  
 ESIM_LIVE_ORDERS_ENABLED=false
-```
-
-Only enable provider webhooks during controlled callback testing when the receiving endpoint and signature verification are intentionally being exercised.
 
 ## What not to claim yet
 
@@ -128,8 +170,16 @@ Do not publicly promise:
 
 - unlimited data
 - unlimited hotspot
-- a specific carrier/network not guaranteed by the provider contract
-- permanent or recurring U.S. service rights not confirmed in writing
-- business SLA/support levels not contractually supported
+- voice/SMS
+- a local mobile number
+- number portability
+- 5G, VoLTE, or Wi-Fi calling
+- automatic network switching
+- emergency reserve
+- scam/phishing filtering
+- a specific carrier/network
+- permanent U.S. service rights
+- international coverage
+- business SLA/support levels
 
-The backend should be kept ready for those capabilities without advertising them before they are real.
+until each capability is contractually supported and technically verified.
