@@ -17,8 +17,8 @@
 ## IRS application selections to review
 
 - Reason for applying: **Started a new business**
-- Principal activity: **Telecommunications / mobile data / internet services**
-- Business description: **eSIM-based mobile data reseller and customer account platform using wholesale network providers**
+- Principal activity: **Telecommunications / cellular connectivity services**
+- Business description: **Branded cellular connectivity reseller and customer account platform using licensed wholesale network providers; planned services may include data, voice, SMS, phone-number features, SIM/eSIM activation and related support subject to provider and regulatory approval**
 - Employees expected in next 12 months: **Confirm before filing**
 - First date wages will be paid: **Leave blank if no employees are planned**
 - Closing month of accounting year: **December** unless tax advice supports another choice
