@@ -71,37 +71,39 @@ Final service features and prices require real provider mapping and economics.
 
 ## Provider direction
 
-### Priority: 1GLOBAL or equivalent full-stack provider
+### Priority: AT&T
 
-The provider search is now centred on a recurring U.S. cellular product, not merely data-only travel eSIM.
+AT&T is now the primary domestic provider candidate.
 
-The preferred provider must be evaluated for:
+The repo is prepared to evaluate two current AT&T business paths:
 
-- recurring U.S. domestic-use rights
-- data
-- hotspot rules
-- voice
-- SMS
-- local mobile numbers
-- number portability
-- 5G
-- VoLTE
-- Wi-Fi calling
-- SIM/eSIM lifecycle
-- network footprint/resilience options
-- roaming/international
-- SIM-swap and lifecycle events
-- pricing/minimum commitments
-- support and SLA
-- provider-of-record/regulatory allocation
-- taxes/surcharges
-- E911/numbering responsibilities
+- AT&T Partner Exchange
+- AT&T Wholesale
 
-Public 1GLOBAL materials indicate a fuller Telco-as-a-Service capability set, but Streetwise still lacks account-specific commercial approval, pricing, credentials, and U.S. product terms.
+AT&T's public materials support evaluating wireless voice, data and messaging resale/wholesale, but Streetwise has not yet received an AT&T commercial approval, provider-of-record determination, account-specific pricing, API specification, branding right or live provisioning access.
 
-### Secondary: eSIM Go
+Coding posture:
 
-The existing adapter remains technically proven for data/eSIM work. Current Travel API documentation describes roaming use and a same-country permanent-roaming restriction risk beyond 60 days, making it unsuitable as the assumed recurring U.S. cellular foundation without a written exception or different product.
+- AT&T primary domestic candidate: configured
+- AT&T live provisioning: disabled
+- AT&T public affiliation claim: disabled
+- AT&T commercial evidence: required and fail-closed
+- AT&T-specific support/billing/FRN/API/branding evidence: required
+- AT&T API endpoints: not invented
+- credentials: not present in GitHub
+
+Prepared external packet:
+
+- docs/ATT_PROVIDER_APPLICATION_PACKET.md
+- docs/business/AT&T-SIGNATURE-READY-PACKET.md
+
+### Fallback: 1GLOBAL
+
+1GLOBAL remains the required domestic comparison candidate until AT&T's actual terms, qualification and technical access are accepted.
+
+### Travel/data: eSIM Go
+
+eSIM Go remains a separate travel/data integration. Its commercial evidence is optional for the domestic provider decision.
 
 ## Backend work completed or prepared
 
