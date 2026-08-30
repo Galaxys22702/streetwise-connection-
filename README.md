@@ -106,7 +106,8 @@ The repository already contains:
 - Provider abstraction layer
 - Mock connectivity provider
 - eSIM Go adapter and controlled diagnostics
-- Read-only 1GLOBAL preparation
+- AT&T-first commercial strategy and fail-closed AT&T provider gate
+- Read-only 1GLOBAL fallback preparation
 - Provider economics tooling
 - Provider commercial-evidence gate
 - Idempotency protections
@@ -196,8 +197,8 @@ The default payment and connectivity providers remain mocks during local develop
 
 ## Next concrete milestones
 
-1. Obtain a written 1GLOBAL or equivalent full-cellular commercial offer for recurring U.S. service.
-2. Confirm voice, SMS, local number, number-porting, Wi-Fi calling/VoLTE, domestic use, roaming, network, and support capabilities.
+1. Submit the prepared AT&T qualification packet and obtain the correct AT&T Partner Exchange/Wholesale path plus written commercial terms.
+2. Confirm AT&T residential/commercial resale, voice, SMS, local number, number-porting, SIM/eSIM, Wi-Fi calling/VoLTE, domestic use, roaming, network, support, branding and API capabilities.
 3. Resolve provider-of-record, Nevada PUCN, FCC/USAC, E911, taxes/surcharges, number-porting, and customer-disclosure responsibilities for the final model.
 4. Map real wholesale products to the existing target pricing.
 5. Validate contribution margin.
