@@ -1,14 +1,14 @@
 # Streetwise Connection — Terms of Service (Pre-Launch Draft)
 
-> **Draft only. Not effective until formally adopted and published.** The final terms must match the executed carrier/eSIM agreement, payment/refund rules, launch jurisdictions, and applicable law.
+> **Draft only. Not effective until formally adopted and published.** The final terms must match the executed wholesale cellular/provider agreement, payment/refund rules, launch jurisdictions, supported service features, and applicable law.
 
 **Last draft update:** August 25, 2026
 
-These Terms of Service ("Terms") govern use of Streetwise Connection's website, account platform, and any eSIM/mobile-data services that Streetwise later makes commercially available.
+These Terms of Service ("Terms") govern use of Streetwise Connection's website, account platform, and any cellular connectivity services that Streetwise later makes commercially available.
 
 ## 1. Pre-launch status
 
-Until Streetwise announces commercial availability, website plans, coverage checks, pricing targets, mock checkout flows, simulated usage, and prototype eSIM functions are demonstrations and do not constitute a promise of live telecommunications service.
+Until Streetwise announces commercial availability, website plans, coverage checks, pricing targets, mock checkout flows, simulated usage, and prototype SIM/eSIM and cellular-line functions are demonstrations and do not constitute a promise of live telecommunications service.
 
 ## 2. Eligibility
 
@@ -20,17 +20,17 @@ Customers are responsible for keeping account credentials secure and for activit
 
 ## 4. Service model
 
-Streetwise intends to provide eSIM-based mobile-data service using third-party wholesale network and eSIM partners. Coverage, speed, latency, network availability, roaming, device compatibility, and service quality depend in part on third-party mobile networks and cannot be guaranteed everywhere.
+Streetwise intends to provide branded cellular service using licensed third-party wholesale network, MVNO/MVNE, carrier, or Telco-as-a-Service partners. Depending on the final provider and plan, service may include mobile data, hotspot, voice, SMS, local mobile numbers, number portability, SIM/eSIM activation, roaming, and related line-management features. Coverage, speed, latency, voice quality, messaging availability, network availability, roaming, device compatibility, and service quality depend in part on third-party mobile networks and cannot be guaranteed everywhere.
 
 Streetwise does not claim ownership of radio spectrum or facilities-based carrier infrastructure unless and until such authority and infrastructure actually exist.
 
 ## 5. Device compatibility
 
-Customers are responsible for using a compatible, carrier-unlocked device that supports the relevant eSIM profile and bands. A coverage or compatibility result is informational unless expressly guaranteed in writing for a specific commercial product.
+Customers are responsible for using a compatible, carrier-unlocked device that supports the relevant network bands and required SIM/eSIM, voice, messaging, and other service features. A coverage or compatibility result is informational unless expressly guaranteed in writing for a specific commercial product.
 
 ## 6. Plans and data allowances
 
-Commercial plan details will state the applicable price, data allowance, validity period, geography, renewal rules, throttling or cutoff rules if any, and other material limitations. Prototype plan descriptions are subject to change before launch.
+Commercial plan details will state the applicable price, data allowance, hotspot terms, voice/SMS and phone-number features when offered, geography, roaming terms, renewal rules, throttling or cutoff rules if any, and other material limitations. Prototype plan descriptions are subject to change before launch.
 
 ## 7. Payments
 
@@ -40,7 +40,7 @@ Streetwise should not enable live recurring charges until production billing and
 
 ## 8. Activation and delivery
 
-An eSIM order is not complete until required payment, fraud/security checks, provider acceptance, and provisioning succeed. Some orders may be delayed, rejected, or require replacement because of device, network, provider, regulatory, or technical conditions.
+A cellular service order or line activation is not complete until required payment, fraud/security checks, provider acceptance, number/porting steps when applicable, and SIM/eSIM provisioning succeed. Some orders may be delayed, rejected, or require replacement because of device, network, provider, regulatory, or technical conditions.
 
 ## 9. Refunds and failed activation
 
@@ -72,7 +72,7 @@ Streetwise may take proportionate action to protect networks and comply with law
 
 ## 11. Availability and network limitations
 
-Mobile-data service is inherently dependent on radio coverage, congestion, device capability, roaming arrangements, maintenance, outages, weather, local restrictions, and third-party networks. Streetwise should describe any guaranteed service levels only when supported by a written contract.
+Cellular service is inherently dependent on radio coverage, congestion, device capability, network and roaming arrangements, voice/SMS infrastructure, number-routing systems, maintenance, outages, weather, local restrictions, and third-party networks. Streetwise should describe any guaranteed service levels only when supported by a written contract.
 
 ## 12. Customer support
 
