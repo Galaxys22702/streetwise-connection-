@@ -119,7 +119,9 @@ The repository contains or supports:
 - eSIM Go provider adapter
 - real eSIM Go catalogue/authentication evidence from earlier controlled validation
 - provider economics normalisation
-- read-only 1GLOBAL integration preparation
+- AT&T commercial qualification strategy and fail-closed client gate
+- AT&T-specific commercial evidence validation
+- read-only 1GLOBAL fallback preparation
 - provider comparison/outreach documentation
 - provider commercial evidence gate
 - public waitlist health and smoke checks
@@ -146,8 +148,8 @@ That work should not be guessed into existence before the selected wholesale pro
 ## External / owner-gated work remaining
 
 1. Complete Nevada entity formation, Initial List, State Business Licence, EIN, and applicable local/tax registration.
-2. Obtain a written full-cellular provider offer.
-3. Confirm residential and commercial resale rights.
+2. Submit the AT&T qualification/application packet and obtain the correct AT&T program path plus a written commercial offer.
+3. Confirm AT&T residential and commercial resale rights, branding rights, Tier 1 support model, end-user billing model and FRN requirement/status.
 4. Confirm recurring U.S. domestic use.
 5. Confirm voice/SMS/number/porting/5G/VoLTE/Wi-Fi-calling capability.
 6. Confirm networks and any multi-network/resilience options.
