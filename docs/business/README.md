@@ -18,6 +18,6 @@ Do **not** commit Social Security numbers, EIN confirmation letters, bank inform
 
 ## Current launch philosophy
 
-Streetwise's lowest-cost initial path is a software/eSIM reseller model using licensed wholesale network partners. The project should avoid facilities-based carrier obligations, spectrum claims, physical right-of-way construction, and live customer charging until the applicable registrations, contracts, production database, and payment/provider integrations are ready.
+Streetwise's lowest-cost initial path is a cellular/MVNO reseller or Telco-as-a-Service model using licensed wholesale network partners. The project should avoid facilities-based carrier obligations, spectrum claims, physical right-of-way construction, and live customer charging or line activation until the applicable registrations, provider contracts, production systems, regulatory allocations, and payment/provider integrations are ready. Voice, SMS, phone numbers, number porting, 5G/VoLTE/Wi-Fi calling, network resilience, and security features remain launch-gated until contractually supported and technically verified.
 
 These documents are planning drafts and do not prove that any license, entity, tax registration, or regulatory authorization has been issued.
