@@ -1,120 +1,156 @@
 # Streetwise Connection — Provider Comparison
 
-Last reviewed: 2026-08-27
+Last reviewed: 2026-08-30
 
-This comparison is for provider selection only. It does not authorize live sales or eSIM transactions.
+This comparison is for provider selection only. It does not authorise live sales, payments, SIM/eSIM activation, phone-number assignment, or number porting.
 
-## eSIM Go
+## Decision standard after the cellular pivot
 
-Current public developer documentation and the live Streetwise provider check confirm:
+Streetwise is no longer selecting a provider only for data-only eSIM delivery. The preferred long-term provider should support a recurring U.S. cellular product and should be evaluated for:
 
-- API authentication uses `X-API-Key`.
-- The stored Streetwise API key authenticates successfully.
-- The account currently exposes 29 U.S. catalogue bundles.
-- `type: validate` checks an order without charging the provider balance, but the account must still satisfy the checks a transaction would require.
-- `esim_3GB_30D_US_V2` currently quotes at $4 USD for this account.
-- The current account balance does not cover that quote, so validation remains `valid=false`. No top-up was attempted.
-- The current standard minimum top-up documented by eSIM Go is $1,000, with a $5,000 default daily maximum; account managers can alter limits.
-- eSIM Go states its travel eSIMs are used in roaming mode, has permanent-roaming detection, and reserves the right to restrict a SIM used in the same country for more than 60 days.
-- eSIM Go states first-line end-customer support is handled by the commercial partner, with eSIM Go providing second- and third-line technical support.
+- recurring same-country U.S. service rights
+- mobile data
+- hotspot/tethering rules
+- voice
+- SMS
+- local mobile numbers
+- number portability
+- eSIM and, if useful, physical SIM
+- 5G
+- VoLTE
+- Wi-Fi calling
+- line suspension/reactivation
+- SIM swap/replacement lifecycle
+- roaming/international options
+- network footprint and resilience options
+- usage and lifecycle events
+- API idempotency
+- support/SLA
+- wholesale pricing and minimum commitments
+- provider-of-record/regulatory allocation
+- taxes/surcharges
+- E911/numbering responsibilities
+- customer data and fraud/security responsibilities
 
-Primary sources:
+A public marketing page is not a Streetwise commercial agreement. Every launch-critical capability still requires account-specific confirmation.
 
-- https://docs.esim-go.com/quick_start/
-- https://docs.esim-go.com/guides/authentication/
-- https://docs.esim-go.com/guides/setup_esimgo_account/
-- https://docs.esim-go.com/guides/getting_started/
+## 1GLOBAL — priority full-cellular candidate
+
+Current public 1GLOBAL Telco-as-a-Service materials describe:
+
+- domestic mobile plans
+- data, texts and calls
+- local phone numbers
+- number porting
+- SIM/eSIM
+- voice and SMS APIs/capabilities
+- roaming
+- 5G
+- VoLTE
+- Wi-Fi calling
+- full-MVNO/core-network infrastructure
+- branded mobile-service enablement
+
+Public source reviewed:
+
+- https://www.1global.com/telco-as-a-service
 
 ### Streetwise implications
 
 Strengths:
 
-- Existing Streetwise adapter is implemented and contract-tested.
-- Working credentials and real U.S. catalogue access are already verified.
-- The $4 candidate quote passes the initial $6 wholesale screening guardrail.
-- Validation-only ordering lets Streetwise test without executing a transaction.
+- The published capability set is much closer to the new Streetwise cellular/MVNO direction than a travel-data-only product.
+- Domestic mobile plans, phone numbers, voice/SMS and porting are directly relevant to the intended service.
+- A full-stack provider architecture could reduce the amount of telecom infrastructure Streetwise must own while still allowing Streetwise to control the brand and customer experience.
+- International/travel capability can sit alongside domestic service instead of forcing the domestic product to use a travel-eSIM model.
+
+Open risks and required evidence:
+
+- Streetwise does not yet have an account-specific commercial offer for the intended U.S. product.
+- Streetwise does not yet have production credentials for the full cellular capability set.
+- Public material does not prove which U.S. networks, prices, minimum commitments, voice/SMS terms, number ranges, porting processes, hotspot rules, or resilience options would apply to Streetwise.
+- Provider-of-record, E911, numbering/porting, taxes/surcharges, FCC/USAC, Nevada PUCN, fraud and customer-support responsibilities must be confirmed.
+- Any security or network-failover differentiator must be mapped to actual provider capabilities.
+
+Best current fit: **primary commercial evaluation path for the recurring U.S. cellular product**.
+
+## eSIM Go — secondary travel/data path
+
+Current public eSIM Go Travel API documentation confirms:
+
+- API authentication with X-API-Key
+- consumer travel eSIM products
+- roaming-mode use for travel bundles
+- permanent-roaming detection
+- a reserved right to restrict a SIM used in the same country for more than 60 days
+- first-line customer support handled by the commercial partner
+- pre-paid wholesale model
+
+Public source reviewed:
+
+- https://docs.esim-go.com/guides/getting_started/
+
+Streetwise also already has:
+
+- implemented eSIM Go adapter
+- working authentication from earlier controlled validation
+- U.S. catalogue access from earlier controlled validation
+- validation-only order behaviour
+- idempotency and persistence foundations
+
+### Streetwise implications
+
+Strengths:
+
+- Existing code is useful and should not be discarded.
+- Good fit for travel/short-duration data products or a controlled data/eSIM technical path.
+- Existing provider abstraction gives Streetwise a working integration baseline.
 
 Material constraint:
 
-The published 60-day same-country restriction conflicts with Streetwise's intended recurring U.S. home-market service if customers are expected to keep using the same connectivity continuously. Therefore eSIM Go should **not** be treated as the default long-term U.S. provider unless eSIM Go provides a written contractual exception or a different non-travel product that permits the intended domestic usage.
+The documented same-country/permanent-roaming restriction is a poor default match for a recurring U.S. domestic cellular plan. eSIM Go should not become the assumed U.S. cellular foundation without a written exception or a different provider product designed for that use.
 
 Open risks:
 
-- $1,000 standard funding minimum is substantial for an early-stage validation exercise.
-- A fully valid order check still requires enough provider balance to cover the quote.
-- Written clarification or exception is needed for recurring U.S. domestic use beyond 60 days.
-- Final taxes, refund exposure, support cost and provider-of-record responsibilities remain unresolved.
+- recurring U.S. domestic-service fit
+- voice/SMS/phone-number/porting scope for the intended product
+- minimum funding/wholesale terms
+- provider-of-record and telecom responsibility allocation
+- final support/refund obligations
 
-Best current fit: travel/short-duration product evaluation, or a controlled technical test after commercial approval. Not approved as the recurring U.S. connectivity foundation.
-
-## 1GLOBAL Connect
-
-Current 1GLOBAL Connect documentation confirms:
-
-- Connect is designed for server-to-server partner integrations that sell eSIM-based cellular connectivity to end customers.
-- Data-only plans are supported.
-- A reseller role exists for product listing, orders, SIM/subscription management and usage data.
-- The API uses OAuth2 and supports `Idempotency-Key` on applicable requests.
-- Current API documentation is versioned `2026-02-05`.
-- The API includes accounts, subscribers, contracts, subscriptions, product offerings, coverage areas and service lifecycle resources.
-- Product offerings can be cached locally and refreshed rather than fetched for every customer transaction.
-- Contract resources explicitly include the United States as a supported legal-entity country in the current API reference.
-
-Primary sources:
-
-- https://docs.connect-api.1global.com/overview/whatisconnect
-- https://docs.connect-api.1global.com/overview/getstarted/
-- https://docs.connect-api.1global.com/api-reference
-- https://docs.connect-api.1global.com/api/idempotency
-
-### Streetwise implications
-
-Strengths:
-
-- Explicit reseller and subscription architecture aligns more closely with Streetwise's intended recurring-service model.
-- Data-only connectivity is a documented use case.
-- OAuth2 and documented idempotency support fit a production-grade provider integration.
-- Account/subscriber/contract/subscription APIs suggest a deeper telco-as-a-service model than a travel-bundle-only integration.
-- A read-only Streetwise OAuth2/catalogue client is now prepared for credentials.
-
-Open risks:
-
-- Streetwise does not yet have partner credentials or commercial pricing.
-- Public documentation alone does not prove that the specific U.S. product Streetwise needs permits indefinite domestic use.
-- Minimum commitments, U.S. network terms, reseller obligations, support duties and provider-of-record responsibilities must be confirmed directly.
+Best current fit: **secondary travel/data product path or controlled technical fallback**, not the assumed full-cellular foundation.
 
 ## Current decision
 
-**Provider priority has changed.**
+1. Pursue 1GLOBAL or an equivalent full-stack MVNO/MVNE/Telco-as-a-Service partner first.
+2. Keep eSIM Go integrated as a travel/data option and technical backup.
+3. Do not fund or commit to a provider merely because an API works.
+4. Require written U.S. domestic-service, resale, capability, economics and regulatory evidence before mapping a provider to a Streetwise launch plan.
+5. Keep all live customer sales and activation disabled during comparison.
 
-For the intended recurring U.S. product, pursue 1GLOBAL or another provider with explicit domestic/MVNO-style rights **before** committing $1,000 to eSIM Go. Keep eSIM Go available as a technically proven backup for short-duration/travel use or if a written domestic-use exception is offered.
+## Evidence required from the priority provider
 
-Next evidence required:
+Obtain written answers for:
 
-1. Obtain 1GLOBAL partner/reseller commercial terms, credentials path and minimum commitments.
-2. Obtain written confirmation that the intended U.S. data-only service can be used continuously in-market, not merely as travel roaming.
-3. Obtain real U.S. pricing and run it through `npm run analyse:provider`.
-4. Ask eSIM Go whether Streetwise can receive an explicit contractual exception or alternative product for continuous U.S. use beyond 60 days.
-5. Compare contribution margin, network coverage, renewal behaviour, usage latency, refunds, support obligations, taxes and provider-of-record responsibility.
+1. commercial role Streetwise would hold;
+2. recurring U.S. domestic-use rights;
+3. residential and commercial resale rights;
+4. supported U.S. networks;
+5. data and hotspot terms;
+6. voice and SMS terms;
+7. local-number capability;
+8. number-porting process and costs;
+9. 5G/VoLTE/Wi-Fi-calling support;
+10. eSIM/physical-SIM lifecycle;
+11. SIM-swap/replacement/port-out events and controls;
+12. roaming/international products;
+13. network-selection/failover options, if any;
+14. usage/event latency and webhooks;
+15. sandbox/test path;
+16. minimum commitment, deposit, funding and wholesale pricing;
+17. refunds/credits/failed activations;
+18. support/SLA;
+19. provider-of-record, E911, numbering, taxes, FCC/USAC and Nevada responsibilities;
+20. exit/termination treatment for active customers and numbers.
 
-Until those facts are available, `PUBLIC_LAUNCH_MODE=waitlist` and `ESIM_LIVE_ORDERS_ENABLED=false` remain mandatory.
-
-## Machine-checkable evidence gate
-
-Copy `docs/provider-commercial-evidence.example.json` to a private working location and replace only facts supported by a written provider response, account-specific catalogue, written quote, signed terms, or completed test evidence. Store confidential source material outside this public repository and use `evidenceRecordId` only as a private record reference.
-
-Check whether the two-provider comparison is complete:
-
-```bash
-npm run check:provider-commercial -- /secure/path/provider-evidence.json
-```
-
-After a provider is selected, check the stricter pre-activation evidence set:
-
-```bash
-npm run check:provider-commercial -- \
-  /secure/path/provider-evidence.json \
-  --stage=activation
-```
-
-The command fails closed when commercial facts are missing. It also refuses to pass while waitlist mode, disabled checkout, disabled payments, and disabled live provider ordering are not explicitly recorded.
+Until those facts are complete, PUBLIC_LAUNCH_MODE=waitlist and ESIM_LIVE_ORDERS_ENABLED=false remain mandatory.
