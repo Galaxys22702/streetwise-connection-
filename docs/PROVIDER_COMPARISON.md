@@ -2,155 +2,129 @@
 
 Last reviewed: 2026-08-30
 
-This comparison is for provider selection only. It does not authorise live sales, payments, SIM/eSIM activation, phone-number assignment, or number porting.
-
-## Decision standard after the cellular pivot
-
-Streetwise is no longer selecting a provider only for data-only eSIM delivery. The preferred long-term provider should support a recurring U.S. cellular product and should be evaluated for:
-
-- recurring same-country U.S. service rights
-- mobile data
-- hotspot/tethering rules
-- voice
-- SMS
-- local mobile numbers
-- number portability
-- eSIM and, if useful, physical SIM
-- 5G
-- VoLTE
-- Wi-Fi calling
-- line suspension/reactivation
-- SIM swap/replacement lifecycle
-- roaming/international options
-- network footprint and resilience options
-- usage and lifecycle events
-- API idempotency
-- support/SLA
-- wholesale pricing and minimum commitments
-- provider-of-record/regulatory allocation
-- taxes/surcharges
-- E911/numbering responsibilities
-- customer data and fraud/security responsibilities
-
-A public marketing page is not a Streetwise commercial agreement. Every launch-critical capability still requires account-specific confirmation.
-
-## 1GLOBAL — priority full-cellular candidate
-
-Current public 1GLOBAL Telco-as-a-Service materials describe:
-
-- domestic mobile plans
-- data, texts and calls
-- local phone numbers
-- number porting
-- SIM/eSIM
-- voice and SMS APIs/capabilities
-- roaming
-- 5G
-- VoLTE
-- Wi-Fi calling
-- full-MVNO/core-network infrastructure
-- branded mobile-service enablement
-
-Public source reviewed:
-
-- https://www.1global.com/telco-as-a-service
-
-### Streetwise implications
-
-Strengths:
-
-- The published capability set is much closer to the new Streetwise cellular/MVNO direction than a travel-data-only product.
-- Domestic mobile plans, phone numbers, voice/SMS and porting are directly relevant to the intended service.
-- A full-stack provider architecture could reduce the amount of telecom infrastructure Streetwise must own while still allowing Streetwise to control the brand and customer experience.
-- International/travel capability can sit alongside domestic service instead of forcing the domestic product to use a travel-eSIM model.
-
-Open risks and required evidence:
-
-- Streetwise does not yet have an account-specific commercial offer for the intended U.S. product.
-- Streetwise does not yet have production credentials for the full cellular capability set.
-- Public material does not prove which U.S. networks, prices, minimum commitments, voice/SMS terms, number ranges, porting processes, hotspot rules, or resilience options would apply to Streetwise.
-- Provider-of-record, E911, numbering/porting, taxes/surcharges, FCC/USAC, Nevada PUCN, fraud and customer-support responsibilities must be confirmed.
-- Any security or network-failover differentiator must be mapped to actual provider capabilities.
-
-Best current fit: **primary commercial evaluation path for the recurring U.S. cellular product**.
-
-## eSIM Go — secondary travel/data path
-
-Current public eSIM Go Travel API documentation confirms:
-
-- API authentication with X-API-Key
-- consumer travel eSIM products
-- roaming-mode use for travel bundles
-- permanent-roaming detection
-- a reserved right to restrict a SIM used in the same country for more than 60 days
-- first-line customer support handled by the commercial partner
-- pre-paid wholesale model
-
-Public source reviewed:
-
-- https://docs.esim-go.com/guides/getting_started/
-
-Streetwise also already has:
-
-- implemented eSIM Go adapter
-- working authentication from earlier controlled validation
-- U.S. catalogue access from earlier controlled validation
-- validation-only order behaviour
-- idempotency and persistence foundations
-
-### Streetwise implications
-
-Strengths:
-
-- Existing code is useful and should not be discarded.
-- Good fit for travel/short-duration data products or a controlled data/eSIM technical path.
-- Existing provider abstraction gives Streetwise a working integration baseline.
-
-Material constraint:
-
-The documented same-country/permanent-roaming restriction is a poor default match for a recurring U.S. domestic cellular plan. eSIM Go should not become the assumed U.S. cellular foundation without a written exception or a different provider product designed for that use.
-
-Open risks:
-
-- recurring U.S. domestic-service fit
-- voice/SMS/phone-number/porting scope for the intended product
-- minimum funding/wholesale terms
-- provider-of-record and telecom responsibility allocation
-- final support/refund obligations
-
-Best current fit: **secondary travel/data product path or controlled technical fallback**, not the assumed full-cellular foundation.
+This document records the commercial provider strategy. It does not authorise live sales, payments, SIM/eSIM activation, phone-number assignment, number porting, or any public claim of AT&T affiliation.
 
 ## Current decision
 
-1. Pursue 1GLOBAL or an equivalent full-stack MVNO/MVNE/Telco-as-a-Service partner first.
-2. Keep eSIM Go integrated as a travel/data option and technical backup.
-3. Do not fund or commit to a provider merely because an API works.
-4. Require written U.S. domestic-service, resale, capability, economics and regulatory evidence before mapping a provider to a Streetwise launch plan.
-5. Keep all live customer sales and activation disabled during comparison.
+1. **AT&T is the primary U.S. domestic commercial evaluation path.**
+2. **1GLOBAL remains the full-stack fallback candidate.**
+3. **eSIM Go remains a travel/data path and no longer blocks domestic provider selection.**
+4. Runtime provisioning remains mock/eSIM Go only until a signed provider contract and real API specification are received.
+5. Streetwise must not market itself as an AT&T reseller, AT&T MVNO, AT&T partner, or AT&T-powered service until AT&T grants the applicable rights in writing.
 
-## Evidence required from the priority provider
+## AT&T — primary domestic candidate
 
-Obtain written answers for:
+Current official AT&T materials show two relevant paths.
 
-1. commercial role Streetwise would hold;
-2. recurring U.S. domestic-use rights;
-3. residential and commercial resale rights;
-4. supported U.S. networks;
-5. data and hotspot terms;
-6. voice and SMS terms;
-7. local-number capability;
-8. number-porting process and costs;
-9. 5G/VoLTE/Wi-Fi-calling support;
-10. eSIM/physical-SIM lifecycle;
-11. SIM-swap/replacement/port-out events and controls;
-12. roaming/international products;
-13. network-selection/failover options, if any;
-14. usage/event latency and webhooks;
-15. sandbox/test path;
-16. minimum commitment, deposit, funding and wholesale pricing;
-17. refunds/credits/failed activations;
-18. support/SLA;
-19. provider-of-record, E911, numbering, taxes, FCC/USAC and Nevada responsibilities;
-20. exit/termination treatment for active customers and numbers.
+### AT&T Partner Exchange
 
-Until those facts are complete, PUBLIC_LAUNCH_MODE=waitlist and ESIM_LIVE_ORDERS_ENABLED=false remain mandatory.
+AT&T describes Partner Exchange as a reseller program in which the partner can control the customer lifecycle, own the end-to-end customer relationship, manage Tier 1 support, use co-branding, access APIs/custom resale tools, and resell a portfolio that includes wireless voice, data, and messaging.
+
+Official source:
+
+- https://www.business.att.com/industries/partner-solutions/att-partner-exchange.html
+
+### AT&T Wholesale
+
+AT&T Wholesale markets wireless voice, data, and messaging as part of its wholesale portfolio. Its current qualification form asks telecommunications providers for company/contact details and specifically asks about:
+
+- total employee count;
+- whether the company operates a 24/7/365 Tier 1 Network Operations Center;
+- whether the company currently bills end users;
+- whether the company has an FCC Registration Number (FRN).
+
+Official sources:
+
+- https://www.business.att.com/industries/wholesale.html
+- https://partnerexchange.att.com/wholesalelead/s/
+
+### What the public material does NOT prove
+
+Public AT&T pages do not prove that Streetwise has:
+
+- been accepted into Partner Exchange or Wholesale;
+- received U.S. residential resale rights;
+- received an MVNO agreement;
+- received subscriber-provisioning APIs;
+- received phone-number/porting APIs;
+- received account-specific wholesale pricing;
+- received an AT&T network/SIM/eSIM product mapping;
+- received permission to use AT&T branding;
+- received provider-of-record or regulatory allocations.
+
+Those items remain contractual gates.
+
+### AT&T evidence required before launch
+
+Streetwise must obtain and record:
+
+- approved partner route: Partner Exchange, Wholesale, both, or another AT&T route;
+- written recurring U.S. domestic-use rights;
+- written residential and commercial resale rights;
+- exact provider-of-record model;
+- supported wireless products and networks;
+- data allowance/throttling/hotspot rules;
+- voice and SMS;
+- local-number and number-portability support;
+- SIM/eSIM lifecycle;
+- 5G, VoLTE and Wi-Fi calling;
+- international/roaming;
+- line suspension/reactivation and SIM replacement;
+- fraud/SIM-swap/port-out controls or events;
+- API documentation, authentication, sandbox/test process and lifecycle events;
+- Tier 1 support obligations;
+- end-user billing model;
+- FRN requirement/status;
+- branding/co-branding rights;
+- account-specific wholesale prices and minimum commitments;
+- refund/SLA/escalation rules;
+- taxes/surcharges;
+- FCC/USAC, E911, numbering/porting and Nevada responsibilities;
+- termination treatment for active customers and phone numbers.
+
+## 1GLOBAL — domestic fallback
+
+1GLOBAL remains valuable because its public Telco-as-a-Service materials describe a broad cellular feature set including domestic mobile service, calls/texts/data, phone numbers, porting, SIM/eSIM, roaming, 5G, VoLTE and Wi-Fi calling.
+
+Streetwise should keep the existing read-only 1GLOBAL preparation so the company has a real alternative if AT&T commercial terms, qualification requirements, economics or implementation access do not fit.
+
+Fallback does not mean secondary quality. It means Streetwise avoids becoming commercially trapped by one upstream provider before signing a contract.
+
+## eSIM Go — travel/data path
+
+The existing eSIM Go integration remains useful for:
+
+- travel data;
+- short-duration eSIM products;
+- controlled technical validation;
+- future international add-ons.
+
+Its travel product should not determine whether Streetwise is ready to choose a recurring U.S. domestic carrier path.
+
+## Domestic comparison gate
+
+The repository now requires complete commercial evidence for:
+
+- att-wholesale
+- 1global
+
+eSIM Go evidence is recorded separately as optional/travel evidence.
+
+The comparison remains fail-closed if AT&T or 1GLOBAL commercial facts are unknown.
+
+## Launch rule
+
+Before a domestic provider can be selected for activation:
+
+- public launch mode must remain waitlist;
+- checkout must remain disabled;
+- payments must remain disabled;
+- live provider orders must remain disabled;
+- provider commercial evidence must be complete;
+- legal approval must be recorded;
+- credentials/API access must be verified;
+- catalogue/product mapping must be verified;
+- controlled validation must pass;
+- staging lifecycle testing must pass.
+
+AT&T is the primary target, not a public affiliation claim.
