@@ -10,6 +10,7 @@ COPY src ./src
 COPY public ./public
 COPY db ./db
 COPY scripts ./scripts
+COPY docs ./docs
 COPY test ./test
 COPY render.yaml ./render.yaml
 RUN node --check src/server.js \
