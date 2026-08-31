@@ -23,7 +23,7 @@ Streetwise does not own towers or licensed radio spectrum. The commercially real
 
 The production deployment remains intentionally constrained. Visitors can join the waitlist, but no one can purchase cellular service, activate a line, port a number, or create a live paid subscription until provider, legal, regulatory, technical, support, and economics gates are complete.
 
-See docs/PROJECT_STATUS.md for the current readiness snapshot and docs/OWNER_ACTIONS.md for owner/provider/regulator actions that cannot be completed safely in code.
+See docs/PROJECT_STATUS.md for the current readiness snapshot, docs/90_DAY_LAUNCH_PLAN.md for the August 31–November 30 launch-readiness schedule, and docs/OWNER_ACTIONS.md for owner/provider/regulator actions that cannot be completed safely in code.
 
 ## Product direction
 
@@ -194,6 +194,12 @@ Run the deployed production smoke check with:
 npm run check:production
 
 The default payment and connectivity providers remain mocks during local development.
+
+## 90-day target
+
+Target launch-readiness date: **November 30, 2026**. The date drives execution, but mandatory provider, legal, regulatory, security, economics, and staging gates still control whether public service may actually launch.
+
+See `docs/90_DAY_LAUNCH_PLAN.md`.
 
 ## Next concrete milestones
 
