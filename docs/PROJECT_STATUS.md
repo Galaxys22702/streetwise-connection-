@@ -2,6 +2,10 @@
 
 Last reviewed: 2026-08-30
 
+Target launch-readiness date: **2026-11-30**
+
+Execution plan: `docs/90_DAY_LAUNCH_PLAN.md`
+
 ## Executive summary
 
 Streetwise Connection has pivoted from a primarily data-only eSIM connectivity concept to a broader **cellular/MVNO service company** direction.
@@ -159,6 +163,10 @@ That work should not be guessed into existence before the selected wholesale pro
 10. Run controlled staging line provisioning and lifecycle tests.
 11. Reconcile Terms, Privacy, refund/support, security, and disclosures to the selected provider agreement.
 12. Explicitly approve live billing and live service only after all gates pass.
+
+## 90-day execution rule
+
+Streetwise is targeting launch readiness by November 30, 2026. If provider, licensing, regulatory, economics, security, customer-policy, or controlled-staging gates remain incomplete on that date, the software can be considered prepared but public commercial launch remains blocked.
 
 ## Required safety configuration
 
