@@ -1,0 +1,29 @@
+name: ${COMPOSE_PROJECT_NAME:-streetwise-open5gs-lab}
+
+services:
+  mongodb:
+    image: ${MONGO_IMAGE:-mongo:7}
+    restart: unless-stopped
+    command: ["mongod", "--bind_ip", "0.0.0.0"]
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE:-open5gs_lab}
+    volumes:
+      - open5gs-lab-mongo:/data/db
+    networks:
+      - open5gs-lab-core
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  open5gs-lab-core:
+    driver: bridge
+    internal: true
+
+volumes:
+  open5gs-lab-mongo:
