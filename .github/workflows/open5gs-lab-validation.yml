@@ -1,0 +1,75 @@
+name: Open5GS lab validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'lab/open5gs/**'
+      - '.github/workflows/open5gs-lab-validation.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'lab/open5gs/**'
+      - '.github/workflows/open5gs-lab-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: open5gs-lab-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate isolated lab
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Create lab environment
+        run: cp lab/open5gs/.env.example lab/open5gs/.env
+
+      - name: Validate Compose model
+        run: docker compose --env-file lab/open5gs/.env -f lab/open5gs/compose.yml config --quiet
+
+      - name: Start isolated MongoDB
+        run: docker compose --env-file lab/open5gs/.env -f lab/open5gs/compose.yml up -d mongodb
+
+      - name: Wait for MongoDB health
+        shell: bash
+        run: |
+          set -euo pipefail
+          cid="$(docker compose --env-file lab/open5gs/.env -f lab/open5gs/compose.yml ps -q mongodb)"
+          test -n "$cid"
+          for attempt in {1..30}; do
+            status="$(docker inspect --format='{{.State.Health.Status}}' "$cid")"
+            echo "MongoDB health: $status"
+            if [ "$status" = healthy ]; then
+              exit 0
+            fi
+            if [ "$status" = unhealthy ]; then
+              docker compose --env-file lab/open5gs/.env -f lab/open5gs/compose.yml logs mongodb
+              exit 1
+            fi
+            sleep 2
+          done
+          docker compose --env-file lab/open5gs/.env -f lab/open5gs/compose.yml logs mongodb
+          exit 1
+
+      - name: Verify lab network is internal
+        shell: bash
+        run: |
+          set -euo pipefail
+          network="$(docker compose --env-file lab/open5gs/.env -f lab/open5gs/compose.yml config --format json | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(iter(d["networks"].values()))["name"])')"
+          test "$(docker network inspect "$network" --format='{{.Internal}}')" = true
+
+      - name: Show lab status
+        if: always()
+        run: docker compose --env-file lab/open5gs/.env -f lab/open5gs/compose.yml ps
+
+      - name: Tear down isolated lab
+        if: always()
+        run: docker compose --env-file lab/open5gs/.env -f lab/open5gs/compose.yml down -v --remove-orphans
