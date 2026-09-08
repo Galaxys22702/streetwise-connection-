@@ -1,12 +1,16 @@
-# Streetwise Connection
+# Streetwise Connection℠
 
-Streetwise Connection is an early-stage cellular service brand and control plane being designed around affordable mobile service, strong account security, practical support, and smarter connectivity resilience.
+**Stay Connected. Stay Streetwise.℠**
+
+Streetwise Connection℠ is an early-stage cellular service brand and control plane being designed around affordable mobile service, strong account security, practical support, and smarter connectivity resilience.
 
 Streetwise does not own towers or licensed radio spectrum. The commercially realistic launch path is an MVNO/MVNE or Telco-as-a-Service relationship with licensed network partners while Streetwise owns the customer experience, plan design, software, support workflow, security layer, and provider orchestration.
 
 **Positioning:** Affordable cellular service without the usual confusion.
 
 ## Current launch state
+
+Last reviewed: **2026-09-08**
 
 - Public mode: waitlist only
 - Commercial sales: disabled
@@ -20,14 +24,18 @@ Streetwise does not own towers or licensed radio spectrum. The commercially real
 - Emergency connectivity reserve: planned, not enabled
 - Production waitlist backend: Supabase
 - Future customer/order/service database: PostgreSQL
+- Primary domestic commercial candidate: AT&T
+- Domestic fallback candidate: 1GLOBAL
+- Travel/data integration path: eSIM Go
+- Open5GS work: isolated lab validation only, not production service
 
-The production deployment remains intentionally constrained. Visitors can join the waitlist, but no one can purchase cellular service, activate a line, port a number, or create a live paid subscription until provider, legal, regulatory, technical, support, and economics gates are complete.
+The production deployment remains intentionally constrained. Visitors can join the waitlist, but no one can purchase cellular service, activate a line, port a number, or create a live paid subscription until provider, legal, regulatory, technical, support, security, and economics gates are complete.
 
-See docs/PROJECT_STATUS.md for the current readiness snapshot, docs/90_DAY_LAUNCH_PLAN.md for the August 31–November 30 launch-readiness schedule, and docs/OWNER_ACTIONS.md for owner/provider/regulator actions that cannot be completed safely in code.
+See `docs/PROJECT_STATUS.md` for the current readiness snapshot, `docs/90_DAY_LAUNCH_PLAN.md` for the August 31-November 30 launch-readiness schedule, and `docs/OWNER_ACTIONS.md` for owner/provider/regulator actions that cannot be completed safely in code.
 
 ## Product direction
 
-Streetwise is now being prepared as a cellular/MVNO brand rather than a data-only eSIM storefront.
+Streetwise is being prepared as a cellular/MVNO brand rather than a data-only eSIM storefront.
 
 The planned service stack is:
 
@@ -71,11 +79,11 @@ Final pricing must be validated against wholesale connectivity, voice/SMS/number
 
 AT&T is the primary U.S. domestic commercial evaluation path.
 
-Streetwise is evaluating the correct AT&T route, including AT&T Partner Exchange and AT&T Wholesale. Current AT&T public materials show reseller/wholesale wireless voice, data, and messaging opportunities, but public material is not an approval for Streetwise.
+Streetwise is evaluating the correct AT&T route, including AT&T Partner Exchange and AT&T Wholesale. Public AT&T material is not an approval for Streetwise and must not be represented as one.
 
 The repository therefore treats AT&T as **commercially targeted but technically fail-closed**:
 
-- internal provider candidate: att-wholesale
+- internal provider candidate: `att-wholesale`
 - public AT&T affiliation claim: disabled
 - AT&T commercial-contract flag: false
 - AT&T live-provisioning flag: false
@@ -84,7 +92,7 @@ The repository therefore treats AT&T as **commercially targeted but technically 
 
 Streetwise must not advertise itself as an AT&T reseller, AT&T MVNO, AT&T partner, or AT&T-powered service until the applicable rights are granted in writing.
 
-See docs/ATT_PROVIDER_APPLICATION_PACKET.md for the prepared qualification transfer sheet.
+See `docs/ATT_PROVIDER_APPLICATION_PACKET.md` for the prepared qualification transfer sheet.
 
 ### Domestic fallback: 1GLOBAL
 
@@ -116,6 +124,9 @@ The repository already contains:
 - Production smoke checks and launch-readiness guardrails
 - Nevada formation/licensing packet and regulatory working documents
 - Draft privacy, terms, refund, and support documents
+- Isolated Open5GS lab scaffold and validation workflow for non-production research
+- Streetwise brand/service-mark evidence record
+- Current dependency maintenance including Stripe 22.6.0 and Node.js 24 workflow support
 
 The existing data/eSIM work is not discarded. It becomes the connectivity-provisioning foundation underneath a broader cellular product.
 
@@ -140,7 +151,7 @@ The future provider capability boundary should be able to represent:
 - SIM swaps
 - provider events/webhooks
 
-See docs/ARCHITECTURE.md.
+See `docs/ARCHITECTURE.md`.
 
 ## Safety model
 
@@ -148,11 +159,15 @@ Production must remain in waitlist mode until every applicable launch gate is co
 
 Required safety posture:
 
-PUBLIC_LAUNCH_MODE=waitlist  
-STRIPE_LIVE_MODE_ENABLED=false  
+```text
+PUBLIC_LAUNCH_MODE=waitlist
+STRIPE_LIVE_MODE_ENABLED=false
 ESIM_LIVE_ORDERS_ENABLED=false
+```
 
 Do not commit provider API keys, Stripe secrets, database passwords, Supabase service-role keys, SSNs/ITINs, identity documents, banking information, or private licence/provider paperwork.
+
+The Open5GS lab must remain isolated from production customer traffic, live provider credentials, billing, and live SIM/eSIM activation.
 
 ## Commercial reality
 
@@ -160,44 +175,53 @@ Streetwise should compete on **affordability + security + resilience + clarity +
 
 Contribution margin must include:
 
-retail price  
-minus wholesale network/data/voice/SMS/number cost  
-minus payment fees  
-minus telecom taxes/surcharges  
-minus support and fraud reserve  
-minus infrastructure/security tooling  
+```text
+retail price
+minus wholesale network/data/voice/SMS/number cost
+minus payment fees
+minus telecom taxes/surcharges
+minus support and fraud reserve
+minus infrastructure/security tooling
 equals contribution margin
+```
 
 Do not promise unlimited data, unlimited hotspot, guaranteed network switching, emergency reserve, voice/SMS, a local number, Wi-Fi calling, international coverage, or specific security filtering until the selected provider and implemented system actually support the claim.
 
 ## Repository map
 
-api/ — Vercel API entry points  
-src/ — application/server code  
-src/config/ — launch and product configuration  
-src/providers/ — wholesale provider adapters  
-db/migrations/ — PostgreSQL migrations  
-scripts/ — verification, migration, economics, and smoke checks  
-public/ — public waitlist experience  
-docs/ — architecture, cellular strategy, provider, and technical documentation  
-docs/business/ — formation, licensing, policy, and regulatory working documents  
-.github/workflows/ — CI and provider/payment validation
+```text
+api/                Vercel API entry points
+src/                application/server code
+src/config/         launch and product configuration
+src/providers/      wholesale provider adapters
+db/migrations/      PostgreSQL migrations
+scripts/            verification, migration, economics, and smoke checks
+public/             public waitlist experience
+docs/               architecture, cellular strategy, provider, and technical documentation
+docs/business/      formation, licensing, policy, and regulatory working documents
+lab/                isolated non-production Open5GS research/validation
+.github/workflows/  CI and provider/payment/lab validation
+```
 
 ## Verification
 
 Run the repository verification suite before merging:
 
+```bash
 npm run verify
+```
 
 Run the deployed production smoke check with:
 
+```bash
 npm run check:production
+```
 
 The default payment and connectivity providers remain mocks during local development.
 
 ## 90-day target
 
-Target launch-readiness date: **November 30, 2026**. The date drives execution, but mandatory provider, legal, regulatory, security, economics, and staging gates still control whether public service may actually launch.
+Target launch-readiness date: **November 30, 2026**. The date drives execution, but mandatory provider, legal, regulatory, security, economics, customer-policy, and staging gates still control whether public service may actually launch.
 
 See `docs/90_DAY_LAUNCH_PLAN.md`.
 
@@ -212,3 +236,7 @@ See `docs/90_DAY_LAUNCH_PLAN.md`.
 7. Run controlled staging provisioning and lifecycle tests.
 8. Finalise customer policies and support procedures.
 9. Enable live billing and live line activation only after all launch gates pass and the owner explicitly authorises launch.
+
+## Brand usage
+
+Use **Streetwise Connection℠** and **Stay Connected. Stay Streetwise.℠** for current public/common-law service-mark usage. Do not use the ® symbol unless and until the corresponding mark is federally registered and that registration supports the specific usage.
