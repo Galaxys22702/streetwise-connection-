@@ -1,6 +1,6 @@
 # Project Status
 
-Last reviewed: 2026-08-30
+Last reviewed: **2026-09-08**
 
 Target launch-readiness date: **2026-11-30**
 
@@ -8,9 +8,9 @@ Execution plan: `docs/90_DAY_LAUNCH_PLAN.md`
 
 ## Executive summary
 
-Streetwise Connection has pivoted from a primarily data-only eSIM connectivity concept to a broader **cellular/MVNO service company** direction.
+Streetwise Connection℠ is being prepared as a broader **cellular/MVNO service company** rather than a data-only eSIM storefront.
 
-The existing waitlist, account, payment, eSIM, provider, economics, compliance, and database work remains useful. It now becomes the foundation for a larger product that may eventually include data, hotspot, voice, SMS, local numbers, number portability, security controls, network-resilience options, emergency-connectivity features, and international service.
+The existing waitlist, account, payment, eSIM, provider, economics, compliance, database, security, and deployment work remains useful. It is now the foundation for a larger product that may eventually include data, hotspot, voice, SMS, local numbers, number portability, security controls, network-resilience options, emergency-connectivity features, and international service.
 
 Streetwise is **not yet authorised or technically complete for commercial cellular sales**.
 
@@ -28,6 +28,25 @@ Current production posture:
 - Public waitlist storage: Supabase
 - Future customer/service/order storage: PostgreSQL
 - Provider commercial-readiness gate: fail-closed
+- Primary domestic commercial candidate: AT&T
+- Domestic fallback candidate: 1GLOBAL
+- Travel/data integration: eSIM Go
+- Open5GS: isolated lab validation only, not production service
+
+## September maintenance and branding state
+
+The September repository/production pass includes:
+
+- public branding updated to **Streetwise Connection℠**
+- slogan usage updated to **Stay Connected. Stay Streetwise.℠**
+- brand/IP evidence record added
+- production waitlist redesign deployed
+- Stripe dependency updated to 22.6.0 with live billing still disabled
+- GitHub Actions/Node.js workflow maintenance updated while retaining Node.js 24
+- Open5GS lab scaffold and validation workflow added in an isolated non-production path
+- production safety model unchanged: waitlist only, no public payment, no live SIM/eSIM provisioning
+
+The lab work must not be interpreted as Streetwise operating a live mobile core or carrier network. It is development/research infrastructure only.
 
 ## Product objective
 
@@ -72,19 +91,20 @@ Final service features and prices require real provider mapping and economics.
 | Emergency connectivity reserve | Planned | Provider plan/billing mechanics required |
 | International/travel data | Existing provider path available for evaluation | Commercial approval required |
 | Commercial multi-line model | Database foundation built | Full cellular line lifecycle required |
+| Open5GS lab | Isolated validation scaffold | Must remain disconnected from production/live subscriber provisioning |
 
 ## Provider direction
 
 ### Priority: AT&T
 
-AT&T is now the primary domestic provider candidate.
+AT&T remains the primary domestic provider candidate.
 
-The repo is prepared to evaluate two current AT&T business paths:
+The repo is prepared to evaluate two AT&T business paths:
 
 - AT&T Partner Exchange
 - AT&T Wholesale
 
-AT&T's public materials support evaluating wireless voice, data and messaging resale/wholesale, but Streetwise has not yet received an AT&T commercial approval, provider-of-record determination, account-specific pricing, API specification, branding right or live provisioning access.
+Public AT&T materials are not an approval for Streetwise. Streetwise has not yet received an AT&T commercial approval, provider-of-record determination, account-specific pricing, API specification, branding right or live provisioning access.
 
 Coding posture:
 
@@ -98,8 +118,8 @@ Coding posture:
 
 Prepared external packet:
 
-- docs/ATT_PROVIDER_APPLICATION_PACKET.md
-- docs/business/AT&T-SIGNATURE-READY-PACKET.md
+- `docs/ATT_PROVIDER_APPLICATION_PACKET.md`
+- `docs/business/AT&T-SIGNATURE-READY-PACKET.md`
 
 ### Fallback: 1GLOBAL
 
@@ -133,8 +153,11 @@ The repository contains or supports:
 - regulatory matrix
 - draft customer policies
 - launch safety controls
+- isolated Open5GS lab validation infrastructure
+- Streetwise brand/service-mark evidence documentation
+- current dependency maintenance and CI compatibility work
 
-## Important gap created by the pivot
+## Important gaps
 
 The current codebase does not yet implement a complete cellular line stack for:
 
@@ -172,9 +195,20 @@ Streetwise is targeting launch readiness by November 30, 2026. If provider, lice
 
 Production remains:
 
-PUBLIC_LAUNCH_MODE=waitlist  
-STRIPE_LIVE_MODE_ENABLED=false  
+```text
+PUBLIC_LAUNCH_MODE=waitlist
+STRIPE_LIVE_MODE_ENABLED=false
 ESIM_LIVE_ORDERS_ENABLED=false
+```
+
+## Brand usage rule
+
+Current public/common-law service-mark usage is:
+
+- **Streetwise Connection℠**
+- **Stay Connected. Stay Streetwise.℠**
+
+Do not use the ® symbol unless and until a corresponding federal registration is issued and supports the specific use.
 
 ## What not to claim yet
 
