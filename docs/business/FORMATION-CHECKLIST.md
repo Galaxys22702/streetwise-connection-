@@ -19,9 +19,13 @@
 - [x] Prepare regulatory/licensing matrix
 - [x] Prepare privacy-policy draft
 - [x] Prepare terms-of-service draft
+- [x] Prepare AT&T free first-contact / qualification packet
+- [ ] Submit AT&T Partner Exchange Request info inquiry using `Streetwise Connection` as the pre-formation business name and truthful current status
 - [ ] Confirm Nevada entity-name availability immediately before filing
-- [ ] Confirm exact City of Las Vegas licensing category with Business Licensing before paying a city fee
-- [ ] Obtain written wholesale/eSIM provider terms identifying the provider of record and regulatory responsibilities
+- [ ] Confirm exact local licensing jurisdiction and licensing category from the final operating address before paying a local fee
+- [ ] Obtain written wholesale/provider terms identifying the provider of record and regulatory responsibilities
+
+The AT&T first-contact inquiry may be made before Nevada LLC formation, but it must not represent `Streetwise Connection LLC` as an existing entity until Nevada accepts the filing. A preliminary inquiry is not AT&T approval, reseller authority, or carrier affiliation.
 
 ## Paid / government-gated filings
 
@@ -33,7 +37,7 @@ Official portal: https://www.nvsilverflume.gov/
 
 ### 2. IRS EIN
 
-The EIN itself is free. Apply only through the IRS. The application requires responsible-party identity information that should never be stored in this public repository.
+The EIN itself is free. Apply only through the IRS after the LLC is legally formed. The application requires responsible-party identity information that should never be stored in this public repository.
 
 Official IRS page: https://www.irs.gov/businesses/small-businesses-self-employed/get-an-employer-identification-number
 
@@ -43,15 +47,15 @@ After a state business license and EIN exist, determine required Nevada tax regi
 
 Official site: https://tax.nv.gov/
 
-### 4. City of Las Vegas
+### 4. Local Nevada business licensing
 
-Confirm the physical address is actually inside City of Las Vegas jurisdiction before filing. City licensing requires state compliance first. Home-based operations may also require a Home Occupation Permit.
+Confirm the physical operating address and governing jurisdiction before filing. A mailing address containing `Las Vegas` does not necessarily mean the location is inside the City of Las Vegas; it may fall under North Las Vegas, Clark County, Henderson, or another jurisdiction. Complete state compliance first where the local authority requires it. Home-based operations may also require a home-occupation approval or permit.
 
-Official licensing page: https://www.lasvegasnevada.gov/Business/Business-License/Apply-For-A-Business-License
+City of Las Vegas reference: https://www.lasvegasnevada.gov/Business/Business-License/Apply-For-A-Business-License
 
 ### 5. Nevada PUCN — CMRS
 
-If Streetwise offers commercial mobile radio service in Nevada, the PUCN requires a CMRS license. The PUCN registration form expressly recognizes resellers that do not themselves hold an FCC spectrum license. Current annual CMRS licensing fee: $200.
+If Streetwise offers commercial mobile radio service in Nevada, the PUCN may require CMRS licensing/registration depending on the final provider and contractual model. Resolve this from the signed provider-of-record allocation before filing unnecessary telecom registrations.
 
 Official page: https://puc.nv.gov/Utilities/Telecommunications/CMRS/
 
@@ -68,8 +72,8 @@ Streetwise should not accept real paid subscribers until all applicable items be
 - [ ] Legal entity is active and in good standing
 - [ ] EIN issued
 - [ ] Required Nevada tax registration complete
-- [ ] Required City of Las Vegas business license issued
-- [ ] Required PUCN CMRS registration/license complete
+- [ ] Required local business license issued
+- [ ] Required PUCN CMRS registration/license complete, if applicable
 - [ ] FCC/USAC status analyzed and required registrations completed
 - [ ] Wholesale/eSIM contract executed
 - [ ] Production database connected and migrations verified
