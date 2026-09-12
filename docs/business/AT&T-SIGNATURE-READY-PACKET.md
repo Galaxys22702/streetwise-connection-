@@ -1,22 +1,25 @@
-# Streetwise Connection LLC — AT&T Signature-Ready Packet
+# Streetwise Connection — AT&T Signature-Ready Packet
 
 Prepared: 2026-08-30  
+Last reviewed: 2026-09-12  
 Status: READY FOR OWNER/PROVIDER COMPLETION, NOT EXECUTED
 
 This document prepares the signatures and declarations Streetwise can control. It does not replace AT&T's official application, AT&T contract documents, government forms, or legal advice.
 
 ## A. Applicant identity declaration
 
-Proposed legal entity: Streetwise Connection LLC  
-Public brand / DBA: Streetwise Connection  
+Current public / pre-formation brand: Streetwise Connection  
+Proposed legal entity after Nevada acceptance: Streetwise Connection LLC  
 State: Nevada  
-Ownership/authorised signer: Sole Member / Owner  
+Planned ownership/authorised signer: Sole Member / Owner  
 Launch status: waitlist only
+
+Until Nevada accepts the LLC filing, do not sign or submit this packet as though `Streetwise Connection LLC` is already an existing legal entity. For a preliminary AT&T Request info inquiry, identify the business as **Streetwise Connection** and disclose that it is pre-launch.
 
 I certify that the company information supplied to AT&T will be true and current at the time of submission.
 
 Authorised signer name: ______________________________  
-Title: Sole Member / Owner  
+Title: Sole Member / Owner, if accurate at submission  
 Signature: ______________________________  
 Date: ______________________________
 
@@ -29,7 +32,8 @@ I certify that Streetwise will answer the AT&T qualification questions truthfull
 - 24/7/365 Tier 1 NOC status;
 - whether Streetwise currently bills end users;
 - FCC FRN status;
-- company address/contact details.
+- company address/contact details;
+- legal entity formation status.
 
 I understand that this packet does not pre-answer facts that require current owner verification.
 
