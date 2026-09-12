@@ -1,19 +1,52 @@
 # Streetwise Connection — AT&T Provider Application Packet
 
 Prepared: 2026-08-30  
-Status: PREPARED, NOT SUBMITTED
+Last verified: 2026-09-12  
+Status: FREE FIRST-CONTACT READY, NOT SUBMITTED
 
 This packet is a transfer sheet for AT&T Partner Exchange / AT&T Wholesale qualification. It is not an AT&T form and does not create a partnership, reseller right, MVNO relationship, network right, or API entitlement.
+
+## 0. Free first-contact route
+
+Current official AT&T materials reviewed 2026-09-12 make **AT&T Partner Exchange** the best first qualification route for Streetwise because AT&T describes it as a reseller program with customer-lifecycle control, co-branding, Tier 1 support responsibility, self-service tools/APIs, and a resale portfolio that includes wireless voice, data, and messaging.
+
+AT&T Wholesale remains the fallback / parallel route for carrier and wholesale connectivity discussions.
+
+Official first-contact pages:
+
+- Partner Exchange: https://www.business.att.com/industries/partner-solutions/att-partner-exchange.html
+- Partner Solutions: https://www.business.att.com/industries/partner-solutions.html
+- Wholesale: https://www.business.att.com/industries/wholesale.html
+
+The Partner Exchange page currently provides a free **Request info** form requesting first name, last name, email address, phone, company name, and a comment. It also links to a formal program application. Use the Request info path first unless AT&T directs Streetwise straight to a formal application.
+
+### First-contact comment
+
+Use this short description in the Request info form:
+
+> Streetwise Connection is a pre-launch Las Vegas-based cellular connectivity business seeking the correct AT&T-approved reseller or wholesale path for recurring U.S. wireless service. We plan to serve residential and small-business customers using approved upstream network products while providing account management, Tier 1 customer support, activation assistance, security-focused account controls, and related line-management services. We are currently waitlist-only and are not representing Streetwise as an AT&T partner or reseller before written approval. Please advise whether AT&T Partner Exchange, AT&T Wholesale, or another AT&T program is the appropriate qualification path and what formation, FRN, support/NOC, volume, and commercial requirements apply.
+
+Do not change this wording to claim AT&T affiliation, approved resale rights, network ownership, live subscribers, or active carrier status.
+
+### First-contact fields still requiring private owner entry
+
+- First name
+- Last name
+- Current contact email
+- Current contact phone
+- Company name to use on inquiry: **Streetwise Connection** until Nevada legally accepts `Streetwise Connection LLC`
+
+Do not place the private phone, email, home address, SSN/ITIN, EIN, signatures, or provider credentials in the public repository.
 
 ## 1. Intended provider route
 
 Primary objective: obtain the AT&T-approved commercial path for recurring U.S. wireless resale.
 
-Routes to ask AT&T to evaluate:
+Priority routes:
 
-- AT&T Partner Exchange
-- AT&T Wholesale
-- another AT&T partner/wholesale route if AT&T determines it is a better fit
+1. AT&T Partner Exchange — first qualification route
+2. AT&T Wholesale — parallel/fallback route
+3. another AT&T partner/wholesale route if AT&T determines it is a better fit
 
 Internal Streetwise provider ID: att-wholesale
 
@@ -22,13 +55,15 @@ That internal ID is code terminology only.
 ## 2. Prepared company identity
 
 Legal company name: Streetwise Connection LLC **only after Nevada accepts the entity**  
-DBA / public brand: Streetwise Connection  
-Entity type: Nevada LLC  
+Current public / pre-formation brand: Streetwise Connection  
+Proposed entity type: Nevada LLC  
 Customer markets: residential and small business  
 Business model: branded cellular connectivity using licensed upstream network/provider infrastructure  
 Launch state: public waitlist only  
 Live billing: disabled  
 Live line activation: disabled
+
+Until Nevada accepts the LLC, do not represent `Streetwise Connection LLC` as an existing legal entity in the first-contact form. Use `Streetwise Connection` and describe the business as pre-launch.
 
 ## 3. Business description for AT&T
 
@@ -54,14 +89,15 @@ Phone: [OWNER TO ENTER]
 
 ### Corporate information
 
-Company name: Streetwise Connection LLC, after formation acceptance  
+Company name before Nevada formation: Streetwise Connection  
+Company name after Nevada formation acceptance: Streetwise Connection LLC  
 Company website URL: https://streetwise-connection.vercel.app/  
 Company street address: [OWNER TO ENTER PRIVATELY]  
-City: Las Vegas, subject to final operating address  
+City: Las Vegas / correct local jurisdiction based on actual operating address  
 State: Nevada  
 ZIP/postal: [OWNER TO ENTER]  
 Country: United States  
-Company DBA name: Streetwise Connection  
+Company DBA/public brand: Streetwise Connection  
 Company phone number: [OWNER TO ENTER]  
 Street address 2: [IF APPLICABLE]
 
@@ -160,7 +196,20 @@ Title: ______________________________
 Signature: ______________________________  
 Date: ______________________________
 
-## 9. Record handling
+## 9. Submission evidence record
+
+After the free Request info form or formal application is submitted, record only non-sensitive evidence here or in issue #25:
+
+- submission date;
+- AT&T route used;
+- confirmation/reference number if provided;
+- representative/contact name if provided;
+- next requested action;
+- whether AT&T requested entity formation, FRN, NOC capability, financial information, volume commitments, or additional documents.
+
+Do not commit private email threads, signatures, tax IDs, account IDs, pricing under NDA, credentials, or contracts to public GitHub.
+
+## 10. Record handling
 
 Do not commit the following to public GitHub:
 
