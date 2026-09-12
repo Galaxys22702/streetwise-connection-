@@ -1,13 +1,23 @@
 # Streetwise Connection — Owner Actions Only
 
-Last reviewed: 2026-08-30
+Last reviewed: 2026-09-12
 
 Everything that can safely be prepared in code or public working documents should be completed before this list is handed to the owner.
+
+## Free actions now
+
+- [x] Prepare AT&T Partner Exchange first-contact text and route
+- [x] Verify current official AT&T Partner Exchange / Partner Solutions / Wholesale pages
+- [ ] Submit the free AT&T Partner Exchange Request info form using truthful current pre-launch status
+- [ ] Record submission date/reference and AT&T response in issue #25
+- [ ] Continue free Nevada name/jurisdiction research and ready-to-file preparation
+
+No paid tools, filing services, provider funding, or government filing payments are authorised at this stage.
 
 ## Business formation and private identity actions
 
 - [ ] Confirm the legal name immediately before filing.
-- [ ] Complete Nevada LLC filing, Initial List and State Business Licence.
+- [ ] Complete Nevada LLC filing, Initial List and State Business Licence when funding is available and authorised.
 - [ ] Provide registered-agent/address information privately.
 - [ ] Obtain EIN after formation.
 - [ ] Complete applicable Nevada tax registration.
@@ -17,14 +27,17 @@ Everything that can safely be prepared in code or public working documents shoul
 
 ## AT&T application / qualification
 
-Use docs/ATT_PROVIDER_APPLICATION_PACKET.md and docs/business/AT&T-SIGNATURE-READY-PACKET.md.
+Use `docs/ATT_PROVIDER_APPLICATION_PACKET.md`, `docs/business/ATT_FIRST_CONTACT.md`, and `docs/business/AT&T-SIGNATURE-READY-PACKET.md`.
+
+For the free first-contact inquiry before Nevada formation, use the public/pre-formation company name **Streetwise Connection**. Do not represent `Streetwise Connection LLC` as an existing entity until Nevada accepts the filing.
 
 Owner supplies privately or in the official AT&T form:
 
-- [ ] final legal company name;
-- [ ] business/registered address;
-- [ ] company phone;
-- [ ] primary contact phone/email/title;
+- [ ] first and last name;
+- [ ] current contact email;
+- [ ] current contact phone;
+- [ ] final legal company name after formation, when applicable;
+- [ ] business/registered address when requested;
 - [ ] employee-count bracket;
 - [ ] truthful current answer on 24/7/365 Tier 1 NOC capability;
 - [ ] truthful current answer on whether Streetwise bills end users;
@@ -34,7 +47,8 @@ Owner supplies privately or in the official AT&T form:
 
 Then:
 
-- [ ] submit the appropriate AT&T Partner Exchange/Wholesale inquiry or application;
+- [ ] submit the free AT&T Partner Exchange Request info inquiry;
+- [ ] follow the AT&T-directed Partner Exchange / Wholesale / other qualification path;
 - [ ] provide any documents AT&T requests through AT&T's secure process;
 - [ ] obtain written program acceptance/commercial terms;
 - [ ] obtain written branding/resale rights;
