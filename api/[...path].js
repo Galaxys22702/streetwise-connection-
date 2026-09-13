@@ -1,4 +1,5 @@
 import { plans } from "../src/config/plans.js";
+import { cellularCapabilities } from "../src/config/cellularCapabilities.js";
 import { isCustomerServicePath, isPublicWaitlistOnly, publicLaunchMode } from "../src/config/launchMode.js";
 import { databaseStatus } from "../src/db/index.js";
 import {
@@ -25,8 +26,15 @@ import {
   provisionEsim,
   recordMockUsage
 } from "../src/services/esimService.js";
+import { handleEsimGoWebhook } from "../src/services/esimWebhookService.js";
 import { enforceWaitlistRateLimit } from "../src/services/waitlistRateLimit.js";
 import { joinWaitlist, waitlistStatus } from "../src/services/waitlistService.js";
+
+export const config = {
+  api: {
+    bodyParser: false
+  }
+};
 
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
@@ -124,7 +132,9 @@ export default async function handler(req, res) {
   if (req.method === "GET" && url.pathname === "/api/public-status") {
     return sendJson(res, 200, {
       publicLaunchMode: publicLaunchMode(),
-      waitlist: waitlistStatus()
+      serviceModel: "cellular-mvno",
+      waitlist: waitlistStatus(),
+      cellularCapabilities
     });
   }
 
@@ -236,6 +246,21 @@ export default async function handler(req, res) {
       const signature = String(req.headers["stripe-signature"] || "");
       if (!signature) return sendJson(res, 400, { error: "stripe_signature_required" });
       return sendJson(res, 200, await handleStripeWebhook(await readRawBody(req), signature));
+    } catch (error) {
+      return sendError(res, error, 400);
+    }
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/providers/esim-go/webhook") {
+    try {
+      const enabled = process.env.ESIM_WEBHOOKS_ENABLED === "true";
+      const provider = String(process.env.ESIM_PROVIDER || "mock").toLowerCase();
+      if (!enabled || provider !== "esim-go") {
+        return sendJson(res, 404, { error: "esim_go_webhook_not_enabled" });
+      }
+      const signature = String(req.headers["x-signature-sha256"] || "");
+      if (!signature) return sendJson(res, 400, { error: "esim_go_signature_required" });
+      return sendJson(res, 200, await handleEsimGoWebhook(await readRawBody(req), signature));
     } catch (error) {
       return sendError(res, error, 400);
     }
