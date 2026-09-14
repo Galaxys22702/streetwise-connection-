@@ -22,7 +22,10 @@ permissions:
 
 jobs:
   esim-go-connection:
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    # Dependabot PRs do not receive repository secrets, even when the branch lives
+    # in this repository. Skip live provider validation there instead of reporting
+    # a false failure. Pushes to main and trusted non-Dependabot PRs still validate.
+    if: github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
