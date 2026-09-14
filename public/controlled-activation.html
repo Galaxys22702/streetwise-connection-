@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#050713" />
-  <meta name="description" content="What Streetwise Connection means by Controlled Activation." />
+  <meta name="description" content="Streetwise Connection's Controlled Activation commitment: deliberate, authorised and verified mobile-line activation." />
   <title>Controlled Activation — Streetwise Connection℠</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
@@ -17,19 +17,43 @@
 
     <p class="eyebrow" style="margin-top:56px">Streetwise commitment</p>
     <h1>Controlled Activation</h1>
-    <p class="statement">A line should not go live until the required commercial, technical and customer checks have passed.</p>
+    <p class="statement">A Streetwise line should only go live through an authorised, verified activation path.</p>
 
-    <h2>What it means</h2>
-    <p>Streetwise is being designed so live cellular activation remains disabled until the selected provider is approved, the applicable plan is mapped correctly, device and eSIM workflows are tested, billing is ready and the required launch gates are complete.</p>
+    <h2>The commitment</h2>
+    <p>Streetwise is being designed so a mobile line cannot become active simply because a customer clicked a button or because a backend request was received. Activation should occur only after the relevant commercial, technical, billing, compatibility and customer checks have passed.</p>
 
-    <h2>For customers</h2>
-    <p>When live service becomes available, activation should be deliberate and traceable: the customer selects a supported plan, confirms the required information, completes the approved purchase flow and receives an activation only through the authorised provisioning path.</p>
+    <h2>Before Streetwise opens sales</h2>
+    <p>Live activation remains disabled until Streetwise has an approved wholesale relationship, mapped provider products, tested eSIM or SIM provisioning, verified billing behaviour, documented customer support procedures, required disclosures and the applicable launch-readiness gates completed.</p>
+
+    <h2>Customer authorisation</h2>
+    <p>When live service launches, the activation flow should require the customer to intentionally choose a supported plan, provide the information required for that service, review the material terms, authorise payment where applicable and confirm the activation request. Streetwise will not treat a waitlist signup as consent to activate or bill a mobile line.</p>
+
+    <h2>Device and eSIM checks</h2>
+    <p>Where technically available, Streetwise intends to perform device compatibility and eSIM capability checks before provisioning. The purpose is to reduce failed activations and avoid issuing a profile that cannot reasonably be used on the intended device.</p>
+
+    <h2>Provider-side provisioning</h2>
+    <p>The actual network service must be created through the selected provider's authorised provisioning system. Streetwise's software will treat provider confirmation, order state and identifiers as part of the activation record rather than assuming that an API request succeeded.</p>
+
+    <h2>Duplicate and accidental orders</h2>
+    <p>Streetwise's platform is being designed with idempotency and order-state controls so the same customer action or repeated network request does not intentionally create duplicate paid services. Failed or uncertain provider responses should be reconciled instead of blindly retried.</p>
+
+    <h2>Billing and activation</h2>
+    <p>Billing and service state should stay aligned. A payment event by itself should not be treated as proof that a line is active, and an activation event should not be treated as proof that billing completed correctly. Streetwise intends to track these states separately and reconcile them before presenting a final customer status.</p>
+
+    <h2>SIM changes, replacements and transfers</h2>
+    <p>Future eSIM replacement, SIM swap, device-transfer and number-port workflows should require appropriate authentication and provider-supported checks. High-risk changes should not be processed as casually as ordinary profile edits.</p>
+
+    <h2>What happens when something fails</h2>
+    <p>If a required check fails or the provider returns an uncertain result, Streetwise's intended posture is to stop and investigate rather than force the activation through. The customer should receive an honest status such as pending, failed or needs support instead of a false “active” message.</p>
 
     <h2>Current status</h2>
-    <p>Public Streetwise cellular sales, live eSIM ordering and paid line activation remain locked today. Joining the waitlist does not activate a cellular line or create a paid mobile subscription.</p>
+    <p>Streetwise cellular sales, live eSIM ordering and paid line activation remain locked. The public website is currently a waitlist and planning experience. No customer joining the waitlist is purchasing or activating Streetwise cellular service.</p>
 
-    <h2>Why it matters</h2>
-    <p>Failing closed reduces the chance of accidental activations, unsupported plans, incorrect billing or provisioning against a provider that has not been commercially approved.</p>
+    <h2>Why controlled activation matters</h2>
+    <p>Controlled activation reduces the risk of accidental charges, duplicate subscriptions, unsupported devices, unauthorised line changes, failed eSIM deliveries and provisioning against a provider or plan that Streetwise has not fully approved.</p>
+
+    <h2>What it does not mean</h2>
+    <p>Controlled activation cannot guarantee that every carrier-side activation will be instant or error-free. It means Streetwise will use deliberate checks, clear states and authorised provisioning paths rather than treating activation as an uncontrolled one-click action.</p>
 
     <p><a class="button" href="/">Back to Streetwise <span aria-hidden="true">↗</span></a></p>
   </main>
