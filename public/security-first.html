@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#050713" />
-  <meta name="description" content="What Streetwise Connection means by Security First." />
+  <meta name="description" content="Streetwise Connection's Security First commitment: account protection, controlled changes, secret handling, provider security and honest limits." />
   <title>Security First — Streetwise Connection℠</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
@@ -17,19 +17,49 @@
 
     <p class="eyebrow" style="margin-top:56px">Streetwise commitment</p>
     <h1>Security First</h1>
-    <p class="statement">Security controls should be part of the service design, not an afterthought added after launch.</p>
+    <p class="statement">Security should shape how Streetwise accounts, activations and provider connections work from the beginning.</p>
 
-    <h2>What it means</h2>
-    <p>Streetwise is being designed around protected account access, careful handling of credentials and customer data, controlled provider integrations, secure payment workflows and practical protections against unauthorised SIM or account changes.</p>
+    <h2>The commitment</h2>
+    <p>Streetwise is being designed so security is part of the product architecture and operating process, not a marketing add-on. The goal is to reduce unnecessary access, protect sensitive credentials, make high-risk account changes deliberate, detect problems where technically possible and give customers a clear recovery path when something goes wrong.</p>
 
-    <h2>SIM-swap and port-out protection</h2>
-    <p>Streetwise plans to use the strongest account-recovery, SIM-change and number-port protections that the selected wholesale provider and implemented system support. Exact controls will be published only after they are contractually available and tested.</p>
+    <h2>Account access</h2>
+    <p>Customer account access should require appropriate authentication and should not expose sensitive information unnecessarily. Recovery procedures must balance helping the legitimate customer regain access with preventing an attacker from using support as a shortcut around account protections.</p>
 
-    <h2>Provider and payment security</h2>
-    <p>Provider API keys, payment secrets, database passwords and other sensitive credentials are not intended for public code or customer-facing pages. Production integrations remain gated until the appropriate security and commercial requirements are met.</p>
+    <h2>SIM-swap and eSIM-change protection</h2>
+    <p>Changing a SIM or eSIM can transfer control of a mobile line to another device. Streetwise intends to apply stronger verification to these changes than to ordinary profile updates, using the best controls supported by the selected wholesale provider and implemented Streetwise system. Exact protections will be published only after they are available and tested.</p>
 
-    <h2>What this does not promise</h2>
-    <p>No mobile service can honestly claim that fraud, account takeover or network attacks are impossible. “Security First” means Streetwise will design for prevention, controlled access, monitoring and recovery while being clear about the limits of the available protections.</p>
+    <h2>Number-port protection</h2>
+    <p>If Streetwise launches number portability, port-out requests should use provider-supported identity, account and transfer controls designed to reduce unauthorised movement of a customer's number. Streetwise will not advertise specific port-lock or transfer-PIN capabilities until the selected provider actually supports them for Streetwise customers.</p>
+
+    <h2>Provider credentials and API access</h2>
+    <p>Wholesale-provider API keys, tokens and other service credentials are not intended to be placed in public source code, browser JavaScript or customer-facing pages. Production credentials should be stored and used through controlled server-side environments with access limited to the systems and people that actually require them.</p>
+
+    <h2>Payments</h2>
+    <p>Streetwise's payment architecture is intended to minimise direct handling of sensitive payment-card information by using an approved payment provider and server-side controls. Live billing remains disabled until the production payment configuration and launch gates are ready.</p>
+
+    <h2>Customer data</h2>
+    <p>Streetwise intends to collect and retain only the customer and operational data reasonably required to provide, support, secure and account for the service, subject to legal, regulatory and provider obligations. Access to sensitive operational data should be restricted rather than broadly available across the system.</p>
+
+    <h2>Logging and monitoring</h2>
+    <p>Security-relevant events such as authentication activity, provisioning changes, provider events and important administrative actions should be logged at an appropriate level so problems can be investigated. Logs should not deliberately contain passwords, full payment credentials or provider secrets.</p>
+
+    <h2>Fail-closed launch controls</h2>
+    <p>Streetwise currently keeps live billing and live cellular activation disabled. Provider integrations that have not received commercial approval are not treated as production-ready merely because code exists. This reduces the risk of exposing customers to an unapproved or partially configured service path.</p>
+
+    <h2>Software and dependency security</h2>
+    <p>The Streetwise codebase is maintained with verification checks and dependency updates. Security work also includes reviewing how new provider integrations affect authentication, data handling, webhooks, billing and customer support before those integrations become live.</p>
+
+    <h2>Incident response and recovery</h2>
+    <p>If Streetwise detects or is informed of a security problem, the intended response is to contain the affected function where possible, preserve useful evidence, determine what happened, restore safe service and communicate material customer impact when required. The exact operational process will be finalised before commercial launch.</p>
+
+    <h2>What customers still control</h2>
+    <p>Customers remain responsible for protecting their device passcode, email account, authentication factors and verification codes. Streetwise support should not ask customers to post passwords, PINs or one-time verification codes publicly.</p>
+
+    <h2>What “Security First” does not promise</h2>
+    <p>No mobile provider can honestly guarantee that fraud, phishing, account takeover, SIM-swap attempts, software vulnerabilities or network attacks will never occur. Streetwise's commitment is to design for prevention, limited access, controlled changes, detection and recovery while being explicit about the protections that are actually available.</p>
+
+    <h2>Current status</h2>
+    <p>Several security capabilities remain dependent on the final wholesale provider and production implementation. Streetwise will not present planned protections as live until they are contractually supported, implemented and tested.</p>
 
     <p><a class="button" href="/">Back to Streetwise <span aria-hidden="true">↗</span></a></p>
   </main>
