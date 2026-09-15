@@ -1,175 +1,340 @@
 # Streetwise Connection — 90-Day Launch-Readiness Plan
 
-Window: **2026-08-31 through 2026-11-30**
+Start: 2026-08-31  
+Target readiness date: 2026-11-30  
+Goal: Make Streetwise technically, operationally, commercially, and compliance-ready for a controlled cellular launch, while keeping public sales disabled until every mandatory external approval is complete.
 
-Target: reach a defensible go/no-go decision for commercial cellular launch by **2026-11-30** without bypassing provider, legal, regulatory, economics, security, support, or staging gates.
+## Definition of success on 2026-11-30
 
-## Current checkpoint — 2026-09-15
+Streetwise is considered launch-ready only when all mandatory gates below are complete:
 
-Overall status: **RED / pre-launch**.
+- legal entity, state business licence, EIN, and applicable local licensing are complete;
+- AT&T or the approved fallback provider has supplied written commercial rights;
+- provider-of-record and regulatory responsibilities are documented;
+- approved wholesale products are mapped to Streetwise plans;
+- contribution margin is acceptable;
+- provider API/portal credentials are configured securely;
+- subscriber/line/SIM/eSIM lifecycle has passed controlled staging;
+- voice/SMS/number/porting/E911 workflows have passed if included in launch scope;
+- payments and refunds have passed controlled testing;
+- customer Terms, Privacy, Refund/Support, and material plan disclosures are final;
+- fraud, SIM-swap, port-out, account-recovery, incident, and support procedures are ready;
+- monitoring, backups, audit logging, and rollback procedures pass;
+- final production launch authorisation is signed.
 
-- Public waitlist only.
-- Live Stripe billing remains disabled.
-- Live SIM/eSIM ordering remains disabled.
-- AT&T remains the primary domestic provider candidate, with 1GLOBAL as the fallback.
+If provider or regulator approval is still pending on November 30, the software/operations target remains complete but public commercial launch stays locked. No calendar date overrides a failed launch gate.
+
+## Non-negotiable production lock during the 90 days
+
+PUBLIC_LAUNCH_MODE=waitlist  
+STRIPE_LIVE_MODE_ENABLED=false  
+ESIM_LIVE_ORDERS_ENABLED=false  
+ATT_COMMERCIAL_CONTRACT_APPROVED=false until written approval exists  
+ATT_LIVE_PROVISIONING_ENABLED=false until controlled acceptance is complete
+
+## Current execution note — 2026-09-15
+
+- Overall readiness remains **RED / pre-launch**.
 - The September 6 AT&T submission checkpoint passed without repository evidence of a completed submission.
-- The September 13 Nevada formation target was missed. Nevada LLC formation remains incomplete.
-- An official Nevada entity-search attempt on September 14 redirected to ORION sign-in and did not return an entity result; the legal name therefore remains unverified in the official state search.
-- The September 20 fallback trigger remains active. If there is still no viable AT&T path, elevate 1GLOBAL to equal domestic priority.
+- The September 13 Nevada formation target was not met; formation remains incomplete.
+- An official Nevada entity-search attempt on September 14 redirected to ORION sign-in and did not return an entity-search result, so the legal name remains unverified in the official state search.
+- The September 20 fallback trigger remains active: if AT&T has not provided a viable path, elevate 1GLOBAL to equal domestic priority.
+- The latest main-branch Build targets workflow passed after the Stripe 22.6.2 update; current launch blockers are external/project-gate items, not a known latest-build failure.
 
-No calendar date overrides a mandatory launch gate.
+## Phase 1 — Formation + provider qualification
+### August 31 to September 20
 
-## Phase 1 — Foundation and provider qualification
+### Week 1: August 31 to September 6
 
-### Aug 31–Sep 6
+Owner/external:
+- submit or complete Nevada LLC formation package;
+- complete Initial List and State Business Licence;
+- submit AT&T qualification/application using the prepared packet;
+- confirm truthful AT&T qualification answers: employee count, NOC status, end-user billing status, FRN status, and current AT&T relationship.
 
-Goals:
+Repository:
+- keep AT&T primary, 1GLOBAL fallback, eSIM Go travel/data;
+- maintain the provider evidence gate;
+- keep all production commerce locked;
+- establish this 90-day roadmap as the project source of truth.
 
-- [x] establish the 90-day execution plan
-- [x] prepare AT&T-first provider strategy and application materials
-- [x] preserve 1GLOBAL fallback preparation
-- [x] keep all production commercial gates fail-closed
-- [ ] submit AT&T qualification/application inquiry or record the exact external blocker
+Exit condition:
+- formation is submitted or the exact filing blocker is documented;
+- AT&T request is submitted or the exact submission blocker is documented.
 
-Checkpoint: **2026-09-06** — missed; no submission evidence recorded in the repository.
+### Week 2: September 7 to September 13
 
-### Sep 7–Sep 13
+Owner/external:
+- obtain EIN after entity acceptance;
+- determine local licence jurisdiction;
+- start applicable local/tax registration;
+- follow up with AT&T if acknowledgement has not arrived.
 
-Goals:
+Repository / operations:
+- document Tier 1 support model;
+- document current NOC capability truthfully;
+- prepare escalation/contact matrix;
+- define subscriber support categories: activation, billing, voice/SMS, number/porting, SIM swap, outage, security, refund.
 
-- [x] maintain free formation preparation and signature-ready materials
-- [x] confirm current official formation/licensing routes and costs in working documents
-- [ ] complete a successful official Nevada entity-name search immediately before filing
-- [ ] complete Nevada formation when funding and filing authority are available
-- [ ] record every unfinished formation item with a specific external blocker
+Exit condition:
+- business identity package is materially complete;
+- AT&T qualification status is known;
+- support responsibility model is drafted.
 
-Checkpoint: **2026-09-13** — missed; formation remains incomplete.
+### Week 3: September 14 to September 20
 
-### Sep 14–Sep 20
+Provider:
+- obtain AT&T programme/path decision if possible;
+- request written commercial scope, pricing, minimums, support obligations, branding rights, API/portal access, and regulatory allocation;
+- keep 1GLOBAL fallback active in parallel.
 
-Goals:
+Hard fallback trigger:
+- If AT&T has not provided a viable qualification/commercial path by **September 20**, treat 1GLOBAL as an equal domestic candidate and push the fallback process immediately. AT&T remains preferred but no longer controls the schedule.
 
-- [x] attempt the official Nevada entity search; September 14 attempt redirected to ORION sign-in without an entity result
-- [ ] complete the official entity search successfully before filing
-- [ ] submit the free AT&T first-contact/qualification inquiry and record evidence
-- [ ] keep the 1GLOBAL commercial path active in parallel
-- [ ] review all launch blockers against current evidence
+Exit condition:
+- provider decision evidence is recorded;
+- unknown provider facts are explicit rather than assumed.
 
-Hard trigger: **2026-09-20** — if no viable AT&T path is established, elevate 1GLOBAL to equal domestic priority.
+## Phase 2 — Commercial selection + contract-defined integration
+### September 21 to October 18
 
-## Phase 2 — Commercial and regulatory definition
+### Week 4: September 21 to September 27
 
-### Sep 21–Sep 27
+Commercial:
+- compare AT&T and 1GLOBAL using written/account-specific evidence;
+- resolve recurring U.S. use;
+- resolve residential/commercial resale;
+- resolve provider-of-record;
+- resolve network/product scope;
+- resolve voice/SMS/numbers/porting/SIM/eSIM capability;
+- resolve support, refunds, fraud, taxes, minimums, and termination treatment.
 
-- [ ] obtain an AT&T program/path decision or explicit blocker report
-- [ ] obtain equivalent 1GLOBAL commercial status if AT&T remains unresolved
-- [ ] identify the most viable domestic-provider path using written evidence
-- [ ] document provider-of-record responsibilities that are known and unknown
+Exit condition:
+- one provider is provisionally selected or both remain explicitly blocked with written reasons.
 
-Checkpoint: **2026-09-27** — provisional provider decision or explicit blocker report.
+### Week 5: September 28 to October 4
 
-### Sep 28–Oct 4
+Economics:
+- import or record approved wholesale product pricing;
+- run contribution-margin analysis at $15, $20, $25, and $30 retail targets;
+- map viable wholesale products to Streetwise Home and Business tiers;
+- reject any tier with unclear wholesale cost, tax treatment, or unacceptable margin.
 
-- [ ] obtain or document wholesale pricing/minimum commitments
-- [ ] map candidate products to Streetwise target retail pricing
-- [ ] calculate contribution margin including taxes/surcharges, support, fraud, payment and infrastructure reserve
-- [ ] complete the first provider-of-record / FCC / USAC / Nevada PUCN / E911 responsibility map
+Exit condition:
+- provisional launch plans and economics are documented;
+- pricing remains non-public until provider and legal gates pass.
 
-Checkpoint: **2026-10-04** — commercial economics and responsibility map.
+### Week 6: October 5 to October 11
 
-## Phase 3 — Contract-defined integration
+Engineering:
+- implement only the selected provider's documented API/portal contract;
+- configure authentication in secret storage;
+- implement catalogue/product mapping;
+- implement subscriber/service-line lifecycle;
+- implement SIM/eSIM provisioning;
+- implement usage retrieval;
+- implement lifecycle events/webhooks if provided;
+- keep live provisioning disabled.
 
-### Oct 5–Oct 11
+Exit condition:
+- provider authentication and read-only/test catalogue access pass without exposing secrets.
 
-- [ ] freeze speculative provider integration work
-- [ ] implement only contract/API-defined authentication, catalogue and capability mappings
-- [ ] verify provider credentials without exposing secrets
-- [ ] verify approved product mapping
+### Week 7: October 12 to October 18
 
-Hard rule: **2026-10-11** — no speculative provider API code after this date.
+Engineering acceptance:
+- controlled subscriber creation;
+- controlled SIM/eSIM issue/activation path;
+- persistence and idempotency;
+- usage synchronisation;
+- suspend/resume if supported;
+- retry and failure handling;
+- provider webhook/event verification;
+- refund/reconciliation path.
 
-### Oct 12–Oct 18
+If first launch includes full phone service:
+- test number assignment;
+- voice;
+- SMS;
+- E911 workflow;
+- provider-approved number porting;
+- SIM replacement/swap.
 
-- [ ] controlled subscriber/service-line creation
-- [ ] controlled SIM/eSIM provisioning
-- [ ] activation lifecycle
-- [ ] persistence and idempotency
-- [ ] usage synchronisation
-- [ ] retry/failure handling
-- [ ] lifecycle events/webhooks
+Exit condition:
+- controlled staging lifecycle either passes or has a bounded blocker list.
 
-Checkpoint: **2026-10-18** — controlled staging lifecycle target.
+## Phase 3 — Security, support, policy, and pilot
+### October 19 to November 15
 
-### Oct 19–Nov 1
+### Week 8: October 19 to October 25
 
-- [ ] strong account authentication and recovery
-- [ ] SIM-swap and port-out protection workflow
-- [ ] audit-event and privilege review
-- [ ] secret-rotation procedure
-- [ ] abuse/rate-limit review
-- [ ] fraud escalation path
-- [ ] incident-response procedure
-- [ ] support and outage runbooks
+Security:
+- strong authentication;
+- secure recovery;
+- SIM-swap approval/alert workflow;
+- port-out protection;
+- audit events;
+- privilege review;
+- secret rotation procedure;
+- abuse/rate limits;
+- fraud escalation;
+- incident response.
 
-Hard freeze: **2026-11-01** — non-essential feature freeze.
+Exit condition:
+- security checklist passes for launch scope.
 
-## Phase 4 — Customer readiness and pilot
+### Week 9: October 26 to November 1
 
-### Nov 2–Nov 8
+Operations:
+- support runbooks;
+- provider escalation paths;
+- outage handling;
+- activation-failure runbook;
+- lost/stolen-device handling;
+- SIM replacement;
+- number-port failure;
+- billing dispute/refund;
+- security incident escalation;
+- service termination/migration procedure.
 
-- [ ] finalise Privacy Policy
-- [ ] finalise Terms of Service
-- [ ] finalise Refund/Cancellation and Support policy
-- [ ] publish accurate plan, data, throttling, hotspot, coverage, roaming, voice/SMS/number/porting/E911 disclosures as applicable
-- [ ] ensure customer documents match the signed provider agreement and implemented product
+Exit condition:
+- one operator can follow the runbooks without relying on undocumented knowledge.
 
-Checkpoint: **2026-11-08** — customer policy adoption target.
+### Week 10: November 2 to November 8
 
-### Nov 9–Nov 15
+Customer/legal:
+- reconcile Terms to signed provider contract;
+- reconcile Privacy to actual production data flows;
+- reconcile Refund/Support to provider rules;
+- prepare actual plan disclosures;
+- prepare network/coverage limitations;
+- prepare data/throttling/hotspot/roaming disclosures;
+- prepare number/porting and E911 disclosures if applicable;
+- confirm telecom tax/surcharge treatment.
 
-- [ ] complete controlled end-to-end staging
-- [ ] test refunds/reconciliation
-- [ ] test support escalation
-- [ ] test voice/SMS/number/E911 only if in launch scope
-- [ ] test provider-approved porting only if in launch scope
-- [ ] complete a small non-public pilot if permitted by provider terms
-- [ ] close every launch-blocking defect
+Exit condition:
+- customer-facing policy package is final pending only signatures/publication.
 
-Hard freeze: **2026-11-15** — launch-scope feature freeze and pilot target.
+### Week 11: November 9 to November 15
 
-## Phase 5 — Final go/no-go
+Controlled pilot:
+- run a small non-public test cohort permitted by provider terms;
+- verify activation;
+- verify usage;
+- verify billing in controlled mode;
+- verify support;
+- verify refund/reconciliation;
+- verify security alerts;
+- verify cancellation/suspension;
+- collect defects and close critical ones.
 
-### Nov 16–Nov 30
+Exit condition:
+- no unresolved launch-blocking defect.
 
-Do not authorise public commercial launch unless every mandatory item is green:
+## Phase 4 — Launch decision
+### November 16 to November 30
 
-- [ ] business formation/licensing
-- [ ] active provider contract
-- [ ] approved residential/commercial rights
-- [ ] provider-of-record/regulatory allocation
-- [ ] approved provider products and credentials
-- [ ] acceptable contribution margin
-- [ ] controlled staging/pilot evidence
-- [ ] payment/refund acceptance
-- [ ] final Terms/Privacy/Refund-Support disclosures
-- [ ] security and incident readiness
-- [ ] monitoring/backups/rollback
-- [ ] support readiness
-- [ ] production smoke test
-- [ ] final owner launch authorisation
+### Week 12: November 16 to November 22
 
-Decision date: **2026-11-30**.
+Production hardening:
+- full CI green;
+- Docker/Vercel production build green;
+- database migration rehearsal;
+- backup/restore test;
+- monitoring/alert test;
+- secret/config audit;
+- security regression;
+- rate-limit/abuse test;
+- rollback rehearsal;
+- production smoke test.
 
-If any mandatory gate remains red, production stays in waitlist mode and the blocker is recorded instead of forcing a launch.
+Exit condition:
+- technical launch-readiness report is green.
 
-## Permanent safety controls until launch approval
+### Final week: November 23 to November 30
 
-```text
-PUBLIC_LAUNCH_MODE=waitlist
-STRIPE_LIVE_MODE_ENABLED=false
-ESIM_LIVE_ORDERS_ENABLED=false
-ATT_COMMERCIAL_CONTRACT_APPROVED=false
-ATT_LIVE_PROVISIONING_ENABLED=false
-```
+Commercial go/no-go:
+- verify all licences and registrations;
+- verify active provider contract;
+- verify provider/API credentials;
+- verify provider product mapping;
+- verify pricing/margin;
+- verify legal/customer documents;
+- verify banking/payment settlement;
+- verify support staffing/process;
+- verify regulatory evidence;
+- verify controlled pilot evidence;
+- sign internal production launch authorisation.
 
-Do not claim AT&T, 1GLOBAL, or any other carrier partnership until written rights exist. Do not commit provider credentials, business identity documents, banking information, government identifiers, signatures, or private commercial terms to the public repository.
+Target decision date: **November 30, 2026**.
+
+## Schedule protection / fallback rules
+
+- September 20: AT&T response/path fallback trigger.
+- October 1: if no domestic provider is commercially viable, executive focus moves to closing a fallback provider rather than building speculative provider code.
+- October 11: no undocumented provider API implementation. Missing docs are a provider blocker, not permission to guess.
+- November 1: freeze non-essential product features. Security, compliance, support, provider integration, payments, and reliability take priority.
+- November 15: feature freeze for launch scope. Only blocker fixes after this date.
+- November 30: no launch if any mandatory gate is red.
+
+## Features that are NOT required for the first launch
+
+These may remain post-launch unless the provider supplies them cheaply and safely:
+
+- automatic multi-carrier failover;
+- emergency connectivity reserve;
+- advanced scam/phishing network filtering;
+- elaborate international bundles;
+- sophisticated business admin UI;
+- every planned security enhancement.
+
+The first launch should prove a reliable core cellular service rather than attempt to ship the entire telecom industry in one quarter.
+
+## Weekly review scorecard
+
+Every Sunday update:
+
+- Formation/licensing: red / amber / green
+- AT&T/provider: red / amber / green
+- Regulatory: red / amber / green
+- Economics/pricing: red / amber / green
+- Provider integration: red / amber / green
+- Payments: red / amber / green
+- Security: red / amber / green
+- Customer policies: red / amber / green
+- Support/operations: red / amber / green
+- Pilot/testing: red / amber / green
+
+Any red workstream gets priority the following week.
+
+## Current status at plan creation
+
+Green:
+- public waitlist;
+- CI/testing foundation;
+- Docker/Vercel compatibility;
+- database/account/payment architecture;
+- provider abstraction;
+- AT&T-first fail-closed strategy;
+- AT&T application/signature packets;
+- 1GLOBAL fallback preparation;
+- eSIM Go travel/data integration;
+- business/compliance working documents.
+
+Amber:
+- Nevada/business formation completion;
+- AT&T qualification;
+- provider commercial terms;
+- regulatory allocation;
+- production customer database deployment;
+- final provider plan economics.
+
+Red / intentionally blocked:
+- live billing;
+- live cellular activation;
+- AT&T live provisioning;
+- voice/SMS/numbering production;
+- public checkout.
+
+## Principle
+
+The target is **launch readiness by November 30, 2026**, not reckless activation by November 30, 2026. The date drives execution. The gates decide whether customers are allowed in.
