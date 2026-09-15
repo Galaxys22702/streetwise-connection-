@@ -1,24 +1,40 @@
 import Stripe from "stripe";
 
+const STRIPE_TIMEOUT_MS = 15_000;
+
 function stripeKey() {
   return String(process.env.STRIPE_SECRET_KEY || "").trim();
 }
 
+function keyMode(key = stripeKey()) {
+  if (key.startsWith("sk_test_")) return "test";
+  if (key.startsWith("sk_live_")) return "live";
+  return key ? "invalid" : "none";
+}
+
 function client() {
   const key = stripeKey();
-  if (!key) {
+  const mode = keyMode(key);
+  if (mode === "none") {
     const error = new Error("stripe_secret_key_not_configured");
     error.statusCode = 503;
     throw error;
   }
-
-  if (key.startsWith("sk_live_") && process.env.STRIPE_LIVE_MODE_ENABLED !== "true") {
+  if (mode === "invalid") {
+    const error = new Error("stripe_secret_key_invalid");
+    error.statusCode = 503;
+    throw error;
+  }
+  if (mode === "live" && process.env.STRIPE_LIVE_MODE_ENABLED !== "true") {
     const error = new Error("stripe_live_key_blocked_by_safety_switch");
     error.statusCode = 503;
     throw error;
   }
 
-  return new Stripe(key, { maxNetworkRetries: 2 });
+  return new Stripe(key, {
+    maxNetworkRetries: 2,
+    timeout: STRIPE_TIMEOUT_MS
+  });
 }
 
 function deploymentBaseUrl() {
@@ -35,12 +51,14 @@ function deploymentBaseUrl() {
 
 export function stripeStatus() {
   const key = stripeKey();
+  const mode = keyMode(key);
+  const webhookSecret = String(process.env.STRIPE_WEBHOOK_SECRET || "").trim();
   return {
     provider: "stripe",
-    configured: Boolean(key),
-    keyMode: key.startsWith("sk_live_") ? "live" : key.startsWith("sk_test_") ? "test" : key ? "unknown" : "none",
+    configured: mode === "test" || mode === "live",
+    keyMode: mode,
     liveModeEnabled: process.env.STRIPE_LIVE_MODE_ENABLED === "true",
-    webhookConfigured: Boolean(process.env.STRIPE_WEBHOOK_SECRET)
+    webhookConfigured: webhookSecret.startsWith("whsec_")
   };
 }
 
@@ -90,6 +108,11 @@ export function verifyStripeWebhook(rawBody, signature) {
   const secret = String(process.env.STRIPE_WEBHOOK_SECRET || "").trim();
   if (!secret) {
     const error = new Error("stripe_webhook_secret_not_configured");
+    error.statusCode = 503;
+    throw error;
+  }
+  if (!secret.startsWith("whsec_")) {
+    const error = new Error("stripe_webhook_secret_invalid");
     error.statusCode = 503;
     throw error;
   }
