@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { booleanEnv } from "../config/env.js";
 
 const STRIPE_TIMEOUT_MS = 15_000;
 
@@ -25,7 +26,7 @@ function client() {
     error.statusCode = 503;
     throw error;
   }
-  if (mode === "live" && process.env.STRIPE_LIVE_MODE_ENABLED !== "true") {
+  if (mode === "live" && !booleanEnv("STRIPE_LIVE_MODE_ENABLED")) {
     const error = new Error("stripe_live_key_blocked_by_safety_switch");
     error.statusCode = 503;
     throw error;
@@ -57,7 +58,7 @@ export function stripeStatus() {
     provider: "stripe",
     configured: mode === "test" || mode === "live",
     keyMode: mode,
-    liveModeEnabled: process.env.STRIPE_LIVE_MODE_ENABLED === "true",
+    liveModeEnabled: booleanEnv("STRIPE_LIVE_MODE_ENABLED"),
     webhookConfigured: webhookSecret.startsWith("whsec_")
   };
 }
