@@ -1,6 +1,6 @@
 # Project Status
 
-Last reviewed: **2026-09-08**
+Last reviewed: **2026-09-15**
 
 Target launch-readiness date: **2026-11-30**
 
@@ -33,6 +33,18 @@ Current production posture:
 - Travel/data integration: eSIM Go
 - Open5GS: isolated lab validation only, not production service
 
+## Current blocker snapshot — 2026-09-15
+
+Overall launch readiness remains **RED / pre-launch**.
+
+- Provider onboarding remains the primary launch blocker. There is still no repository evidence that the AT&T qualification/application inquiry has been submitted or accepted.
+- The September 13 Nevada formation target was not met. Nevada LLC formation, Initial List, State Business Licence, EIN and applicable local/tax registrations remain incomplete.
+- An official Nevada entity-search attempt on September 14 redirected to the ORION sign-in flow and did not produce an entity-search result. `Streetwise Connection LLC` therefore remains unverified in the official state search and must be checked successfully immediately before filing.
+- The September 20 provider fallback trigger remains active: if no viable AT&T path is established, 1GLOBAL should be elevated to equal domestic priority.
+- The latest main-branch Build targets workflow passed after the Stripe 22.6.2 update, so the current launch blockers are not a known latest-build failure.
+
+Production safety remains unchanged: waitlist only, no public cellular checkout, no live Stripe billing, no live SIM/eSIM provisioning, and no unsupported carrier-affiliation claims.
+
 ## September maintenance and branding state
 
 The September repository/production pass includes:
@@ -41,10 +53,10 @@ The September repository/production pass includes:
 - slogan usage updated to **Stay Connected. Stay Streetwise.℠**
 - brand/IP evidence record added
 - production waitlist redesign deployed
-- Stripe dependency updated to 22.6.0 with live billing still disabled
+- Stripe dependency updated to 22.6.2 with live billing still disabled
 - GitHub Actions/Node.js workflow maintenance updated while retaining Node.js 24
 - Open5GS lab scaffold and validation workflow added in an isolated non-production path
-- production safety model unchanged: waitlist only, no public payment, no live SIM/eSIM provisioning
+- production safety model unchanged: waitlist only, no public cellular payment, no live SIM/eSIM provisioning
 
 The lab work must not be interpreted as Streetwise operating a live mobile core or carrier network. It is development/research infrastructure only.
 
@@ -67,7 +79,7 @@ These remain planning targets only:
 | Commercial | Business Volume | $15/month per line for 3+ lines |
 | Commercial | Business Pro | $30/month per line |
 
-Final service features and prices require real provider mapping and economics.
+Final cellular-service features and prices require real provider mapping and economics.
 
 ## Cellular capability status
 
@@ -174,7 +186,7 @@ That work should not be guessed into existence before the selected wholesale pro
 
 ## External / owner-gated work remaining
 
-1. Complete Nevada entity formation, Initial List, State Business Licence, EIN, and applicable local/tax registration.
+1. Complete a successful official Nevada entity-name check immediately before filing, then complete Nevada entity formation, Initial List, State Business Licence, EIN, and applicable local/tax registration when authorised.
 2. Submit the AT&T qualification/application packet and obtain the correct AT&T program path plus a written commercial offer.
 3. Confirm AT&T residential and commercial resale rights, branding rights, Tier 1 support model, end-user billing model and FRN requirement/status.
 4. Confirm recurring U.S. domestic use.
