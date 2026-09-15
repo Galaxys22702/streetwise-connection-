@@ -10,10 +10,11 @@ services:
     volumes:
       - streetwise_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U streetwise -d streetwise"]
+      test: ["CMD-SHELL", "psql -U streetwise -d streetwise -tAc 'SELECT 1' | grep -q 1"]
       interval: 5s
       timeout: 3s
       retries: 10
+      start_period: 5s
 
 volumes:
   streetwise_pgdata:
