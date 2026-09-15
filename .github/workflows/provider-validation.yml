@@ -20,6 +20,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: provider-validation-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   esim-go-connection:
     # Dependabot PRs do not receive repository secrets, even when the branch lives
