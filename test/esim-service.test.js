@@ -44,10 +44,65 @@ test("mock eSIM orders are idempotent and only visible to their owner", async ()
   assert.equal(replay.idempotentReplay, true);
   assert.ok(orders.some((order) => order.id === first.order.id));
   assert.equal(await getEsimOrder(first.order.id, { userId: "another-user" }), null);
+  assert.equal(await getEsimInstallDetails(first.order.id, { userId: "another-user" }), null);
 
   const usage = await recordMockUsage(first.order.id, user.id, 100);
   const installation = await getEsimInstallDetails(first.order.id, { userId: user.id });
   assert.equal(usage.usage.usedBytes, 100 * 1024 * 1024);
   assert.equal(installation.mock, true);
   assert.ok(installation.activationCode.startsWith("LPA:1$"));
+});
+
+test("transaction orders require both a user and an idempotency key in the service layer", async () => {
+  process.env.ESIM_PROVIDER = "mock";
+  const input = {
+    bundleName: "mock_1GB_7D_GLOBAL",
+    country: "US",
+    validateOnly: false
+  };
+
+  await assert.rejects(
+    () => provisionEsim(input),
+    (error) => error.message === "authentication_required" && error.statusCode === 401
+  );
+  await assert.rejects(
+    () => provisionEsim(input, { user }),
+    (error) => error.message === "idempotency_key_required" && error.statusCode === 400
+  );
+});
+
+test("anonymous validation orders are not persisted and quantities are normalized", async () => {
+  process.env.ESIM_PROVIDER = "mock";
+  const validation = await provisionEsim({
+    bundleName: "mock_1GB_7D_GLOBAL",
+    quantity: 2.8,
+    country: "US",
+    device: "iPhone 15",
+    validateOnly: true
+  });
+
+  assert.equal(validation.order.quantity, 2);
+  assert.equal(validation.order.total, 7);
+  assert.equal(await getEsimOrder(validation.order.id, { userId: user.id }), null);
+});
+
+test("order input validation rejects malformed customer data", async () => {
+  process.env.ESIM_PROVIDER = "mock";
+  await assert.rejects(
+    () => provisionEsim({
+      bundleName: "mock_1GB_7D_GLOBAL",
+      country: "USA",
+      validateOnly: true
+    }),
+    (error) => error.message === "country_code_invalid" && error.statusCode === 400
+  );
+  await assert.rejects(
+    () => provisionEsim({
+      bundleName: "mock_1GB_7D_GLOBAL",
+      country: "US",
+      customerEmail: "not-an-email",
+      validateOnly: true
+    }),
+    (error) => error.message === "customer_email_invalid" && error.statusCode === 400
+  );
 });
