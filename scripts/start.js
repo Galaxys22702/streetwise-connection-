@@ -21,7 +21,10 @@ for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     break;
   } catch (error) {
     if (attempt === maxAttempts) {
-      console.error("Database migrations could not be completed.", error);
+      console.error(
+        "Database migrations could not be completed.",
+        error?.code ? `code=${error.code}` : ""
+      );
       process.exit(1);
     }
     const waitMs = attempt * 1_000;
