@@ -2,12 +2,41 @@ name: Stripe test validation
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/providers/stripePaymentProvider.js"
+      - "src/services/paymentService.js"
+      - "src/config/env.js"
+      - "src/config/plans.js"
+      - "test/payment-service.test.js"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/stripe-test-validation.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/providers/stripePaymentProvider.js"
+      - "src/services/paymentService.js"
+      - "src/config/env.js"
+      - "src/config/plans.js"
+      - "test/payment-service.test.js"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/stripe-test-validation.yml"
 
 permissions:
   contents: read
 
+concurrency:
+  group: stripe-test-validation-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   stripe-test-connection:
+    # External forks and Dependabot PRs do not receive repository secrets. Skip
+    # the live Stripe test connection there instead of producing a false failure.
+    if: github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
