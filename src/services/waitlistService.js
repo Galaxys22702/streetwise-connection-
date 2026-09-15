@@ -1,3 +1,4 @@
+import { booleanEnv } from "../config/env.js";
 import { isPublicWaitlistOnly } from "../config/launchMode.js";
 
 const WAITLIST_CONSENT_VERSION = "2026-08-26";
@@ -13,9 +14,7 @@ function isValidEmail(value) {
 }
 
 function isWaitlistEnabled() {
-  const configured = String(process.env.WAITLIST_ENABLED || "").trim().toLowerCase();
-  if (configured) return configured === "true";
-  return process.env.VERCEL_ENV === "production";
+  return booleanEnv("WAITLIST_ENABLED", process.env.VERCEL_ENV === "production");
 }
 
 export function waitlistStatus() {
