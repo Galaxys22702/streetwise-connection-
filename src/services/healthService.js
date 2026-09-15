@@ -25,6 +25,19 @@ function publicWaitlistHealth(runtime, waitlist) {
   };
 }
 
+function safePaymentStatus() {
+  try {
+    return paymentProviderStatus();
+  } catch {
+    return {
+      provider: "invalid",
+      configured: false,
+      liveModeEnabled: false,
+      webhookConfigured: false
+    };
+  }
+}
+
 export async function buildHealthStatus({ runtime = null } = {}) {
   const waitlist = waitlistStatus();
   if (isPublicWaitlistOnly()) {
@@ -35,10 +48,11 @@ export async function buildHealthStatus({ runtime = null } = {}) {
     databaseStatus(),
     providerStatus().catch(() => ({ configured: false, connected: false }))
   ]);
-  const payments = paymentProviderStatus();
+  const payments = safePaymentStatus();
   const databaseReady = database.configured === true && database.connected === true;
   const providerReady = provider?.configured !== false;
-  const ready = databaseReady && providerReady;
+  const paymentsReady = payments?.configured !== false;
+  const ready = databaseReady && providerReady && paymentsReady;
 
   return {
     statusCode: ready ? 200 : 503,
