@@ -104,7 +104,11 @@ export async function createEsimOrder({ bundleName, quantity = 1, validateOnly =
   if (!bundleName) throw new Error("bundle_name_required");
 
   const config = getConfig();
-  const safeQuantity = Math.max(1, Math.min(Number(quantity) || 1, 5));
+  const numericQuantity = Number(quantity);
+  const safeQuantity = Math.max(
+    1,
+    Math.min(Number.isFinite(numericQuantity) ? Math.floor(numericQuantity) : 1, 5)
+  );
   const transactionAllowed = config.liveOrdersEnabled && validateOnly === false;
   const type = transactionAllowed ? "transaction" : "validate";
 
