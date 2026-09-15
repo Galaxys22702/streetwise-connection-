@@ -25,9 +25,6 @@ function deploymentBaseUrl() {
   const explicit = String(process.env.APP_BASE_URL || "").trim();
   if (explicit) return explicit.replace(/\/$/, "");
 
-  const renderUrl = String(process.env.RENDER_EXTERNAL_URL || "").trim();
-  if (renderUrl) return renderUrl.replace(/\/$/, "");
-
   const vercelHost = String(
     process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL || ""
   ).trim();
@@ -50,11 +47,13 @@ export function stripeStatus() {
 export async function createStripeCheckoutSession({ user, plan }) {
   const stripe = client();
   const baseUrl = deploymentBaseUrl();
-  const configuredPrice = String(process.env.STRIPE_PRICE_ID || "").trim();
 
-  const lineItem = configuredPrice
-    ? { price: configuredPrice, quantity: 1 }
-    : {
+  const session = await stripe.checkout.sessions.create({
+    mode: "subscription",
+    client_reference_id: user.id,
+    customer_email: user.email,
+    line_items: [
+      {
         price_data: {
           currency: "usd",
           unit_amount: Math.round(Number(plan.priceUsd) * 100),
@@ -62,13 +61,8 @@ export async function createStripeCheckoutSession({ user, plan }) {
           product_data: { name: plan.name }
         },
         quantity: 1
-      };
-
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    client_reference_id: user.id,
-    customer_email: user.email,
-    line_items: [lineItem],
+      }
+    ],
     success_url: `${baseUrl}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}/?checkout=cancelled`,
     metadata: {
