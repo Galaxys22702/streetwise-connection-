@@ -1,10 +1,7 @@
-export function resolvePublicLaunchMode(value = process.env.PUBLIC_LAUNCH_MODE) {
-  const setting = String(value || "waitlist").trim().toLowerCase();
-  return setting === "internal" ? "internal" : "waitlist";
-}
+const PUBLIC_LAUNCH_MODE = String(process.env.PUBLIC_LAUNCH_MODE || "waitlist").trim().toLowerCase();
 
 export function publicLaunchMode() {
-  return resolvePublicLaunchMode();
+  return PUBLIC_LAUNCH_MODE === "internal" ? "internal" : "waitlist";
 }
 
 export function isPublicWaitlistOnly() {
@@ -20,7 +17,9 @@ export function isCustomerServicePath(pathname) {
     pathname.startsWith("/api/esims/") ||
     pathname === "/api/payments/checkout" ||
     pathname === "/api/payments/subscription" ||
+    pathname === "/api/payments/status" ||
     pathname === "/api/coverage/check" ||
-    pathname === "/api/provider/catalogue"
+    pathname === "/api/provider/catalogue" ||
+    pathname === "/api/provider/status"
   );
 }
