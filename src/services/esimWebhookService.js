@@ -39,6 +39,12 @@ export async function handleEsimGoWebhook(rawBody, signature) {
   verifyEsimGoWebhook(rawBody, signature);
   const payload = parsePayload(rawBody);
   const iccid = String(payload.iccid || "").trim();
+  if (!iccid) {
+    const error = new Error("esim_go_iccid_required");
+    error.statusCode = 400;
+    throw error;
+  }
+
   const eventType = String(payload.alertType || "unknown").trim().slice(0, 120) || "unknown";
   const bodyHash = createHash("sha256").update(rawBody).digest("hex");
 
@@ -53,17 +59,13 @@ export async function handleEsimGoWebhook(rawBody, signature) {
         `ewh_${randomUUID().replaceAll("-", "")}`,
         bodyHash,
         eventType,
-        iccid || null,
+        iccid,
         payload
       ]
     );
 
     if (!event.rows[0]) {
       return { received: true, duplicate: true, eventType };
-    }
-
-    if (!iccid) {
-      return { received: true, duplicate: false, eventType, processed: false, reason: "iccid_missing" };
     }
 
     const result = await client.query(
@@ -77,7 +79,9 @@ export async function handleEsimGoWebhook(rawBody, signature) {
     );
     const order = result.rows[0];
     if (!order) {
-      return { received: true, duplicate: false, eventType, processed: false, reason: "order_not_found" };
+      const error = new Error("esim_go_order_not_ready");
+      error.statusCode = 503;
+      throw error;
     }
 
     const bundle = payload.bundle && typeof payload.bundle === "object" ? payload.bundle : {};
