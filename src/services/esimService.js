@@ -4,6 +4,9 @@ import { getProvider, getProviderName, getProviderStatus } from "../providers/in
 
 const memoryOrders = new Map();
 const GB = 1024 * 1024 * 1024;
+const MAX_BUNDLE_NAME_LENGTH = 200;
+const MAX_DEVICE_LENGTH = 200;
+const MAX_EMAIL_LENGTH = 254;
 
 function inferDataLimitBytes(bundleName) {
   const match = String(bundleName || "").match(/^mock_(\d+)GB_/i);
@@ -171,6 +174,37 @@ async function findOrderByIdempotencyKey(userId, key) {
   return rowToOrder(result.rows[0]);
 }
 
+function validateOrderInput({ bundleName, country, device, customerEmail }) {
+  if (!bundleName) {
+    const error = new Error("bundle_name_required");
+    error.statusCode = 400;
+    throw error;
+  }
+  if (bundleName.length > MAX_BUNDLE_NAME_LENGTH) {
+    const error = new Error("bundle_name_too_long");
+    error.statusCode = 400;
+    throw error;
+  }
+  if (country && !/^[A-Z]{2}$/.test(country)) {
+    const error = new Error("country_code_invalid");
+    error.statusCode = 400;
+    throw error;
+  }
+  if (device.length > MAX_DEVICE_LENGTH) {
+    const error = new Error("device_name_too_long");
+    error.statusCode = 400;
+    throw error;
+  }
+  if (customerEmail && (
+    customerEmail.length > MAX_EMAIL_LENGTH ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)
+  )) {
+    const error = new Error("customer_email_invalid");
+    error.statusCode = 400;
+    throw error;
+  }
+}
+
 export async function providerStatus() {
   return getProviderStatus();
 }
@@ -188,18 +222,33 @@ export async function provisionEsim(input = {}, { user = null, idempotencyKey = 
   const country = String(input.country || "").trim().toUpperCase();
   const device = String(input.device || "").trim();
   const customerEmail = String(input.customerEmail || user?.email || "").trim().toLowerCase();
-  const quantity = Math.max(1, Math.min(Number(input.quantity) || 1, 5));
+  const numericQuantity = Number(input.quantity);
+  const quantity = Math.max(
+    1,
+    Math.min(Number.isFinite(numericQuantity) ? Math.floor(numericQuantity) : 1, 5)
+  );
   const validateOnly = input.validateOnly !== false;
   const safeKey = String(idempotencyKey || "").trim().slice(0, 200) || null;
 
-  if (!bundleName) throw new Error("bundle_name_required");
+  validateOrderInput({ bundleName, country, device, customerEmail });
+
+  if (!validateOnly && !user?.id) {
+    const error = new Error("authentication_required");
+    error.statusCode = 401;
+    throw error;
+  }
+  if (!validateOnly && !safeKey) {
+    const error = new Error("idempotency_key_required");
+    error.statusCode = 400;
+    throw error;
+  }
   if (!validateOnly && getProviderName() === "esim-go" && quantity !== 1) {
     const error = new Error("multi_esim_live_orders_not_supported");
     error.statusCode = 409;
     throw error;
   }
 
-  if (!validateOnly && user?.id && safeKey) {
+  if (!validateOnly) {
     const existing = await findOrderByIdempotencyKey(user.id, safeKey);
     if (existing) {
       return {
@@ -216,6 +265,7 @@ export async function provisionEsim(input = {}, { user = null, idempotencyKey = 
   const provider = getProvider();
   const id = randomUUID();
   const now = new Date().toISOString();
+  const shouldPersist = Boolean(user?.id) || !validateOnly;
   const order = {
     id,
     userId: user?.id || null,
@@ -244,23 +294,25 @@ export async function provisionEsim(input = {}, { user = null, idempotencyKey = 
     updatedAt: now
   };
 
-  try {
-    await insertOrder(order);
-  } catch (error) {
-    if (!validateOnly && user?.id && safeKey && error?.code === "23505") {
-      const existing = await findOrderByIdempotencyKey(user.id, safeKey);
-      if (existing) {
-        return {
-          order: publicOrder(existing),
-          safety: {
-            liveOrderExecuted: existing.liveOrderExecuted,
-            providerMode: existing.providerMode
-          },
-          idempotentReplay: true
-        };
+  if (shouldPersist) {
+    try {
+      await insertOrder(order);
+    } catch (error) {
+      if (!validateOnly && error?.code === "23505") {
+        const existing = await findOrderByIdempotencyKey(user.id, safeKey);
+        if (existing) {
+          return {
+            order: publicOrder(existing),
+            safety: {
+              liveOrderExecuted: existing.liveOrderExecuted,
+              providerMode: existing.providerMode
+            },
+            idempotentReplay: true
+          };
+        }
       }
+      throw error;
     }
-    throw error;
   }
 
   try {
@@ -277,7 +329,7 @@ export async function provisionEsim(input = {}, { user = null, idempotencyKey = 
       order.activatedAt = new Date().toISOString();
     }
     order.updatedAt = new Date().toISOString();
-    await updateOrder(order);
+    if (shouldPersist) await updateOrder(order);
     return {
       order: publicOrder(order),
       safety: {
@@ -288,16 +340,16 @@ export async function provisionEsim(input = {}, { user = null, idempotencyKey = 
     };
   } catch (error) {
     order.status = "failed";
-    order.error = error.message;
+    order.error = String(error?.message || "provider_request_failed").slice(0, 500);
     order.updatedAt = new Date().toISOString();
-    await updateOrder(order);
+    if (shouldPersist) await updateOrder(order);
     throw error;
   }
 }
 
 export async function getEsimOrder(id, { refresh = false, userId = null } = {}) {
   const order = await findOrder(id);
-  if (!order || (order.userId && order.userId !== userId)) return null;
+  if (!order || !userId || order.userId !== userId) return null;
 
   if (refresh && order.providerOrderReference) {
     try {
@@ -315,7 +367,7 @@ export async function getEsimOrder(id, { refresh = false, userId = null } = {}) 
 
 export async function getEsimInstallDetails(id, { userId = null } = {}) {
   const order = await findOrder(id);
-  if (!order || (order.userId && order.userId !== userId)) return null;
+  if (!order || !userId || order.userId !== userId) return null;
   if (order.install) return order.install;
   if (!order.providerOrderReference) return null;
 
