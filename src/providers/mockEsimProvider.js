@@ -41,7 +41,11 @@ export async function createEsimOrder({ bundleName, quantity = 1, validateOnly =
   const bundle = mockBundles.find((item) => item.name === bundleName);
   if (!bundle) throw new Error("bundle_not_found");
 
-  const safeQuantity = Math.max(1, Math.min(Number(quantity) || 1, 5));
+  const numericQuantity = Number(quantity);
+  const safeQuantity = Math.max(
+    1,
+    Math.min(Number.isFinite(numericQuantity) ? Math.floor(numericQuantity) : 1, 5)
+  );
   const orderReference = `mock-${randomUUID()}`;
 
   if (validateOnly) {
