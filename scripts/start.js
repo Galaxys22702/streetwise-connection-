@@ -1,4 +1,5 @@
 import { setTimeout as delay } from "node:timers/promises";
+import { integerEnv } from "../src/config/env.js";
 import { pool } from "../src/db/index.js";
 import { runMigrations } from "../src/db/migrate.js";
 
@@ -7,12 +8,13 @@ if (!pool) {
   process.exit(1);
 }
 
-const configuredMaxAttempts = Number(process.env.MIGRATION_MAX_ATTEMPTS ?? 10);
-if (!Number.isInteger(configuredMaxAttempts) || configuredMaxAttempts < 1 || configuredMaxAttempts > 30) {
-  console.error("MIGRATION_MAX_ATTEMPTS must be an integer between 1 and 30.");
+let maxAttempts;
+try {
+  maxAttempts = integerEnv("MIGRATION_MAX_ATTEMPTS", { fallback: 10, min: 1, max: 30 });
+} catch (error) {
+  console.error(error.message);
   process.exit(1);
 }
-const maxAttempts = configuredMaxAttempts;
 
 for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
   try {
