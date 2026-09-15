@@ -1,6 +1,6 @@
 # Streetwise Connection — Database Readiness
 
-Last reviewed: 2026-08-27
+Last reviewed: 2026-09-15
 
 ## Purpose
 
@@ -25,6 +25,10 @@ The public launch remains waitlist-only. Customer, payment and live eSIM tables 
 - wraps each migration in a transaction;
 - rolls back a failed migration;
 - skips migrations already recorded as applied.
+
+Database migrations are a **controlled release operation**. They must not run implicitly as part of a Vercel preview or production build. The Vercel configuration is intentionally checked to remain free of database-mutating build steps.
+
+Docker/container startup may run the migration script only where that deployment model explicitly owns application startup and the target database is known. CI validates migrations against an isolated PostgreSQL instance before production changes are considered.
 
 ## Schema prepared
 
@@ -71,7 +75,7 @@ Secrets must remain in deployment/environment secret storage and never be commit
 When owner/provider gates are complete:
 
 1. Confirm production PostgreSQL is backed up and reachable.
-2. Run `npm run db:migrate` against the intended production database.
+2. Run `npm run db:migrate` explicitly against the intended production database.
 3. Run the application verification suite.
 4. Confirm database health reports configured + connected.
 5. Map final approved provider bundles to the Streetwise plan IDs.
