@@ -17,8 +17,16 @@ function selectedProvider() {
   return provider;
 }
 
-function planExists(planId) {
-  return plans.some((plan) => plan.id === planId);
+function findPlan(planId) {
+  return plans.find((plan) => plan.id === planId) || null;
+}
+
+function requireSellableLivePlan(plan) {
+  if (plan?.status !== "sellable") {
+    const error = new Error("plan_not_sellable");
+    error.statusCode = 409;
+    throw error;
+  }
 }
 
 export function paymentProviderStatus() {
@@ -33,7 +41,7 @@ export function paymentProviderStatus() {
 }
 
 export async function createCheckout(user, { planId }) {
-  const plan = plans.find((item) => item.id === planId);
+  const plan = findPlan(planId);
   if (!plan || !Number.isFinite(Number(plan.priceUsd))) {
     const error = new Error("purchasable_plan_required");
     error.statusCode = 400;
@@ -41,6 +49,8 @@ export async function createCheckout(user, { planId }) {
   }
 
   if (selectedProvider() === "stripe") {
+    const status = stripeStatus();
+    if (status.keyMode === "live") requireSellableLivePlan(plan);
     return createStripeCheckoutSession({ user, plan });
   }
 
@@ -71,13 +81,16 @@ async function upsertSubscription(client, {
   providerCustomerId = null,
   providerSubscriptionId = null,
   status = "unknown",
-  currentPeriodEnd = null
+  currentPeriodEnd = null,
+  liveEvent = false
 }) {
-  if (!userId || !planExists(planId)) {
+  const plan = findPlan(planId);
+  if (!userId || !plan) {
     const error = new Error("stripe_subscription_metadata_invalid");
     error.statusCode = 400;
     throw error;
   }
+  if (liveEvent) requireSellableLivePlan(plan);
 
   await client.query(
     `INSERT INTO subscriptions (
@@ -117,6 +130,7 @@ function verifiedStripeEvent(rawBody, signature) {
 
 export async function handleStripeWebhook(rawBody, signature) {
   const event = verifiedStripeEvent(rawBody, signature);
+  const liveEvent = event.livemode === true;
 
   return withTransaction(async (client) => {
     if (!(await recordEvent(client, event))) {
@@ -130,7 +144,8 @@ export async function handleStripeWebhook(rawBody, signature) {
         planId: session.metadata?.streetwisePlanId,
         providerCustomerId: typeof session.customer === "string" ? session.customer : session.customer?.id,
         providerSubscriptionId: typeof session.subscription === "string" ? session.subscription : session.subscription?.id,
-        status: session.payment_status === "paid" ? "active" : "checkout_completed"
+        status: session.payment_status === "paid" ? "active" : "checkout_completed",
+        liveEvent
       });
     }
 
@@ -143,7 +158,8 @@ export async function handleStripeWebhook(rawBody, signature) {
         providerCustomerId: typeof subscription.customer === "string" ? subscription.customer : subscription.customer?.id,
         providerSubscriptionId: subscription.id,
         status: subscription.status,
-        currentPeriodEnd: endSeconds ? new Date(endSeconds * 1000) : null
+        currentPeriodEnd: endSeconds ? new Date(endSeconds * 1000) : null,
+        liveEvent
       });
     }
 
