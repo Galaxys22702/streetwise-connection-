@@ -3,14 +3,21 @@ import { randomBytes, randomUUID, scrypt, timingSafeEqual, createHash } from "no
 import { query } from "../db/index.js";
 
 const scryptAsync = promisify(scrypt);
-const SESSION_DAYS = Number(process.env.SESSION_DAYS || 30);
+const configuredSessionDays = Number(process.env.SESSION_DAYS ?? 30);
+
+if (!Number.isInteger(configuredSessionDays) || configuredSessionDays < 1 || configuredSessionDays > 90) {
+  throw new Error("SESSION_DAYS must be an integer between 1 and 90.");
+}
+const SESSION_DAYS = configuredSessionDays;
+const MAX_EMAIL_LENGTH = 254;
+const MAX_PASSWORD_LENGTH = 256;
 
 function normalizeEmail(value) {
   return String(value || "").trim().toLowerCase();
 }
 
 function validateEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  return email.length <= MAX_EMAIL_LENGTH && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 async function hashPassword(password) {
@@ -20,6 +27,7 @@ async function hashPassword(password) {
 }
 
 async function verifyPassword(password, stored) {
+  if (password.length > MAX_PASSWORD_LENGTH) return false;
   const [scheme, salt, hex] = String(stored || "").split("$");
   if (scheme !== "scrypt" || !salt || !hex) return false;
   const derived = Buffer.from(await scryptAsync(password, salt, 64));
@@ -62,8 +70,8 @@ export async function registerUser({ email, password }) {
     error.statusCode = 400;
     throw error;
   }
-  if (normalizedPassword.length < 10) {
-    const error = new Error("password_must_be_at_least_10_characters");
+  if (normalizedPassword.length < 10 || normalizedPassword.length > MAX_PASSWORD_LENGTH) {
+    const error = new Error("password_must_be_between_10_and_256_characters");
     error.statusCode = 400;
     throw error;
   }
@@ -92,6 +100,13 @@ export async function registerUser({ email, password }) {
 
 export async function loginUser({ email, password }) {
   const normalizedEmail = normalizeEmail(email);
+  const normalizedPassword = String(password || "");
+  if (!validateEmail(normalizedEmail) || normalizedPassword.length > MAX_PASSWORD_LENGTH) {
+    const error = new Error("invalid_email_or_password");
+    error.statusCode = 401;
+    throw error;
+  }
+
   const result = await query(
     `SELECT id, email, password_hash, created_at
      FROM users WHERE LOWER(email) = $1 LIMIT 1`,
@@ -99,7 +114,7 @@ export async function loginUser({ email, password }) {
   );
 
   const row = result.rows[0];
-  if (!row || !(await verifyPassword(String(password || ""), row.password_hash))) {
+  if (!row || !(await verifyPassword(normalizedPassword, row.password_hash))) {
     const error = new Error("invalid_email_or_password");
     error.statusCode = 401;
     throw error;
@@ -113,7 +128,7 @@ export async function loginUser({ email, password }) {
 export async function authenticateRequest(req) {
   const auth = String(req.headers.authorization || "");
   const match = auth.match(/^Bearer\s+(.+)$/i);
-  if (!match) return null;
+  if (!match || match[1].length > 512) return null;
 
   const result = await query(
     `SELECT u.id, u.email, u.created_at
@@ -130,6 +145,6 @@ export async function authenticateRequest(req) {
 export async function logoutRequest(req) {
   const auth = String(req.headers.authorization || "");
   const match = auth.match(/^Bearer\s+(.+)$/i);
-  if (!match) return;
+  if (!match || match[1].length > 512) return;
   await query("DELETE FROM sessions WHERE token_hash = $1", [hashToken(match[1])]);
 }
