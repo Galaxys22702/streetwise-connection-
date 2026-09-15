@@ -13,7 +13,7 @@ function response() {
   };
 }
 
-test("health endpoint reports runtime dependencies and launch safety without exposing secrets", async () => {
+test("public health endpoint reports readiness without internal provider or database details", async () => {
   const previousWaitlistEnabled = process.env.WAITLIST_ENABLED;
   process.env.WAITLIST_ENABLED = "true";
 
@@ -24,21 +24,12 @@ test("health endpoint reports runtime dependencies and launch safety without exp
     assert.equal(res.statusCode, 200);
     assert.equal(res.body.ok, true);
     assert.equal(res.body.runtime, "vercel");
-    assert.equal(res.body.database.configured, false);
-    assert.equal(res.body.database.connected, false);
-    assert.equal(res.body.database.role, "customer-service");
-    assert.equal(res.body.database.requiredForPublicWaitlist, false);
-    assert.equal(res.body.storage.publicWaitlist.provider, "supabase");
-    assert.equal(res.body.storage.publicWaitlist.configured, true);
-    assert.equal(res.body.storage.publicWaitlist.required, true);
-    assert.equal(res.body.payments.provider, "mock");
-    assert.equal(res.body.provider.provider, "mock");
     assert.equal(res.body.publicLaunchMode, "waitlist");
-    assert.equal(res.body.waitlist.open, true);
-    assert.ok(res.body.waitlist.consentVersion);
-    assert.equal(res.body.waitlist.storageConfigured, true);
-    assert.equal(res.body.waitlist.storageProvider, "supabase");
-    assert.ok(res.body.waitlist.supportEmail);
+    assert.deepEqual(res.body.waitlist, { open: true, ready: true });
+    assert.equal("database" in res.body, false);
+    assert.equal("payments" in res.body, false);
+    assert.equal("provider" in res.body, false);
+    assert.equal("storage" in res.body, false);
     assert.equal(res.headers["cache-control"], "no-store");
   } finally {
     if (previousWaitlistEnabled === undefined) delete process.env.WAITLIST_ENABLED;
