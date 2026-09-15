@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { plans } from "../config/plans.js";
-import { query } from "../db/index.js";
+import { query, withTransaction } from "../db/index.js";
 import {
   createStripeCheckoutSession,
   stripeStatus,
@@ -48,8 +48,8 @@ export async function createCheckout(user, { planId }) {
   };
 }
 
-async function recordEvent(event) {
-  const inserted = await query(
+async function recordEvent(client, event) {
+  const inserted = await client.query(
     `INSERT INTO payment_events (id, provider, event_type)
      VALUES ($1, 'stripe', $2)
      ON CONFLICT (id) DO NOTHING
@@ -59,11 +59,7 @@ async function recordEvent(event) {
   return Boolean(inserted.rows[0]);
 }
 
-async function forgetEvent(eventId) {
-  await query("DELETE FROM payment_events WHERE id = $1", [eventId]);
-}
-
-async function upsertSubscription({
+async function upsertSubscription(client, {
   userId,
   planId,
   providerCustomerId = null,
@@ -77,7 +73,7 @@ async function upsertSubscription({
     throw error;
   }
 
-  await query(
+  await client.query(
     `INSERT INTO subscriptions (
        id, user_id, provider, provider_customer_id,
        provider_subscription_id, plan_id, status, current_period_end
@@ -102,16 +98,28 @@ async function upsertSubscription({
   );
 }
 
-export async function handleStripeWebhook(rawBody, signature) {
-  const event = verifyStripeWebhook(rawBody, signature);
-  if (!(await recordEvent(event))) {
-    return { received: true, duplicate: true, type: event.type };
-  }
-
+function verifiedStripeEvent(rawBody, signature) {
   try {
+    return verifyStripeWebhook(rawBody, signature);
+  } catch (error) {
+    if (error?.statusCode) throw error;
+    const invalid = new Error("stripe_signature_invalid");
+    invalid.statusCode = 400;
+    throw invalid;
+  }
+}
+
+export async function handleStripeWebhook(rawBody, signature) {
+  const event = verifiedStripeEvent(rawBody, signature);
+
+  return withTransaction(async (client) => {
+    if (!(await recordEvent(client, event))) {
+      return { received: true, duplicate: true, type: event.type };
+    }
+
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
-      await upsertSubscription({
+      await upsertSubscription(client, {
         userId: session.metadata?.streetwiseUserId || session.client_reference_id,
         planId: session.metadata?.streetwisePlanId,
         providerCustomerId: typeof session.customer === "string" ? session.customer : session.customer?.id,
@@ -123,7 +131,7 @@ export async function handleStripeWebhook(rawBody, signature) {
     if (["customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"].includes(event.type)) {
       const subscription = event.data.object;
       const endSeconds = subscription.current_period_end;
-      await upsertSubscription({
+      await upsertSubscription(client, {
         userId: subscription.metadata?.streetwiseUserId,
         planId: subscription.metadata?.streetwisePlanId,
         providerCustomerId: typeof subscription.customer === "string" ? subscription.customer : subscription.customer?.id,
@@ -132,12 +140,9 @@ export async function handleStripeWebhook(rawBody, signature) {
         currentPeriodEnd: endSeconds ? new Date(endSeconds * 1000) : null
       });
     }
-  } catch (error) {
-    await forgetEvent(event.id);
-    throw error;
-  }
 
-  return { received: true, duplicate: false, type: event.type };
+    return { received: true, duplicate: false, type: event.type };
+  });
 }
 
 export async function getSubscriptionForUser(userId) {
