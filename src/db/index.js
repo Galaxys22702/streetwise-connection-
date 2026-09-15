@@ -17,10 +17,18 @@ export const databaseConfigured = Boolean(connectionString);
 export const pool = databaseConfigured
   ? new Pool({
       connectionString,
-      ssl: databaseSslSetting === "true" ? { rejectUnauthorized: false } : undefined,
-      max: configuredPoolMax
+      ssl: databaseSslSetting === "true" ? { rejectUnauthorized: true } : undefined,
+      max: configuredPoolMax,
+      connectionTimeoutMillis: 10_000,
+      idleTimeoutMillis: 30_000
     })
   : null;
+
+if (pool) {
+  pool.on("error", () => {
+    console.error("Unexpected idle database client error.");
+  });
+}
 
 export async function query(text, params = []) {
   if (!pool) {
