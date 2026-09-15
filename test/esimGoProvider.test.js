@@ -69,6 +69,7 @@ test("catalogue requests use the API key and normalized country filter", async (
     assert.equal(bundles[0].name, "esim_1GB_7D_US_V2");
     assert.match(request.url, /\/catalogue\?countries=US&perPage=100$/);
     assert.equal(request.options.headers["X-API-Key"], "test-provider-key");
+    assert.ok(request.options.signal);
   } finally {
     global.fetch = originalFetch;
     restoreEnv(saved);
@@ -186,6 +187,24 @@ test("provider calls fail closed when the API key is missing", async () => {
       (error) => error.message === "esim_provider_not_configured" && error.statusCode === 503
     );
   } finally {
+    restoreEnv(saved);
+  }
+});
+
+test("provider network failures become controlled availability errors", async () => {
+  const saved = saveEnv();
+  const originalFetch = global.fetch;
+  try {
+    configure();
+    global.fetch = async () => {
+      throw new Error("socket failure");
+    };
+    await assert.rejects(
+      () => listBundles({ country: "US" }),
+      (error) => error.message === "esim_go_unavailable" && error.statusCode === 503
+    );
+  } finally {
+    global.fetch = originalFetch;
     restoreEnv(saved);
   }
 });
