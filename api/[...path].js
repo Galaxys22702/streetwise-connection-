@@ -52,7 +52,7 @@ function applySecurityHeaders(res) {
     "default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:"
   );
   if (IS_PRODUCTION) {
-    res.setHeader("strict-transport-security", "max-age=31536000; includeSubDomains");
+    res.setHeader("strict-transport-security", "max-age=63072000; includeSubDomains; preload");
   }
 }
 
@@ -330,30 +330,25 @@ export default async function handler(req, res) {
     }
   }
 
-  const installMatch = url.pathname.match(/^\/api\/esims\/orders\/([^/]+)\/install$/);
-  if (req.method === "GET" && installMatch) {
+  const orderMatch = url.pathname.match(/^\/api\/esims\/orders\/([^/]+)$/);
+  if (req.method === "GET" && orderMatch) {
     try {
       const user = await requireUser(req);
-      const details = await getEsimInstallDetails(decodePathSegment(installMatch[1]), {
-        userId: user.id
+      return sendJson(res, 200, {
+        order: await getEsimOrder(decodePathSegment(orderMatch[1]), user.id)
       });
-      if (!details) return sendJson(res, 404, { error: "install_details_not_found" });
-      return sendJson(res, 200, { install: details });
     } catch (error) {
       return sendError(res, error);
     }
   }
 
-  const orderMatch = url.pathname.match(/^\/api\/esims\/orders\/([^/]+)$/);
-  if (req.method === "GET" && orderMatch) {
+  const installMatch = url.pathname.match(/^\/api\/esims\/orders\/([^/]+)\/install$/);
+  if (req.method === "GET" && installMatch) {
     try {
       const user = await requireUser(req);
-      const order = await getEsimOrder(decodePathSegment(orderMatch[1]), {
-        refresh: url.searchParams.get("refresh") === "true",
-        userId: user.id
+      return sendJson(res, 200, {
+        install: await getEsimInstallDetails(decodePathSegment(installMatch[1]), user.id)
       });
-      if (!order) return sendJson(res, 404, { error: "order_not_found" });
-      return sendJson(res, 200, { order });
     } catch (error) {
       return sendError(res, error);
     }
