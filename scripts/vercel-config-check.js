@@ -17,6 +17,12 @@ if (buildCommand.includes('migrate') || buildCommand.includes('DATABASE_URL')) {
   throw new Error('vercel_build_command_must_not_mutate_database');
 }
 
+const rewrites = Array.isArray(config.rewrites) ? config.rewrites : [];
+const apiRewrite = rewrites.find((rule) => rule.source === '/api/:path*');
+if (apiRewrite?.destination !== '/api/[...path]') {
+  throw new Error('vercel_nested_api_splat_rewrite_required');
+}
+
 const globalHeaders = config.headers?.find((rule) => rule.source === '/(.*)')?.headers || [];
 const headerMap = new Map(
   globalHeaders.map(({ key, value }) => [String(key).toLowerCase(), String(value)])
@@ -40,5 +46,8 @@ if (headerMap.get('x-frame-options') !== 'DENY') {
 if (headerMap.get('referrer-policy') !== 'no-referrer') {
   throw new Error('vercel_referrer_policy_required');
 }
+if (headerMap.get('strict-transport-security') !== 'max-age=63072000; includeSubDomains; preload') {
+  throw new Error('vercel_hsts_required');
+}
 
-console.log('Vercel config is static/API-only, side-effect free during build, and includes required public security headers.');
+console.log('Vercel config is static/API-only, side-effect free during build, routes nested API paths, and includes required public security headers.');
