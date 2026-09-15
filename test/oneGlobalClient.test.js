@@ -78,6 +78,8 @@ test("fetches OAuth token then lists active plan offerings for a country", async
     assert.match(requests[1].url, /allowances%5Bcoverage-area%5D%5Bcountries%5D=US/);
     assert.equal(requests[1].options.headers.authorization, "Bearer token-123");
     assert.equal(requests[1].options.headers["Api-Version"], "2026-02-05");
+    assert.ok(requests[0].options.signal);
+    assert.ok(requests[1].options.signal);
   } finally {
     global.fetch = originalFetch;
     restoreEnv(saved);
@@ -96,6 +98,24 @@ test("fails closed when credentials are missing", async () => {
       (error) => error.message === "oneglobal_not_configured" && error.statusCode === 503
     );
   } finally {
+    restoreEnv(saved);
+  }
+});
+
+test("OAuth network failures become controlled availability errors", async () => {
+  const saved = saveEnv();
+  const originalFetch = global.fetch;
+  try {
+    configure();
+    global.fetch = async () => {
+      throw new Error("network down");
+    };
+    await assert.rejects(
+      () => listProductOfferings({ country: "US" }),
+      (error) => error.message === "oneglobal_auth_unavailable" && error.statusCode === 503
+    );
+  } finally {
+    global.fetch = originalFetch;
     restoreEnv(saved);
   }
 });
