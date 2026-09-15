@@ -1,6 +1,6 @@
 import { promisify } from "node:util";
 import { randomBytes, randomUUID, scrypt, timingSafeEqual, createHash } from "node:crypto";
-import { query } from "../db/index.js";
+import { query, withTransaction } from "../db/index.js";
 
 const scryptAsync = promisify(scrypt);
 const configuredSessionDays = Number(process.env.SESSION_DAYS ?? 30);
@@ -47,12 +47,12 @@ function publicUser(row) {
   };
 }
 
-async function createSession(userId) {
+async function createSession(userId, execute = query) {
   const token = randomBytes(32).toString("base64url");
   const sessionId = `ses_${randomUUID().replaceAll("-", "")}`;
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
 
-  await query(
+  await execute(
     `INSERT INTO sessions (id, user_id, token_hash, expires_at)
      VALUES ($1, $2, $3, $4)`,
     [sessionId, userId, hashToken(token), expiresAt]
@@ -80,14 +80,16 @@ export async function registerUser({ email, password }) {
   const passwordHash = await hashPassword(normalizedPassword);
 
   try {
-    const result = await query(
-      `INSERT INTO users (id, email, password_hash)
-       VALUES ($1, $2, $3)
-       RETURNING id, email, created_at`,
-      [userId, normalizedEmail, passwordHash]
-    );
-    const session = await createSession(userId);
-    return { user: publicUser(result.rows[0]), session };
+    return await withTransaction(async (client) => {
+      const result = await client.query(
+        `INSERT INTO users (id, email, password_hash)
+         VALUES ($1, $2, $3)
+         RETURNING id, email, created_at`,
+        [userId, normalizedEmail, passwordHash]
+      );
+      const session = await createSession(userId, client.query.bind(client));
+      return { user: publicUser(result.rows[0]), session };
+    });
   } catch (error) {
     if (error.code === "23505") {
       const conflict = new Error("email_already_registered");
