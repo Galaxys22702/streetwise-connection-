@@ -2,6 +2,7 @@ import http from "node:http";
 import { readFile } from "node:fs/promises";
 import { extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { booleanEnv } from "./config/env.js";
 import { plans } from "./config/plans.js";
 import { cellularCapabilities } from "./config/cellularCapabilities.js";
 import { isCustomerServicePath, isPublicWaitlistOnly, publicLaunchMode } from "./config/launchMode.js";
@@ -269,7 +270,7 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "POST" && url.pathname === "/api/providers/esim-go/webhook") {
     try {
-      const enabled = process.env.ESIM_WEBHOOKS_ENABLED === "true";
+      const enabled = booleanEnv("ESIM_WEBHOOKS_ENABLED");
       const provider = String(process.env.ESIM_PROVIDER || "mock").toLowerCase();
       if (!enabled || provider !== "esim-go") {
         return sendJson(res, 404, { error: "esim_go_webhook_not_enabled" });
@@ -317,7 +318,7 @@ const server = http.createServer(async (req, res) => {
       if (isTransaction && !idempotencyKey) {
         return sendJson(res, 400, { error: "idempotency_key_required" });
       }
-      if (process.env.ESIM_LIVE_ORDERS_ENABLED === "true") {
+      if (booleanEnv("ESIM_LIVE_ORDERS_ENABLED")) {
         if (!user || !(await hasActiveSubscription(user.id))) {
           return sendJson(res, 402, { error: "active_subscription_required" });
         }
