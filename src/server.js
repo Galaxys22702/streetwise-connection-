@@ -1,11 +1,11 @@
 import http from "node:http";
 import { readFile } from "node:fs/promises";
-import { extname, join, normalize } from "node:path";
+import { extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { plans } from "./config/plans.js";
 import { cellularCapabilities } from "./config/cellularCapabilities.js";
 import { isCustomerServicePath, isPublicWaitlistOnly, publicLaunchMode } from "./config/launchMode.js";
-import { databaseStatus } from "./db/index.js";
+import { sendError, sendJson } from "./http/response.js";
 import {
   authenticateRequest,
   loginUser,
@@ -31,10 +31,15 @@ import {
   recordMockUsage
 } from "./services/esimService.js";
 import { handleEsimGoWebhook } from "./services/esimWebhookService.js";
+import { buildHealthStatus } from "./services/healthService.js";
 import { enforceWaitlistRateLimit } from "./services/waitlistRateLimit.js";
 import { joinWaitlist, waitlistStatus } from "./services/waitlistService.js";
 
-const PORT = Number(process.env.PORT || 3000);
+const configuredPort = Number(process.env.PORT || 3000);
+if (!Number.isInteger(configuredPort) || configuredPort < 1 || configuredPort > 65535) {
+  throw new Error("PORT must be an integer between 1 and 65535.");
+}
+const PORT = configuredPort;
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 const PUBLIC_DIR = fileURLToPath(new URL("../public/", import.meta.url));
 
@@ -60,19 +65,6 @@ function applySecurityHeaders(res) {
   if (IS_PRODUCTION) {
     res.setHeader("strict-transport-security", "max-age=31536000; includeSubDomains");
   }
-}
-
-function sendJson(res, status, payload) {
-  res.statusCode = status;
-  res.setHeader("content-type", "application/json; charset=utf-8");
-  res.setHeader("cache-control", "no-store");
-  res.end(JSON.stringify(payload));
-}
-
-function sendError(res, error, fallbackStatus = 400) {
-  const payload = { error: error.message || "request_failed" };
-  if (!IS_PRODUCTION && error.providerPayload) payload.provider = error.providerPayload;
-  return sendJson(res, Number(error.statusCode) || fallbackStatus, payload);
 }
 
 async function readRawBody(req, maxBytes = 1_048_576) {
@@ -102,6 +94,16 @@ async function readJsonBody(req) {
   }
 }
 
+function decodePathSegment(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    const error = new Error("invalid_path_parameter");
+    error.statusCode = 400;
+    throw error;
+  }
+}
+
 async function requireUser(req) {
   const user = await authenticateRequest(req);
   if (!user) {
@@ -114,8 +116,7 @@ async function requireUser(req) {
 
 async function serveStatic(pathname, res) {
   const requested = pathname === "/" ? "/index.html" : pathname;
-  const safePath = normalize(requested).replace(/^([.][.][/\\])+/, "");
-  const filePath = join(PUBLIC_DIR, safePath);
+  const filePath = resolve(PUBLIC_DIR, `.${requested}`);
 
   if (!filePath.startsWith(PUBLIC_DIR)) {
     res.statusCode = 403;
@@ -140,17 +141,8 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url || "/", "http://localhost");
 
   if (req.method === "GET" && url.pathname === "/health") {
-    const [provider, database] = await Promise.all([providerStatus(), databaseStatus()]);
-    return sendJson(res, 200, {
-      ok: true,
-      service: "streetwise-connection",
-      version: "0.4.0",
-      database,
-      payments: paymentProviderStatus(),
-      provider,
-      publicLaunchMode: publicLaunchMode(),
-      waitlist: waitlistStatus()
-    });
+    const health = await buildHealthStatus({ runtime: "node" });
+    return sendJson(res, health.statusCode, health.body);
   }
 
   if (req.method === "GET" && url.pathname === "/api/public-status") {
@@ -202,7 +194,7 @@ const server = http.createServer(async (req, res) => {
       await logoutRequest(req);
       return sendJson(res, 200, { loggedOut: true });
     } catch (error) {
-      return sendError(res, error, 401);
+      return sendError(res, error);
     }
   }
 
@@ -214,7 +206,7 @@ const server = http.createServer(async (req, res) => {
         subscription: await getSubscriptionForUser(user.id)
       });
     } catch (error) {
-      return sendError(res, error, 401);
+      return sendError(res, error);
     }
   }
 
@@ -223,7 +215,7 @@ const server = http.createServer(async (req, res) => {
       const user = await requireUser(req);
       return sendJson(res, 200, await getCustomerDashboard(user));
     } catch (error) {
-      return sendError(res, error, 401);
+      return sendError(res, error);
     }
   }
 
@@ -232,7 +224,7 @@ const server = http.createServer(async (req, res) => {
       const user = await requireUser(req);
       return sendJson(res, 200, { esims: await listEsimOrdersForUser(user.id) });
     } catch (error) {
-      return sendError(res, error, 401);
+      return sendError(res, error);
     }
   }
 
@@ -258,7 +250,7 @@ const server = http.createServer(async (req, res) => {
         subscription: await getSubscriptionForUser(user.id)
       });
     } catch (error) {
-      return sendError(res, error, 401);
+      return sendError(res, error);
     }
   }
 
@@ -271,7 +263,7 @@ const server = http.createServer(async (req, res) => {
       if (!signature) return sendJson(res, 400, { error: "stripe_signature_required" });
       return sendJson(res, 200, await handleStripeWebhook(await readRawBody(req), signature));
     } catch (error) {
-      return sendError(res, error, 400);
+      return sendError(res, error);
     }
   }
 
@@ -286,7 +278,7 @@ const server = http.createServer(async (req, res) => {
       if (!signature) return sendJson(res, 400, { error: "esim_go_signature_required" });
       return sendJson(res, 200, await handleEsimGoWebhook(await readRawBody(req), signature));
     } catch (error) {
-      return sendError(res, error, 400);
+      return sendError(res, error);
     }
   }
 
@@ -300,7 +292,7 @@ const server = http.createServer(async (req, res) => {
         bundles: await listProviderBundles({ country: url.searchParams.get("country") || "" })
       });
     } catch (error) {
-      return sendError(res, error, 502);
+      return sendError(res, error, { fallbackStatus: 502 });
     }
   }
 
@@ -331,11 +323,7 @@ const server = http.createServer(async (req, res) => {
         }
       }
 
-      return sendJson(
-        res,
-        201,
-        await provisionEsim(body, { user, idempotencyKey })
-      );
+      return sendJson(res, 201, await provisionEsim(body, { user, idempotencyKey }));
     } catch (error) {
       return sendError(res, error);
     }
@@ -348,7 +336,7 @@ const server = http.createServer(async (req, res) => {
       const body = await readJsonBody(req);
       return sendJson(res, 200, {
         order: await recordMockUsage(
-          decodeURIComponent(usageMatch[1]),
+          decodePathSegment(usageMatch[1]),
           user.id,
           body.usedMegabytes
         )
@@ -362,13 +350,13 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && installMatch) {
     try {
       const user = await requireUser(req);
-      const details = await getEsimInstallDetails(decodeURIComponent(installMatch[1]), {
+      const details = await getEsimInstallDetails(decodePathSegment(installMatch[1]), {
         userId: user.id
       });
       if (!details) return sendJson(res, 404, { error: "install_details_not_found" });
       return sendJson(res, 200, { install: details });
     } catch (error) {
-      return sendError(res, error, 401);
+      return sendError(res, error);
     }
   }
 
@@ -376,15 +364,19 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && orderMatch) {
     try {
       const user = await requireUser(req);
-      const order = await getEsimOrder(decodeURIComponent(orderMatch[1]), {
+      const order = await getEsimOrder(decodePathSegment(orderMatch[1]), {
         refresh: url.searchParams.get("refresh") === "true",
         userId: user.id
       });
       if (!order) return sendJson(res, 404, { error: "order_not_found" });
       return sendJson(res, 200, { order });
     } catch (error) {
-      return sendError(res, error, 401);
+      return sendError(res, error);
     }
+  }
+
+  if (url.pathname.startsWith("/api/")) {
+    return sendJson(res, 404, { error: "not_found" });
   }
 
   if (req.method === "GET") {
