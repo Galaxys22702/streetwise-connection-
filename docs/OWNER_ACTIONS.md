@@ -1,6 +1,6 @@
 # Streetwise Connection — Owner Actions Only
 
-Last reviewed: 2026-09-12
+Last reviewed: 2026-09-15
 
 Everything that can safely be prepared in code or public working documents should be completed before this list is handed to the owner.
 
@@ -10,13 +10,15 @@ Everything that can safely be prepared in code or public working documents shoul
 - [x] Verify current official AT&T Partner Exchange / Partner Solutions / Wholesale pages
 - [ ] Submit the free AT&T Partner Exchange Request info form using truthful current pre-launch status
 - [ ] Record submission date/reference and AT&T response in issue #25
-- [ ] Continue free Nevada name/jurisdiction research and ready-to-file preparation
+- [x] Attempt the official Nevada entity search on 2026-09-14; the flow redirected to ORION sign-in and did not return an entity-search result
+- [ ] Complete the official Nevada entity-name search successfully immediately before filing
+- [ ] Continue free Nevada jurisdiction research and ready-to-file preparation
 
 No paid tools, filing services, provider funding, or government filing payments are authorised at this stage.
 
 ## Business formation and private identity actions
 
-- [ ] Confirm the legal name immediately before filing.
+- [ ] Confirm the legal name successfully in Nevada's official entity search immediately before filing.
 - [ ] Complete Nevada LLC filing, Initial List and State Business Licence when funding is available and authorised.
 - [ ] Provide registered-agent/address information privately.
 - [ ] Obtain EIN after formation.
@@ -24,6 +26,8 @@ No paid tools, filing services, provider funding, or government filing payments 
 - [ ] Confirm City of Las Vegas vs Clark County/other local jurisdiction and obtain the applicable local licence.
 - [ ] Sign the operating agreement and store the executed copy privately.
 - [ ] Open the business bank account.
+
+Current formation status: **not filed**. Do not represent `Streetwise Connection LLC` as an existing Nevada entity until the state accepts the filing.
 
 ## AT&T application / qualification
 
