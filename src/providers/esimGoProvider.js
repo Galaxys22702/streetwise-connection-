@@ -1,3 +1,5 @@
+import { booleanEnv } from "../config/env.js";
+
 const DEFAULT_BASE_URL = "https://api.esim-go.com/v2.5";
 const REQUEST_TIMEOUT_MS = 15_000;
 
@@ -5,8 +7,8 @@ function getConfig() {
   return {
     baseUrl: String(process.env.ESIM_API_BASE_URL || DEFAULT_BASE_URL).replace(/\/$/, ""),
     apiKey: String(process.env.ESIM_API_KEY || "").trim(),
-    webhooksEnabled: String(process.env.ESIM_WEBHOOKS_ENABLED || "false").toLowerCase() === "true",
-    liveOrdersEnabled: String(process.env.ESIM_LIVE_ORDERS_ENABLED || "false").toLowerCase() === "true"
+    webhooksEnabled: booleanEnv("ESIM_WEBHOOKS_ENABLED"),
+    liveOrdersEnabled: booleanEnv("ESIM_LIVE_ORDERS_ENABLED")
   };
 }
 
