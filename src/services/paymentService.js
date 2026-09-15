@@ -8,7 +8,13 @@ import {
 } from "../providers/stripePaymentProvider.js";
 
 function selectedProvider() {
-  return String(process.env.PAYMENT_PROVIDER || "mock").trim().toLowerCase();
+  const provider = String(process.env.PAYMENT_PROVIDER || "mock").trim().toLowerCase();
+  if (provider !== "mock" && provider !== "stripe") {
+    const error = new Error("unsupported_payment_provider");
+    error.statusCode = 500;
+    throw error;
+  }
+  return provider;
 }
 
 function planExists(planId) {
