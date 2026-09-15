@@ -1,7 +1,7 @@
 import { plans } from "../src/config/plans.js";
 import { cellularCapabilities } from "../src/config/cellularCapabilities.js";
 import { isCustomerServicePath, isPublicWaitlistOnly, publicLaunchMode } from "../src/config/launchMode.js";
-import { databaseStatus } from "../src/db/index.js";
+import { sendError, sendJson } from "../src/http/response.js";
 import {
   authenticateRequest,
   loginUser,
@@ -27,6 +27,7 @@ import {
   recordMockUsage
 } from "../src/services/esimService.js";
 import { handleEsimGoWebhook } from "../src/services/esimWebhookService.js";
+import { buildHealthStatus } from "../src/services/healthService.js";
 import { enforceWaitlistRateLimit } from "../src/services/waitlistRateLimit.js";
 import { joinWaitlist, waitlistStatus } from "../src/services/waitlistService.js";
 
@@ -54,24 +55,22 @@ function applySecurityHeaders(res) {
   }
 }
 
-function sendJson(res, status, payload) {
-  res.statusCode = status;
-  res.setHeader("content-type", "application/json; charset=utf-8");
-  res.setHeader("cache-control", "no-store");
-  res.end(JSON.stringify(payload));
-}
-
-function sendError(res, error, fallbackStatus = 400) {
-  const payload = { error: error.message || "request_failed" };
-  if (!IS_PRODUCTION && error.providerPayload) payload.provider = error.providerPayload;
-  return sendJson(res, Number(error.statusCode) || fallbackStatus, payload);
+function bodyBuffer(value) {
+  if (Buffer.isBuffer(value)) return value;
+  if (typeof value === "string") return Buffer.from(value);
+  if (value && typeof value === "object") return Buffer.from(JSON.stringify(value));
+  return null;
 }
 
 async function readRawBody(req, maxBytes = 1_048_576) {
-  if (Buffer.isBuffer(req.body)) return req.body;
-  if (typeof req.body === "string") return Buffer.from(req.body);
-  if (req.body && typeof req.body === "object") {
-    return Buffer.from(JSON.stringify(req.body));
+  const existing = bodyBuffer(req.body);
+  if (existing) {
+    if (existing.length > maxBytes) {
+      const error = new Error("request_too_large");
+      error.statusCode = 413;
+      throw error;
+    }
+    return existing;
   }
 
   const chunks = [];
@@ -89,13 +88,22 @@ async function readRawBody(req, maxBytes = 1_048_576) {
 }
 
 async function readJsonBody(req) {
-  if (req.body && typeof req.body === "object" && !Buffer.isBuffer(req.body)) return req.body;
   const raw = await readRawBody(req, 32_768);
   if (!raw.length) return {};
   try {
     return JSON.parse(raw.toString("utf8"));
   } catch {
     const error = new Error("invalid_json");
+    error.statusCode = 400;
+    throw error;
+  }
+}
+
+function decodePathSegment(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    const error = new Error("invalid_path_parameter");
     error.statusCode = 400;
     throw error;
   }
@@ -116,17 +124,8 @@ export default async function handler(req, res) {
   const url = new URL(req.url || "/", "https://streetwise.local");
 
   if (req.method === "GET" && url.pathname === "/api/health") {
-    const [provider, database] = await Promise.all([providerStatus(), databaseStatus()]);
-    return sendJson(res, 200, {
-      ok: true,
-      service: "streetwise-connection",
-      version: "0.4.0",
-      database,
-      payments: paymentProviderStatus(),
-      provider,
-      publicLaunchMode: publicLaunchMode(),
-      waitlist: waitlistStatus()
-    });
+    const health = await buildHealthStatus({ runtime: "vercel" });
+    return sendJson(res, health.statusCode, health.body);
   }
 
   if (req.method === "GET" && url.pathname === "/api/public-status") {
@@ -178,7 +177,7 @@ export default async function handler(req, res) {
       await logoutRequest(req);
       return sendJson(res, 200, { loggedOut: true });
     } catch (error) {
-      return sendError(res, error, 401);
+      return sendError(res, error);
     }
   }
 
@@ -190,7 +189,7 @@ export default async function handler(req, res) {
         subscription: await getSubscriptionForUser(user.id)
       });
     } catch (error) {
-      return sendError(res, error, 401);
+      return sendError(res, error);
     }
   }
 
@@ -199,7 +198,7 @@ export default async function handler(req, res) {
       const user = await requireUser(req);
       return sendJson(res, 200, await getCustomerDashboard(user));
     } catch (error) {
-      return sendError(res, error, 401);
+      return sendError(res, error);
     }
   }
 
@@ -208,7 +207,7 @@ export default async function handler(req, res) {
       const user = await requireUser(req);
       return sendJson(res, 200, { esims: await listEsimOrdersForUser(user.id) });
     } catch (error) {
-      return sendError(res, error, 401);
+      return sendError(res, error);
     }
   }
 
@@ -234,7 +233,7 @@ export default async function handler(req, res) {
         subscription: await getSubscriptionForUser(user.id)
       });
     } catch (error) {
-      return sendError(res, error, 401);
+      return sendError(res, error);
     }
   }
 
@@ -247,7 +246,7 @@ export default async function handler(req, res) {
       if (!signature) return sendJson(res, 400, { error: "stripe_signature_required" });
       return sendJson(res, 200, await handleStripeWebhook(await readRawBody(req), signature));
     } catch (error) {
-      return sendError(res, error, 400);
+      return sendError(res, error);
     }
   }
 
@@ -262,7 +261,7 @@ export default async function handler(req, res) {
       if (!signature) return sendJson(res, 400, { error: "esim_go_signature_required" });
       return sendJson(res, 200, await handleEsimGoWebhook(await readRawBody(req), signature));
     } catch (error) {
-      return sendError(res, error, 400);
+      return sendError(res, error);
     }
   }
 
@@ -276,7 +275,7 @@ export default async function handler(req, res) {
         bundles: await listProviderBundles({ country: url.searchParams.get("country") || "" })
       });
     } catch (error) {
-      return sendError(res, error, 502);
+      return sendError(res, error, { fallbackStatus: 502 });
     }
   }
 
@@ -320,7 +319,7 @@ export default async function handler(req, res) {
       const body = await readJsonBody(req);
       return sendJson(res, 200, {
         order: await recordMockUsage(
-          decodeURIComponent(usageMatch[1]),
+          decodePathSegment(usageMatch[1]),
           user.id,
           body.usedMegabytes
         )
@@ -334,13 +333,13 @@ export default async function handler(req, res) {
   if (req.method === "GET" && installMatch) {
     try {
       const user = await requireUser(req);
-      const details = await getEsimInstallDetails(decodeURIComponent(installMatch[1]), {
+      const details = await getEsimInstallDetails(decodePathSegment(installMatch[1]), {
         userId: user.id
       });
       if (!details) return sendJson(res, 404, { error: "install_details_not_found" });
       return sendJson(res, 200, { install: details });
     } catch (error) {
-      return sendError(res, error, 401);
+      return sendError(res, error);
     }
   }
 
@@ -348,14 +347,14 @@ export default async function handler(req, res) {
   if (req.method === "GET" && orderMatch) {
     try {
       const user = await requireUser(req);
-      const order = await getEsimOrder(decodeURIComponent(orderMatch[1]), {
+      const order = await getEsimOrder(decodePathSegment(orderMatch[1]), {
         refresh: url.searchParams.get("refresh") === "true",
         userId: user.id
       });
       if (!order) return sendJson(res, 404, { error: "order_not_found" });
       return sendJson(res, 200, { order });
     } catch (error) {
-      return sendError(res, error, 401);
+      return sendError(res, error);
     }
   }
 
