@@ -1,4 +1,5 @@
 const DEFAULT_BASE_URL = "https://api.esim-go.com/v2.5";
+const REQUEST_TIMEOUT_MS = 15_000;
 
 function getConfig() {
   return {
@@ -23,15 +24,23 @@ async function request(path, options = {}) {
   const { baseUrl } = getConfig();
   const apiKey = requireApiKey();
 
-  const response = await fetch(`${baseUrl}${path}`, {
-    ...options,
-    headers: {
-      Accept: "application/json",
-      "X-API-Key": apiKey,
-      ...(options.body ? { "Content-Type": "application/json" } : {}),
-      ...(options.headers || {})
-    }
-  });
+  let response;
+  try {
+    response = await fetch(`${baseUrl}${path}`, {
+      ...options,
+      signal: options.signal || AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      headers: {
+        Accept: "application/json",
+        "X-API-Key": apiKey,
+        ...(options.body ? { "Content-Type": "application/json" } : {}),
+        ...(options.headers || {})
+      }
+    });
+  } catch {
+    const error = new Error("esim_go_unavailable");
+    error.statusCode = 503;
+    throw error;
+  }
 
   const text = await response.text();
   let data = null;
