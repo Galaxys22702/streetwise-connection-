@@ -40,9 +40,16 @@ const health = await request("/health");
 assert.equal(health.response.status, 200, "health endpoint must return 200");
 assert.equal(health.body?.ok, true, "health endpoint must report ok");
 assert.equal(health.body?.publicLaunchMode, "waitlist", "health endpoint must remain in waitlist mode");
-assert.equal(health.body?.payments?.liveModeEnabled, false, "live Stripe mode must stay disabled during waitlist launch");
-assert.equal(health.body?.provider?.liveOrdersEnabled, false, "live eSIM ordering must stay disabled during waitlist launch");
+assert.equal("payments" in health.body, false, "public health must not expose payment configuration");
+assert.equal("provider" in health.body, false, "public health must not expose provider configuration");
+assert.equal("database" in health.body, false, "public health must not expose database configuration");
 assert.equal(Boolean(health.body?.waitlist?.open), Boolean(publicStatus.body?.waitlist?.open), "health and public status must agree on waitlist state");
+
+for (const path of ["/api/payments/status", "/api/provider/status", "/api/provider/catalogue"]) {
+  const diagnostic = await request(path);
+  assert.equal(diagnostic.response.status, 503, `${path} must stay blocked during public waitlist launch`);
+  assert.equal(diagnostic.body?.error, "public_waitlist_only", `${path} must report the waitlist gate`);
+}
 
 if (publicStatus.body.waitlist.open) {
   assert.equal(publicStatus.body.waitlist.storageConfigured, true, "open waitlist requires configured production storage");
