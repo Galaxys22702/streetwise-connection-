@@ -51,3 +51,26 @@ test("unsupported payment provider fails instead of silently becoming mock", asy
     );
   });
 });
+
+test("live Stripe checkout is blocked while the selected plan is still planned", async () => {
+  const previousKey = process.env.STRIPE_SECRET_KEY;
+  const previousLive = process.env.STRIPE_LIVE_MODE_ENABLED;
+  try {
+    process.env.STRIPE_SECRET_KEY = "sk_live_example";
+    process.env.STRIPE_LIVE_MODE_ENABLED = "true";
+    await withPaymentProvider("stripe", async () => {
+      await assert.rejects(
+        createCheckout(
+          { id: "test-user-005", email: "live@streetwise.example" },
+          { planId: "residential-home-25" }
+        ),
+        (error) => error.message === "plan_not_sellable" && error.statusCode === 409
+      );
+    });
+  } finally {
+    if (previousKey === undefined) delete process.env.STRIPE_SECRET_KEY;
+    else process.env.STRIPE_SECRET_KEY = previousKey;
+    if (previousLive === undefined) delete process.env.STRIPE_LIVE_MODE_ENABLED;
+    else process.env.STRIPE_LIVE_MODE_ENABLED = previousLive;
+  }
+});
