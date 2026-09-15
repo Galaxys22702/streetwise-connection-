@@ -1,7 +1,10 @@
-const PUBLIC_LAUNCH_MODE = String(process.env.PUBLIC_LAUNCH_MODE || "waitlist").trim().toLowerCase();
+export function resolvePublicLaunchMode(value = process.env.PUBLIC_LAUNCH_MODE) {
+  const setting = String(value || "waitlist").trim().toLowerCase();
+  return setting === "internal" ? "internal" : "waitlist";
+}
 
 export function publicLaunchMode() {
-  return PUBLIC_LAUNCH_MODE === "waitlist" ? "waitlist" : "internal";
+  return resolvePublicLaunchMode();
 }
 
 export function isPublicWaitlistOnly() {
