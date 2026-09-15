@@ -11,9 +11,17 @@ if (!apiKey) {
 
 process.env.ESIM_LIVE_ORDERS_ENABLED = "false";
 
-const organisationResponse = await fetch(`${baseUrl}/organisation`, {
-  headers: { Accept: "application/json", "X-API-Key": apiKey }
-});
+let organisationResponse;
+try {
+  organisationResponse = await fetch(`${baseUrl}/organisation`, {
+    headers: { Accept: "application/json", "X-API-Key": apiKey },
+    signal: AbortSignal.timeout(15_000)
+  });
+} catch {
+  console.error("Organisation check failed because the provider endpoint was unavailable.");
+  process.exit(3);
+}
+
 const organisationPayload = await organisationResponse.json().catch(() => ({}));
 if (!organisationResponse.ok) {
   console.error(`Organisation check failed with HTTP ${organisationResponse.status}.`);
@@ -33,11 +41,6 @@ const validation = await createEsimOrder({
 });
 
 const quotedTotal = Number(validation.total);
-const providerPayload = validation.providerPayload || {};
-const safeMessage = String(
-  providerPayload?.statusMessage || providerPayload?.message || validation.statusMessage || ""
-).trim().slice(0, 300);
-
 const hasKnownBalance = Number.isFinite(balance);
 const hasPositiveBalance = hasKnownBalance ? balance > 0 : null;
 const hasTestCredit = Number.isFinite(testCredit) ? testCredit > 0 : null;
@@ -61,8 +64,7 @@ const summary = {
   hasPositiveBalance,
   hasTestCredit,
   hasSufficientBalanceForQuote,
-  readiness,
-  providerMessage: safeMessage || null
+  readiness
 };
 
 console.log(JSON.stringify(summary, null, 2));
