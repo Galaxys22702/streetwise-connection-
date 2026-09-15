@@ -11,6 +11,10 @@ function selectedProvider() {
   return String(process.env.PAYMENT_PROVIDER || "mock").trim().toLowerCase();
 }
 
+function planExists(planId) {
+  return plans.some((plan) => plan.id === planId);
+}
+
 export function paymentProviderStatus() {
   const provider = selectedProvider();
   if (provider === "stripe") return stripeStatus();
@@ -55,15 +59,23 @@ async function recordEvent(event) {
   return Boolean(inserted.rows[0]);
 }
 
+async function forgetEvent(eventId) {
+  await query("DELETE FROM payment_events WHERE id = $1", [eventId]);
+}
+
 async function upsertSubscription({
   userId,
-  planId = "starter-10",
+  planId,
   providerCustomerId = null,
   providerSubscriptionId = null,
   status = "unknown",
   currentPeriodEnd = null
 }) {
-  if (!userId) return;
+  if (!userId || !planExists(planId)) {
+    const error = new Error("stripe_subscription_metadata_invalid");
+    error.statusCode = 400;
+    throw error;
+  }
 
   await query(
     `INSERT INTO subscriptions (
@@ -96,28 +108,33 @@ export async function handleStripeWebhook(rawBody, signature) {
     return { received: true, duplicate: true, type: event.type };
   }
 
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object;
-    await upsertSubscription({
-      userId: session.metadata?.streetwiseUserId || session.client_reference_id,
-      planId: session.metadata?.streetwisePlanId || "starter-10",
-      providerCustomerId: typeof session.customer === "string" ? session.customer : session.customer?.id,
-      providerSubscriptionId: typeof session.subscription === "string" ? session.subscription : session.subscription?.id,
-      status: session.payment_status === "paid" ? "active" : "checkout_completed"
-    });
-  }
+  try {
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object;
+      await upsertSubscription({
+        userId: session.metadata?.streetwiseUserId || session.client_reference_id,
+        planId: session.metadata?.streetwisePlanId,
+        providerCustomerId: typeof session.customer === "string" ? session.customer : session.customer?.id,
+        providerSubscriptionId: typeof session.subscription === "string" ? session.subscription : session.subscription?.id,
+        status: session.payment_status === "paid" ? "active" : "checkout_completed"
+      });
+    }
 
-  if (["customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"].includes(event.type)) {
-    const subscription = event.data.object;
-    const endSeconds = subscription.current_period_end;
-    await upsertSubscription({
-      userId: subscription.metadata?.streetwiseUserId,
-      planId: subscription.metadata?.streetwisePlanId || "starter-10",
-      providerCustomerId: typeof subscription.customer === "string" ? subscription.customer : subscription.customer?.id,
-      providerSubscriptionId: subscription.id,
-      status: subscription.status,
-      currentPeriodEnd: endSeconds ? new Date(endSeconds * 1000) : null
-    });
+    if (["customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"].includes(event.type)) {
+      const subscription = event.data.object;
+      const endSeconds = subscription.current_period_end;
+      await upsertSubscription({
+        userId: subscription.metadata?.streetwiseUserId,
+        planId: subscription.metadata?.streetwisePlanId,
+        providerCustomerId: typeof subscription.customer === "string" ? subscription.customer : subscription.customer?.id,
+        providerSubscriptionId: subscription.id,
+        status: subscription.status,
+        currentPeriodEnd: endSeconds ? new Date(endSeconds * 1000) : null
+      });
+    }
+  } catch (error) {
+    await forgetEvent(event.id);
+    throw error;
   }
 
   return { received: true, duplicate: false, type: event.type };
