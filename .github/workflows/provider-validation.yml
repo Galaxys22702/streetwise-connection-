@@ -6,15 +6,31 @@ on:
     branches: [main]
     paths:
       - "src/providers/**"
+      - "src/services/esimService.js"
+      - "src/services/esimWebhookService.js"
+      - "src/config/env.js"
+      - "src/config/launchMode.js"
       - "src/config/plans.js"
+      - "src/server.js"
       - "scripts/esim-go-validation-diagnostics.js"
+      - "Dockerfile"
+      - "package.json"
+      - "package-lock.json"
       - ".github/workflows/provider-validation.yml"
   push:
     branches: [main]
     paths:
       - "src/providers/**"
+      - "src/services/esimService.js"
+      - "src/services/esimWebhookService.js"
+      - "src/config/env.js"
+      - "src/config/launchMode.js"
       - "src/config/plans.js"
+      - "src/server.js"
       - "scripts/esim-go-validation-diagnostics.js"
+      - "Dockerfile"
+      - "package.json"
+      - "package-lock.json"
       - ".github/workflows/provider-validation.yml"
 
 permissions:
@@ -26,9 +42,8 @@ concurrency:
 
 jobs:
   esim-go-connection:
-    # Dependabot PRs do not receive repository secrets, even when the branch lives
-    # in this repository. Skip live provider validation there instead of reporting
-    # a false failure. Pushes to main and trusted non-Dependabot PRs still validate.
+    # Dependabot PRs and external forks do not receive repository secrets. Skip
+    # live provider validation there instead of reporting a false failure.
     if: github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]')
     runs-on: ubuntu-latest
     timeout-minutes: 10
