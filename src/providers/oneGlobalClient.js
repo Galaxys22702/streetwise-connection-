@@ -1,5 +1,6 @@
 const DEFAULT_API_BASE_URL = "https://api.1global.com/connect";
 const DEFAULT_API_VERSION = "2026-02-05";
+const REQUEST_TIMEOUT_MS = 15_000;
 
 let cachedToken = null;
 let cachedTokenExpiresAt = 0;
@@ -24,6 +25,21 @@ function requireCredentials() {
   return config;
 }
 
+async function fetchJson(url, options, unavailableCode) {
+  let response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      signal: options?.signal || AbortSignal.timeout(REQUEST_TIMEOUT_MS)
+    });
+  } catch {
+    const error = new Error(unavailableCode);
+    error.statusCode = 503;
+    throw error;
+  }
+  return response;
+}
+
 async function getAccessToken() {
   const config = requireCredentials();
   const now = Date.now();
@@ -35,11 +51,11 @@ async function getAccessToken() {
     client_secret: config.clientSecret
   });
 
-  const response = await fetch(config.tokenUrl, {
+  const response = await fetchJson(config.tokenUrl, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
     body
-  });
+  }, "oneglobal_auth_unavailable");
   const data = await response.json().catch(() => ({}));
   if (!response.ok || !data?.access_token) {
     const error = new Error(data?.error_description || data?.error || `oneglobal_auth_http_${response.status}`);
@@ -60,13 +76,13 @@ async function request(path, { query } = {}) {
     if (value !== undefined && value !== null && value !== "") url.searchParams.set(key, String(value));
   }
 
-  const response = await fetch(url, {
+  const response = await fetchJson(url, {
     headers: {
       accept: "application/hal+json, application/json",
       authorization: `Bearer ${token}`,
       "Api-Version": config.apiVersion
     }
-  });
+  }, "oneglobal_unavailable");
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     const error = new Error(data?.title || data?.message || `oneglobal_http_${response.status}`);
