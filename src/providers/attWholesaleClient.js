@@ -1,8 +1,4 @@
-function boolEnv(name, fallback = false) {
-  const value = String(process.env[name] ?? "").trim().toLowerCase();
-  if (!value) return fallback;
-  return value === "true";
-}
+import { booleanEnv } from "../config/env.js";
 
 function getConfig() {
   return {
@@ -11,8 +7,8 @@ function getConfig() {
     clientId: String(process.env.ATT_WHOLESALE_CLIENT_ID || "").trim(),
     clientSecret: String(process.env.ATT_WHOLESALE_CLIENT_SECRET || "").trim(),
     accountId: String(process.env.ATT_WHOLESALE_ACCOUNT_ID || "").trim(),
-    commercialContractApproved: boolEnv("ATT_COMMERCIAL_CONTRACT_APPROVED"),
-    liveProvisioningEnabled: boolEnv("ATT_LIVE_PROVISIONING_ENABLED")
+    commercialContractApproved: booleanEnv("ATT_COMMERCIAL_CONTRACT_APPROVED"),
+    liveProvisioningEnabled: booleanEnv("ATT_LIVE_PROVISIONING_ENABLED")
   };
 }
 
