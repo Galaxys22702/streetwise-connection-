@@ -1,14 +1,10 @@
 import { promisify } from "node:util";
 import { randomBytes, randomUUID, scrypt, timingSafeEqual, createHash } from "node:crypto";
+import { integerEnv } from "../config/env.js";
 import { query, withTransaction } from "../db/index.js";
 
 const scryptAsync = promisify(scrypt);
-const configuredSessionDays = Number(process.env.SESSION_DAYS ?? 30);
-
-if (!Number.isInteger(configuredSessionDays) || configuredSessionDays < 1 || configuredSessionDays > 90) {
-  throw new Error("SESSION_DAYS must be an integer between 1 and 90.");
-}
-const SESSION_DAYS = configuredSessionDays;
+const SESSION_DAYS = integerEnv("SESSION_DAYS", { fallback: 30, min: 1, max: 90 });
 const MAX_EMAIL_LENGTH = 254;
 const MAX_PASSWORD_LENGTH = 256;
 
