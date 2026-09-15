@@ -1,15 +1,13 @@
 import pg from "pg";
+import { integerEnv } from "../config/env.js";
 
 const { Pool } = pg;
 const connectionString = String(process.env.DATABASE_URL || "").trim();
 const databaseSslSetting = String(process.env.DATABASE_SSL || "").trim().toLowerCase();
-const configuredPoolMax = Number(process.env.DATABASE_POOL_MAX ?? 10);
+const configuredPoolMax = integerEnv("DATABASE_POOL_MAX", { fallback: 10, min: 1, max: 100 });
 
 if (databaseSslSetting && !["true", "false"].includes(databaseSslSetting)) {
   throw new Error("DATABASE_SSL must be either true or false when set.");
-}
-if (!Number.isInteger(configuredPoolMax) || configuredPoolMax < 1 || configuredPoolMax > 100) {
-  throw new Error("DATABASE_POOL_MAX must be an integer between 1 and 100.");
 }
 
 export const databaseConfigured = Boolean(connectionString);
