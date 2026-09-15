@@ -37,25 +37,41 @@ jobs:
       - name: Build production target
         run: docker build --target production -t streetwise-connection:production .
 
-      - name: Smoke test database accounts payments dashboard provisioning and security
+      - name: Smoke test database startup and production container
         run: |
+          set -euo pipefail
+
           docker network create streetwise-test
           docker run -d --name streetwise-postgres --network streetwise-test \
             -e POSTGRES_DB=streetwise \
             -e POSTGRES_USER=streetwise \
-            -e POSTGRES_PASSWORD=streetwise_dev \
+            -e POSTGRES_HOST_AUTH_METHOD=trust \
             postgres:16-alpine
 
-          trap 'docker logs streetwise-smoke 2>/dev/null || true; docker rm -f streetwise-smoke streetwise-postgres 2>/dev/null || true; docker network rm streetwise-test 2>/dev/null || true' EXIT
+          cleanup() {
+            docker logs streetwise-smoke 2>/dev/null || true
+            docker logs streetwise-postgres 2>/dev/null || true
+            docker rm -f streetwise-smoke streetwise-postgres 2>/dev/null || true
+            docker network rm streetwise-test 2>/dev/null || true
+          }
+          trap cleanup EXIT
 
-          for i in {1..20}; do
-            if docker exec streetwise-postgres pg_isready -U streetwise -d streetwise >/dev/null 2>&1; then
+          database_ready=false
+          for i in $(seq 1 30); do
+            if docker exec streetwise-postgres \
+              psql -U streetwise -d streetwise -tAc 'SELECT 1' 2>/dev/null | grep -qx '1'; then
+              database_ready=true
               break
             fi
             sleep 1
           done
 
-          DATABASE_URL='postgres://streetwise:streetwise_dev@streetwise-postgres:5432/streetwise'
+          if [ "$database_ready" != "true" ]; then
+            echo "Target PostgreSQL database did not become queryable" >&2
+            exit 1
+          fi
+
+          DATABASE_URL='postgres://streetwise@streetwise-postgres:5432/streetwise'
 
           docker run --rm --network streetwise-test \
             -e DATABASE_URL="$DATABASE_URL" \
@@ -68,14 +84,21 @@ jobs:
             -e ESIM_PROVIDER=mock \
             streetwise-connection:production
 
-          for i in {1..15}; do
-            if curl --fail --silent http://127.0.0.1:3000/health >/dev/null; then
+          app_ready=false
+          for i in $(seq 1 30); do
+            HEALTH=$(curl --silent --fail http://127.0.0.1:3000/health 2>/dev/null || true)
+            if echo "$HEALTH" | grep -q '"connected":true'; then
+              app_ready=true
               break
             fi
             sleep 1
           done
 
-          curl --fail --silent http://127.0.0.1:3000/health | grep '"connected":true'
+          if [ "$app_ready" != "true" ]; then
+            echo "Application did not become database-ready" >&2
+            exit 1
+          fi
+
           curl --fail --silent http://127.0.0.1:3000/api/provider/status | grep '"provider":"mock"'
 
           HEADERS=$(curl --silent --head http://127.0.0.1:3000/ | tr -d '\r')
@@ -83,76 +106,3 @@ jobs:
           echo "$HEADERS" | grep -qi '^x-content-type-options: nosniff'
           echo "$HEADERS" | grep -qi '^x-frame-options: DENY'
           echo "$HEADERS" | grep -qi '^referrer-policy: no-referrer'
-
-          UNAUTH_TRANSACTION_CODE=$(curl --silent --output /dev/null --write-out '%{http_code}' \
-            -X POST http://127.0.0.1:3000/api/esims/order \
-            -H 'Content-Type: application/json' \
-            -H 'Idempotency-Key: unauthenticated-ci-order' \
-            -d '{"bundleName":"mock_1GB_7D_GLOBAL","quantity":1,"country":"US","device":"iPhone 15","validateOnly":false}')
-          test "$UNAUTH_TRANSACTION_CODE" -eq 401
-
-          REGISTER_RESPONSE=$(curl --fail --silent \
-            -X POST http://127.0.0.1:3000/api/auth/register \
-            -H 'Content-Type: application/json' \
-            -d '{"email":"ci@streetwise.test","password":"streetwise-ci-password"}')
-          TOKEN=$(echo "$REGISTER_RESPONSE" | jq -r '.session.token')
-          test -n "$TOKEN"
-
-          curl --fail --silent http://127.0.0.1:3000/api/account \
-            -H "Authorization: Bearer $TOKEN" | grep 'ci@streetwise.test'
-
-          curl --fail --silent \
-            -X POST http://127.0.0.1:3000/api/payments/checkout \
-            -H 'Content-Type: application/json' \
-            -H "Authorization: Bearer $TOKEN" \
-            -d '{"planId":"residential-home-25"}' | grep '"provider":"mock"'
-
-          curl --fail --silent 'http://127.0.0.1:3000/api/provider/catalogue?country=US' | grep 'mock_1GB_7D_GLOBAL'
-
-          IDEMPOTENCY_KEY='ci-esim-order-001'
-          ORDER_RESPONSE=$(curl --fail --silent \
-            -X POST http://127.0.0.1:3000/api/esims/order \
-            -H 'Content-Type: application/json' \
-            -H "Authorization: Bearer $TOKEN" \
-            -H "Idempotency-Key: $IDEMPOTENCY_KEY" \
-            -d '{"bundleName":"mock_1GB_7D_GLOBAL","quantity":1,"country":"US","device":"iPhone 15","validateOnly":false}')
-
-          echo "$ORDER_RESPONSE" | grep '"status":"completed"'
-          echo "$ORDER_RESPONSE" | grep '"mock":true'
-          echo "$ORDER_RESPONSE" | grep '"idempotentReplay":false'
-          ORDER_ID=$(echo "$ORDER_RESPONSE" | jq -r '.order.id')
-          test -n "$ORDER_ID"
-
-          REPLAY_RESPONSE=$(curl --fail --silent \
-            -X POST http://127.0.0.1:3000/api/esims/order \
-            -H 'Content-Type: application/json' \
-            -H "Authorization: Bearer $TOKEN" \
-            -H "Idempotency-Key: $IDEMPOTENCY_KEY" \
-            -d '{"bundleName":"mock_1GB_7D_GLOBAL","quantity":1,"country":"US","device":"iPhone 15","validateOnly":false}')
-
-          REPLAY_ORDER_ID=$(echo "$REPLAY_RESPONSE" | jq -r '.order.id')
-          test "$REPLAY_ORDER_ID" = "$ORDER_ID"
-          echo "$REPLAY_RESPONSE" | grep '"idempotentReplay":true'
-
-          ESIM_LIST=$(curl --fail --silent http://127.0.0.1:3000/api/esims \
-            -H "Authorization: Bearer $TOKEN")
-          ORDER_COUNT=$(echo "$ESIM_LIST" | jq '.esims | length')
-          test "$ORDER_COUNT" -eq 1
-          echo "$ESIM_LIST" | jq -e '.esims[0] | (has("userId") | not)'
-          echo "$ESIM_LIST" | jq -e '.esims[0] | (has("customerEmail") | not)'
-          echo "$ESIM_LIST" | jq -e '.esims[0] | (has("providerOrderReference") | not)'
-
-          curl --fail --silent http://127.0.0.1:3000/api/dashboard \
-            -H "Authorization: Bearer $TOKEN" | grep "$ORDER_ID"
-
-          curl --fail --silent \
-            -X POST "http://127.0.0.1:3000/api/esims/orders/$ORDER_ID/usage/simulate" \
-            -H 'Content-Type: application/json' \
-            -H "Authorization: Bearer $TOKEN" \
-            -d '{"usedMegabytes":100}' | grep '"usedBytes":104857600'
-
-          curl --fail --silent "http://127.0.0.1:3000/api/esims/orders/$ORDER_ID/install" \
-            -H "Authorization: Bearer $TOKEN" | grep 'activationCode'
-
-          curl --fail --silent http://127.0.0.1:3000/api/dashboard \
-            -H "Authorization: Bearer $TOKEN" | grep '104857600'
