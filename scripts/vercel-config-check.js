@@ -8,8 +8,13 @@ if (config.framework !== null) {
 if (config.outputDirectory !== 'dist') {
   throw new Error('vercel_output_directory_must_be_dist');
 }
-if (!String(config.buildCommand || '').includes('public')) {
+
+const buildCommand = String(config.buildCommand || '');
+if (!buildCommand.includes('public')) {
   throw new Error('vercel_build_command_must_copy_public');
+}
+if (buildCommand.includes('migrate') || buildCommand.includes('DATABASE_URL')) {
+  throw new Error('vercel_build_command_must_not_mutate_database');
 }
 
 const globalHeaders = config.headers?.find((rule) => rule.source === '/(.*)')?.headers || [];
@@ -36,4 +41,4 @@ if (headerMap.get('referrer-policy') !== 'no-referrer') {
   throw new Error('vercel_referrer_policy_required');
 }
 
-console.log('Vercel config is pinned to Other/static + API functions with required public security headers.');
+console.log('Vercel config is static/API-only, side-effect free during build, and includes required public security headers.');
