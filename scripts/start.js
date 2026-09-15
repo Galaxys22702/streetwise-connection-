@@ -7,7 +7,12 @@ if (!pool) {
   process.exit(1);
 }
 
-const maxAttempts = Math.max(1, Number(process.env.MIGRATION_MAX_ATTEMPTS || 10));
+const configuredMaxAttempts = Number(process.env.MIGRATION_MAX_ATTEMPTS ?? 10);
+if (!Number.isInteger(configuredMaxAttempts) || configuredMaxAttempts < 1 || configuredMaxAttempts > 30) {
+  console.error("MIGRATION_MAX_ATTEMPTS must be an integer between 1 and 30.");
+  process.exit(1);
+}
+const maxAttempts = configuredMaxAttempts;
 
 for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
   try {
