@@ -10,10 +10,10 @@ Streetwise does not own towers or licensed radio spectrum. The commercially real
 
 ## Current launch state
 
-Last reviewed: **2026-09-08**
+Last reviewed: **2026-09-15**
 
 - Public mode: waitlist only
-- Commercial sales: disabled
+- Commercial cellular sales: disabled
 - Customer registration/sign-in: built but disabled publicly
 - Live Stripe billing: disabled
 - Live eSIM/SIM ordering: disabled
@@ -29,7 +29,9 @@ Last reviewed: **2026-09-08**
 - Travel/data integration path: eSIM Go
 - Open5GS work: isolated lab validation only, not production service
 
-The production deployment remains intentionally constrained. Visitors can join the waitlist, but no one can purchase cellular service, activate a line, port a number, or create a live paid subscription until provider, legal, regulatory, technical, support, security, and economics gates are complete.
+The production deployment remains intentionally constrained. Visitors can join the waitlist, but no one can purchase Streetwise cellular service, activate a line, port a number, or create a live paid cellular subscription until provider, legal, regulatory, technical, support, security, and economics gates are complete.
+
+Current launch blockers are external/project-gate items rather than the latest main-branch build: provider onboarding remains unapproved, Nevada formation is not complete, and the official Nevada name check still needs a successful result before filing.
 
 See `docs/PROJECT_STATUS.md` for the current readiness snapshot, `docs/90_DAY_LAUNCH_PLAN.md` for the August 31-November 30 launch-readiness schedule, and `docs/OWNER_ACTIONS.md` for owner/provider/regulator actions that cannot be completed safely in code.
 
@@ -64,7 +66,7 @@ Multi-line cellular service for small teams, with deployment guidance, central l
 
 ## Planning prices
 
-These remain planning targets, not approved public offers:
+These remain planning targets, not approved public cellular offers:
 
 - Streetwise Home — $25/month
 - Business Starter — $20/month per line
@@ -126,7 +128,7 @@ The repository already contains:
 - Draft privacy, terms, refund, and support documents
 - Isolated Open5GS lab scaffold and validation workflow for non-production research
 - Streetwise brand/service-mark evidence record
-- Current dependency maintenance including Stripe 22.6.0 and Node.js 24 workflow support
+- Current dependency maintenance including Stripe 22.6.2 and Node.js 24 workflow support
 
 The existing data/eSIM work is not discarded. It becomes the connectivity-provisioning foundation underneath a broader cellular product.
 
@@ -227,11 +229,11 @@ See `docs/90_DAY_LAUNCH_PLAN.md`.
 
 ## Next concrete milestones
 
-1. Submit the prepared AT&T qualification packet and obtain the correct AT&T Partner Exchange/Wholesale path plus written commercial terms.
-2. Confirm AT&T residential/commercial resale, voice, SMS, local number, number-porting, SIM/eSIM, Wi-Fi calling/VoLTE, domestic use, roaming, network, support, branding and API capabilities.
-3. Resolve provider-of-record, Nevada PUCN, FCC/USAC, E911, taxes/surcharges, number-porting, and customer-disclosure responsibilities for the final model.
-4. Map real wholesale products to the existing target pricing.
-5. Validate contribution margin.
+1. Complete the official Nevada entity-name check successfully immediately before filing, then complete Nevada formation when authorised.
+2. Submit the prepared AT&T qualification packet and obtain the correct AT&T Partner Exchange/Wholesale path plus written commercial terms.
+3. Confirm AT&T residential/commercial resale, voice, SMS, local number, number-porting, SIM/eSIM, Wi-Fi calling/VoLTE, domestic use, roaming, network, support, branding and API capabilities.
+4. Resolve provider-of-record, Nevada PUCN, FCC/USAC, E911, taxes/surcharges, number-porting, and customer-disclosure responsibilities for the final model.
+5. Map real wholesale products to the existing target pricing and validate contribution margin.
 6. Expand the provider abstraction only after the selected provider's actual API/contract is known.
 7. Run controlled staging provisioning and lifecycle tests.
 8. Finalise customer policies and support procedures.
