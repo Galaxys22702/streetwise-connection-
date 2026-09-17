@@ -64,7 +64,7 @@ function applySecurityHeaders(res) {
     "default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:"
   );
   if (IS_PRODUCTION) {
-    res.setHeader("strict-transport-security", "max-age=31536000; includeSubDomains");
+    res.setHeader("strict-transport-security", "max-age=63072000; includeSubDomains; preload");
   }
 }
 
