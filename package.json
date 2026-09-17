@@ -5,7 +5,7 @@
   "description": "Control plane and waitlist foundation for affordable, security-focused cellular/MVNO service.",
   "type": "module",
   "scripts": {
-    "start": "node src/server.js",
+    "start": "node scripts/start.js",
     "dev": "node --watch src/server.js",
     "db:migrate": "node scripts/migrate.js",
     "test": "node --test",
