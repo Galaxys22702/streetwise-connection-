@@ -124,3 +124,4 @@ jobs:
           echo "$HEADERS" | grep -qi '^x-content-type-options: nosniff'
           echo "$HEADERS" | grep -qi '^x-frame-options: DENY'
           echo "$HEADERS" | grep -qi '^referrer-policy: no-referrer'
+          echo "$HEADERS" | grep -qi '^strict-transport-security: max-age=63072000; includeSubDomains; preload$'
