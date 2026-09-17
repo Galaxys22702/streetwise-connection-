@@ -92,7 +92,8 @@ jobs:
 
           docker run -d --name streetwise-smoke --network streetwise-test -p 3000:3000 \
             -e DATABASE_URL="$DATABASE_URL" \
-            -e PUBLIC_LAUNCH_MODE=internal \
+            -e PUBLIC_LAUNCH_MODE=waitlist \
+            -e WAITLIST_ENABLED=false \
             -e PAYMENT_PROVIDER=mock \
             -e ESIM_PROVIDER=mock \
             streetwise-connection:production
@@ -100,7 +101,7 @@ jobs:
           app_ready=false
           for i in $(seq 1 30); do
             HEALTH=$(curl --silent --fail http://127.0.0.1:3000/health 2>/dev/null || true)
-            if echo "$HEALTH" | grep -q '"connected":true'; then
+            if echo "$HEALTH" | grep -q '"ok":true'; then
               app_ready=true
               break
             fi
@@ -108,11 +109,15 @@ jobs:
           done
 
           if [ "$app_ready" != "true" ]; then
-            echo "Application did not become database-ready" >&2
+            echo "Application did not become ready in fail-closed waitlist mode" >&2
             exit 1
           fi
 
-          curl --fail --silent http://127.0.0.1:3000/api/provider/status | grep '"provider":"mock"'
+          PROVIDER_STATUS=$(curl --silent --write-out '\n%{http_code}' http://127.0.0.1:3000/api/provider/status)
+          PROVIDER_BODY=$(printf '%s\n' "$PROVIDER_STATUS" | sed '$d')
+          PROVIDER_CODE=$(printf '%s\n' "$PROVIDER_STATUS" | tail -n 1)
+          test "$PROVIDER_CODE" = "503"
+          echo "$PROVIDER_BODY" | grep '"error":"public_waitlist_only"'
 
           HEADERS=$(curl --silent --head http://127.0.0.1:3000/ | tr -d '\r')
           echo "$HEADERS" | grep -qi '^content-security-policy:'
