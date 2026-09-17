@@ -1,6 +1,6 @@
 # Project Status
 
-Last reviewed: **2026-09-15**  
+Last reviewed: **2026-09-17**  
 Target launch-readiness date: **2026-11-30**  
 Execution plan: `docs/90_DAY_LAUNCH_PLAN.md`
 
@@ -47,20 +47,29 @@ Current production posture:
 
 ## Engineering health
 
-- `Build targets`: green after the PostgreSQL startup race was fixed on 2026-09-15.
-- Docker smoke testing now waits for a real SQL query against the target PostgreSQL database before migrations run; it no longer relies only on `pg_isready`.
-- Unit tests, builder image, production image, database/migration smoke, application health, mock-provider status and security-header checks passed on the corrected workflow.
-- Vercel compatibility passed on the corrected workflow.
+Verified on **2026-09-17**:
+
+- Current `main` is `f7276f7bd7817d3182bbfdc28565af764a775196`; there are no open pull requests.
+- `Build targets` and `Vercel compatibility` both pass on the current engineering head.
+- Provider validation and Stripe test validation passed for the guarded-startup change that is included in current `main`.
+- Hosted startup runs the launch-readiness guard before database migrations or server startup; unsafe pre-launch configuration fails closed.
+- `npm start` routes through the same guarded hosted startup path.
+- Docker production smoke testing boots in waitlist mode, verifies health, confirms provider diagnostics stay blocked, and locks the production HSTS policy.
+- Production Vercel deployment for current `main` is READY.
+- Live `/health` returns `200` with `publicLaunchMode=waitlist` and waitlist readiness true.
+- Live provider and payment status routes return `503 public_waitlist_only`, confirming customer-service diagnostics remain gated.
+- Production security headers include CSP, frame denial, no-sniff, referrer/permissions controls and HSTS `max-age=63072000; includeSubDomains; preload`.
+- No error or fatal production runtime logs were found in the preceding 24-hour check window.
 - Dependabot is configured weekly for npm, Docker and GitHub Actions.
-- No open pull requests were present during the 2026-09-15 repository cleanup pass.
-- Repository code search found no `TODO`, `FIXME`, `HACK` or `XXX` markers during that pass.
-- A coarse repository search found no obvious committed API-key/password/live-Stripe/service-role patterns during that pass; this is not a substitute for GitHub secret scanning.
+- Repository code search found no `TODO` or `FIXME` markers during this pass.
+- Repository code search found no return of `RENDER_EXTERNAL_URL` or generic `STRIPE_PRICE_ID` configuration during this pass.
 
 ### Repository administration cleanup still needed
 
-- There are 34 non-`main` branches. They should be pruned only after each branch is proven merged or obsolete.
-- `main` is currently reported as unprotected. Branch protection/ruleset administration is not available through the connected GitHub integration, so this remains a repository-owner administration task.
+- There are 34 non-`main` branches. They should be pruned only after each branch is proven merged or obsolete; they must not be bulk-deleted because some sampled branches contain unique/diverged commits.
+- `main` is currently unprotected. Branch protection/ruleset administration is not available through the connected GitHub integration, so this remains a repository-owner administration task.
 - Recommended protection: require successful `Build targets` and `Vercel compatibility` checks before merge, block force-pushes and branch deletion, and prefer pull requests for future code changes.
+- Repository description metadata remains empty and should be set in GitHub repository settings when repository-metadata editing is available.
 
 These repository-administration items are engineering hygiene concerns, not permission to bypass any launch gate.
 
