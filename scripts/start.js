@@ -3,6 +3,13 @@ import { integerEnv } from "../src/config/env.js";
 import { pool } from "../src/db/index.js";
 import { runMigrations } from "../src/db/migrate.js";
 
+try {
+  await import("./launch-readiness-check.js");
+} catch (error) {
+  console.error("Launch readiness check failed.", error?.message || "unknown_error");
+  process.exit(1);
+}
+
 if (!pool) {
   console.error("DATABASE_URL is required to start the hosted service.");
   process.exit(1);
