@@ -13,6 +13,7 @@ Streetwise does not own towers or licensed radio spectrum. The commercially real
 Last reviewed: **2026-09-20**
 
 - Public mode: waitlist only
+- Planned public opening target: **January 1, 2027**, subject to all mandatory launch gates
 - Commercial cellular sales: disabled
 - Customer registration/sign-in: built but disabled publicly
 - Live Stripe billing: disabled
@@ -220,9 +221,9 @@ npm run check:production
 
 The default payment and connectivity providers remain mocks during local development.
 
-## 90-day target
+## Launch timeline
 
-Target launch-readiness date: **November 30, 2026**. The date drives execution, but mandatory provider, legal, regulatory, security, economics, customer-policy, and staging gates still control whether public service may actually launch.
+Target launch-readiness date: **November 30, 2026**. Planned public opening target: **January 1, 2027**. December is reserved for final acceptance, controlled production verification, policy/support readiness and launch authorisation. Neither date overrides mandatory provider, legal, regulatory, security, economics, customer-policy or staging gates.
 
 See `docs/90_DAY_LAUNCH_PLAN.md`.
 
