@@ -1,0 +1,11 @@
+# Security-sensitive repository ownership
+* @Galaxys22702
+
+# Changes here can alter CI, repository integrity, or production deployment behaviour.
+.github/ @Galaxys22702
+vercel.json @Galaxys22702
+Dockerfile @Galaxys22702
+scripts/guard-main-provenance.js @Galaxys22702
+scripts/verify-deployment-provenance.js @Galaxys22702
+src/config/ @Galaxys22702
+src/providers/ @Galaxys22702
