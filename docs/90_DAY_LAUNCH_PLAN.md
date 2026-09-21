@@ -2,6 +2,7 @@
 
 Start: 2026-08-31  
 Target readiness date: 2026-11-30  
+Planned public opening target: 2027-01-01  
 Goal: Make Streetwise technically, operationally, commercially, and compliance-ready for a controlled cellular launch, while keeping public sales disabled until every mandatory external approval is complete.
 
 ## Definition of success on 2026-11-30
@@ -22,7 +23,7 @@ Streetwise is considered launch-ready only when all mandatory gates below are co
 - monitoring, backups, audit logging, and rollback procedures pass;
 - final production launch authorisation is signed.
 
-If provider or regulator approval is still pending on November 30, the software/operations target remains complete but public commercial launch stays locked. No calendar date overrides a failed launch gate.
+If provider or regulator approval is still pending on November 30, the software/operations target remains complete but public commercial launch stays locked. The planned January 1, 2027 opening provides a December acceptance buffer, but no calendar date overrides a failed launch gate.
 
 ## Non-negotiable production lock during the 90 days
 
