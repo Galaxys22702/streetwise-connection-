@@ -77,11 +77,13 @@ for (const type of ["deletion", "non_fast_forward", "required_linear_history", "
 }
 
 const pullRequestRule = rulesByType.get("pull_request");
-if ((pullRequestRule?.parameters?.required_approving_review_count || 0) < 1) {
-  fail("documented main ruleset must require at least one approving review");
+if (pullRequestRule?.parameters?.required_review_thread_resolution !== true) {
+  fail("documented main ruleset must require review conversations to be resolved");
 }
-if (pullRequestRule?.parameters?.dismiss_stale_reviews_on_push !== true) {
-  fail("documented main ruleset must dismiss stale reviews after new pushes");
+
+const allowedMergeMethods = new Set(pullRequestRule?.parameters?.allowed_merge_methods || []);
+if (allowedMergeMethods.has("merge") || !allowedMergeMethods.has("squash")) {
+  fail("documented main ruleset must preserve linear history with squash/rebase merging only");
 }
 
 const statusRule = rulesByType.get("required_status_checks");
