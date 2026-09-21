@@ -49,7 +49,7 @@ Current production posture:
 
 Verified on **2026-09-17**:
 
-- Current `main` is `f7276f7bd7817d3182bbfdc28565af764a775196`; there are no open pull requests.
+- Current `main` is the engineering source of truth; avoid hard-coding a commit SHA here because updating this status document changes the branch head.
 - `Build targets` and `Vercel compatibility` both pass on the current engineering head.
 - Provider validation and Stripe test validation passed for the guarded-startup change that is included in current `main`.
 - Hosted startup runs the launch-readiness guard before database migrations or server startup; unsafe pre-launch configuration fails closed.

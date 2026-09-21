@@ -334,9 +334,12 @@ export default async function handler(req, res) {
   if (req.method === "GET" && orderMatch) {
     try {
       const user = await requireUser(req);
-      return sendJson(res, 200, {
-        order: await getEsimOrder(decodePathSegment(orderMatch[1]), user.id)
+      const order = await getEsimOrder(decodePathSegment(orderMatch[1]), {
+        refresh: url.searchParams.get("refresh") === "true",
+        userId: user.id
       });
+      if (!order) return sendJson(res, 404, { error: "order_not_found" });
+      return sendJson(res, 200, { order });
     } catch (error) {
       return sendError(res, error);
     }
@@ -346,9 +349,11 @@ export default async function handler(req, res) {
   if (req.method === "GET" && installMatch) {
     try {
       const user = await requireUser(req);
-      return sendJson(res, 200, {
-        install: await getEsimInstallDetails(decodePathSegment(installMatch[1]), user.id)
+      const details = await getEsimInstallDetails(decodePathSegment(installMatch[1]), {
+        userId: user.id
       });
+      if (!details) return sendJson(res, 404, { error: "install_details_not_found" });
+      return sendJson(res, 200, { install: details });
     } catch (error) {
       return sendError(res, error);
     }
