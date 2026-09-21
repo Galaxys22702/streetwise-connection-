@@ -1,6 +1,6 @@
 # Project Status
 
-Last reviewed: **2026-09-17**  
+Last reviewed: **2026-09-20**  
 Target launch-readiness date: **2026-11-30**  
 Execution plan: `docs/90_DAY_LAUNCH_PLAN.md`
 
@@ -33,21 +33,20 @@ Current production posture:
 - Emergency-connectivity reserve: not enabled
 - Public waitlist storage: Supabase
 - Future customer/service/order storage: PostgreSQL
-- Primary domestic commercial candidate: AT&T
-- Domestic fallback candidate: 1GLOBAL
+- Domestic commercial evaluation priority: AT&T and 1GLOBAL equally prioritised
 - Travel/data integration: eSIM Go
 - Open5GS: isolated non-production lab only
 
 ## Current blockers
 
-1. **Provider onboarding — RED.** There is no repository evidence that the AT&T qualification/application inquiry has been submitted or accepted. The September 20 fallback trigger remains active: without a viable AT&T path, elevate 1GLOBAL to equal domestic priority.
+1. **Provider onboarding — RED.** There is no repository evidence that the AT&T qualification/application inquiry has been submitted or accepted. The September 20 fallback trigger has therefore been executed: AT&T and 1GLOBAL now have equal domestic commercial evaluation priority until written evidence supports a provider decision.
 2. **Nevada formation — RED.** The September 13 target was missed. Nevada LLC formation, Initial List, State Business Licence, EIN and applicable local/tax registrations remain incomplete.
 3. **Nevada name verification — RED.** The September 14 official search attempt redirected to ORION and did not produce an entity-search result. `Streetwise Connection LLC` remains unverified and must be checked successfully immediately before filing.
 4. **Regulatory allocation — RED.** Provider-of-record, Nevada PUCN, FCC/USAC, E911, taxes/surcharges, numbering/porting and related responsibilities must be resolved from the selected provider model before launch.
 
 ## Engineering health
 
-Verified on **2026-09-17**:
+Verified on **2026-09-20**:
 
 - Current `main` is the engineering source of truth; avoid hard-coding a commit SHA here because updating this status document changes the branch head.
 - `Build targets` and `Vercel compatibility` both pass on the current engineering head.
@@ -55,11 +54,11 @@ Verified on **2026-09-17**:
 - Hosted startup runs the launch-readiness guard before database migrations or server startup; unsafe pre-launch configuration fails closed.
 - `npm start` routes through the same guarded hosted startup path.
 - Docker production smoke testing boots in waitlist mode, verifies health, confirms provider diagnostics stay blocked, and locks the production HSTS policy.
-- Production Vercel deployment for current `main` is READY.
+- Production Vercel deployment for current `main` is READY after the Vercel eSIM route-parity fix.
 - Live `/health` returns `200` with `publicLaunchMode=waitlist` and waitlist readiness true.
 - Live provider and payment status routes return `503 public_waitlist_only`, confirming customer-service diagnostics remain gated.
 - Production security headers include CSP, frame denial, no-sniff, referrer/permissions controls and HSTS `max-age=63072000; includeSubDomains; preload`.
-- No error or fatal production runtime logs were found in the preceding 24-hour check window.
+- No production runtime errors were found in the post-deployment verification window.
 - Dependabot is configured weekly for npm, Docker and GitHub Actions.
 - Repository code search found no `TODO` or `FIXME` markers during this pass.
 - Repository code search found no return of `RENDER_EXTERNAL_URL` or generic `STRIPE_PRICE_ID` configuration during this pass.
@@ -90,15 +89,15 @@ Final features and prices require real provider mapping and contribution-margin 
 
 ## Provider status
 
-### AT&T — primary domestic candidate
+### AT&T — equal-priority domestic candidate
 
-AT&T remains commercially targeted but fail-closed technically. Streetwise has no recorded AT&T commercial approval, branding right, provider-of-record determination, account-specific pricing, API specification or live provisioning access.
+AT&T remains commercially targeted and fail-closed technically, but it no longer has sole evaluation priority. Streetwise has no recorded AT&T commercial approval, branding right, provider-of-record determination, account-specific pricing, API specification or live provisioning access.
 
 Do not advertise Streetwise as an AT&T reseller, MVNO, partner or AT&T-powered service unless those rights are granted in writing.
 
-### 1GLOBAL — domestic fallback
+### 1GLOBAL — equal-priority domestic candidate
 
-1GLOBAL remains the full-stack fallback/comparison path until a viable domestic provider agreement is selected.
+1GLOBAL is now being evaluated in parallel with AT&T at equal priority. It remains fail-closed for live customer provisioning until written commercial rights, responsibilities, pricing and technical access are verified.
 
 ### eSIM Go — travel/data path
 
@@ -121,8 +120,8 @@ Do not invent these capabilities before the selected wholesale provider contract
 
 1. Complete the official Nevada entity-name check immediately before filing.
 2. Complete Nevada formation and required business registrations when authorised.
-3. Submit the AT&T qualification packet and obtain a written program/commercial response.
-4. If required by the September 20 trigger, elevate 1GLOBAL to equal domestic priority.
+3. Pursue AT&T and 1GLOBAL in parallel at equal domestic evaluation priority and obtain written commercial responses from each viable path.
+4. Record provider submission dates, contacts, case/reference numbers, pricing evidence and exact blockers as they become available.
 5. Confirm resale, voice/SMS, numbering/porting, SIM/eSIM, network, roaming, support and branding rights.
 6. Resolve provider-of-record and telecom regulatory responsibilities.
 7. Obtain real wholesale pricing and minimum commitments.

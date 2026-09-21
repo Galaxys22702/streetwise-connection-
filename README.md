@@ -10,7 +10,7 @@ Streetwise does not own towers or licensed radio spectrum. The commercially real
 
 ## Current launch state
 
-Last reviewed: **2026-09-15**
+Last reviewed: **2026-09-20**
 
 - Public mode: waitlist only
 - Commercial cellular sales: disabled
@@ -24,8 +24,7 @@ Last reviewed: **2026-09-15**
 - Emergency connectivity reserve: planned, not enabled
 - Production waitlist backend: Supabase
 - Future customer/order/service database: PostgreSQL
-- Primary domestic commercial candidate: AT&T
-- Domestic fallback candidate: 1GLOBAL
+- Domestic commercial evaluation priority: AT&T and 1GLOBAL equally prioritised
 - Travel/data integration path: eSIM Go
 - Open5GS work: isolated lab validation only, not production service
 
@@ -77,9 +76,9 @@ Final pricing must be validated against wholesale connectivity, voice/SMS/number
 
 ## Provider strategy
 
-### Primary domestic path: AT&T
+### Equal domestic evaluation path: AT&T
 
-AT&T is the primary U.S. domestic commercial evaluation path.
+As of the September 20 fallback trigger, AT&T remains an active U.S. domestic candidate but no longer has sole evaluation priority. AT&T and 1GLOBAL are now being pursued in parallel at equal priority until written commercial evidence supports a selection.
 
 Streetwise is evaluating the correct AT&T route, including AT&T Partner Exchange and AT&T Wholesale. Public AT&T material is not an approval for Streetwise and must not be represented as one.
 
@@ -96,9 +95,9 @@ Streetwise must not advertise itself as an AT&T reseller, AT&T MVNO, AT&T partne
 
 See `docs/ATT_PROVIDER_APPLICATION_PACKET.md` for the prepared qualification transfer sheet.
 
-### Domestic fallback: 1GLOBAL
+### Equal domestic evaluation path: 1GLOBAL
 
-1GLOBAL remains the full-stack fallback so Streetwise can compare AT&T's actual commercial/technical offer against another provider and avoid provider lock-in before launch.
+1GLOBAL is now an equal-priority domestic evaluation path so Streetwise can compare real commercial and technical evidence without allowing an unresolved AT&T path to block the launch-readiness schedule.
 
 ### Travel/data path: eSIM Go
 
@@ -116,8 +115,8 @@ The repository already contains:
 - Provider abstraction layer
 - Mock connectivity provider
 - eSIM Go adapter and controlled diagnostics
-- AT&T-first commercial strategy and fail-closed AT&T provider gate
-- Read-only 1GLOBAL fallback preparation
+- Dual-track AT&T/1GLOBAL domestic provider strategy with fail-closed activation gates
+- Read-only 1GLOBAL commercial/integration preparation
 - Provider economics tooling
 - Provider commercial-evidence gate
 - Idempotency protections
@@ -230,8 +229,8 @@ See `docs/90_DAY_LAUNCH_PLAN.md`.
 ## Next concrete milestones
 
 1. Complete the official Nevada entity-name check successfully immediately before filing, then complete Nevada formation when authorised.
-2. Submit the prepared AT&T qualification packet and obtain the correct AT&T Partner Exchange/Wholesale path plus written commercial terms.
-3. Confirm AT&T residential/commercial resale, voice, SMS, local number, number-porting, SIM/eSIM, Wi-Fi calling/VoLTE, domestic use, roaming, network, support, branding and API capabilities.
+2. Pursue AT&T and 1GLOBAL in parallel at equal domestic evaluation priority and obtain written commercial terms from each viable path.
+3. Confirm residential/commercial resale, voice, SMS, local number, number-porting, SIM/eSIM, Wi-Fi calling/VoLTE, domestic use, roaming, network, support, branding and API capabilities for each viable provider.
 4. Resolve provider-of-record, Nevada PUCN, FCC/USAC, E911, taxes/surcharges, number-porting, and customer-disclosure responsibilities for the final model.
 5. Map real wholesale products to the existing target pricing and validate contribution margin.
 6. Expand the provider abstraction only after the selected provider's actual API/contract is known.

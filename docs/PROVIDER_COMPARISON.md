@@ -1,18 +1,18 @@
 # Streetwise Connection — Provider Comparison
 
-Last reviewed: 2026-08-30
+Last reviewed: 2026-09-20
 
 This document records the commercial provider strategy. It does not authorise live sales, payments, SIM/eSIM activation, phone-number assignment, number porting, or any public claim of AT&T affiliation.
 
 ## Current decision
 
-1. **AT&T is the primary U.S. domestic commercial evaluation path.**
-2. **1GLOBAL remains the full-stack fallback candidate.**
+1. **AT&T and 1GLOBAL now have equal U.S. domestic commercial evaluation priority.**
+2. **The September 20 fallback trigger has been executed because no viable AT&T commercial path is recorded in the repository.**
 3. **eSIM Go remains a travel/data path and no longer blocks domestic provider selection.**
 4. Runtime provisioning remains mock/eSIM Go only until a signed provider contract and real API specification are received.
 5. Streetwise must not market itself as an AT&T reseller, AT&T MVNO, AT&T partner, or AT&T-powered service until AT&T grants the applicable rights in writing.
 
-## AT&T — primary domestic candidate
+## AT&T — equal-priority domestic candidate
 
 Current official AT&T materials show two relevant paths.
 
@@ -82,13 +82,11 @@ Streetwise must obtain and record:
 - FCC/USAC, E911, numbering/porting and Nevada responsibilities;
 - termination treatment for active customers and phone numbers.
 
-## 1GLOBAL — domestic fallback
+## 1GLOBAL — equal-priority domestic candidate
 
-1GLOBAL remains valuable because its public Telco-as-a-Service materials describe a broad cellular feature set including domestic mobile service, calls/texts/data, phone numbers, porting, SIM/eSIM, roaming, 5G, VoLTE and Wi-Fi calling.
+1GLOBAL is now being evaluated in parallel with AT&T at equal priority. Its public Telco-as-a-Service materials describe a broad cellular feature set including domestic mobile service, calls/texts/data, phone numbers, porting, SIM/eSIM, roaming, 5G, VoLTE and Wi-Fi calling.
 
-Streetwise should keep the existing read-only 1GLOBAL preparation so the company has a real alternative if AT&T commercial terms, qualification requirements, economics or implementation access do not fit.
-
-Fallback does not mean secondary quality. It means Streetwise avoids becoming commercially trapped by one upstream provider before signing a contract.
+Streetwise should keep the existing read-only 1GLOBAL preparation active while seeking written commercial evidence, pricing, responsibilities and integration access from both domestic candidates. Equal evaluation priority does not authorise live provisioning or any carrier-affiliation claim.
 
 ## eSIM Go — travel/data path
 
@@ -127,4 +125,4 @@ Before a domestic provider can be selected for activation:
 - controlled validation must pass;
 - staging lifecycle testing must pass.
 
-AT&T is the primary target, not a public affiliation claim.
+AT&T and 1GLOBAL are equal evaluation targets. Neither status is a public affiliation claim or launch authorisation.
