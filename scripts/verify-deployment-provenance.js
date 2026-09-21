@@ -14,32 +14,41 @@ if (!/^[a-f0-9]{40}$/.test(sha || "") || !repoSlug || !owner) {
 }
 
 const repository = `${owner}/${repoSlug}`;
-const response = await fetch(
-  `https://api.github.com/repos/${repository}/commits/${sha}/pulls`,
-  {
-    headers: {
-      accept: "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2022-11-28",
-      "User-Agent": "streetwise-deployment-provenance"
-    },
-    redirect: "error",
-    signal: AbortSignal.timeout(15000)
+let trusted = false;
+let lastStatus = null;
+for (let attempt = 1; attempt <= 5 && !trusted; attempt++) {
+  const response = await fetch(
+    `https://api.github.com/repos/${repository}/commits/${sha}/pulls`,
+    {
+      headers: {
+        accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "streetwise-deployment-provenance"
+      },
+      redirect: "error",
+      signal: AbortSignal.timeout(15000)
+    }
+  );
+  lastStatus = response.status;
+  if (response.ok) {
+    const prs = await response.json();
+    trusted = prs.some(pr =>
+      pr.state === "closed" &&
+      pr.merged_at &&
+      pr.merge_commit_sha === sha &&
+      pr.base?.ref === "main" &&
+      pr.base?.repo?.full_name === repository
+    );
   }
-);
-
-if (!response.ok) {
-  console.error(`Unable to verify production deployment provenance: HTTP ${response.status}`);
-  process.exit(1);
+  if (!trusted && attempt < 5) {
+    await new Promise(resolve => setTimeout(resolve, 2000));
+  }
 }
 
-const prs = await response.json();
-const trusted = prs.some(pr =>
-  pr.state === "closed" &&
-  pr.merged_at &&
-  pr.merge_commit_sha === sha &&
-  pr.base?.ref === "main" &&
-  pr.base?.repo?.full_name === repository
-);
+if (lastStatus !== 200 && !trusted) {
+  console.error(`Unable to verify production deployment provenance: HTTP ${lastStatus}`);
+  process.exit(1);
+}
 
 if (!trusted) {
   console.error("Blocked production deployment: commit is not a PR merge into main.");
