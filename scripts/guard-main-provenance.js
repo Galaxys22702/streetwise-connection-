@@ -26,24 +26,33 @@ if (!repository || !token) {
     "X-GitHub-Api-Version": "2022-11-28"
   };
 
-  const response = await fetch(`${apiBase}/commits/${after}/pulls`, {
-    headers,
-    redirect: "error",
-    signal: AbortSignal.timeout(15000)
-  });
+  let trusted = false;
+  let lastStatus = null;
+  for (let attempt = 1; attempt <= 5 && !trusted; attempt++) {
+    const response = await fetch(`${apiBase}/commits/${after}/pulls`, {
+      headers,
+      redirect: "error",
+      signal: AbortSignal.timeout(15000)
+    });
+    lastStatus = response.status;
+    if (response.ok) {
+      const prs = await response.json();
+      trusted = prs.some(pr =>
+        pr.state === "closed" &&
+        pr.merged_at &&
+        pr.merge_commit_sha === after &&
+        pr.base?.ref === "main" &&
+        pr.base?.repo?.full_name === repository
+      );
+    }
+    if (!trusted && attempt < 5) {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
 
-  if (!response.ok) {
-    fail(`Unable to verify push provenance: HTTP ${response.status}`);
+  if (lastStatus !== 200 && !trusted) {
+    fail(`Unable to verify push provenance: HTTP ${lastStatus}`);
   } else {
-    const prs = await response.json();
-    const trusted = prs.some(pr =>
-      pr.state === "closed" &&
-      pr.merged_at &&
-      pr.merge_commit_sha === after &&
-      pr.base?.ref === "main" &&
-      pr.base?.repo?.full_name === repository
-    );
-
     if (trusted) {
       console.log("Trusted main update: head commit is the merge commit of a PR merged into main.");
     } else {
