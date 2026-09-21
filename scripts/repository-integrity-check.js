@@ -69,6 +69,35 @@ if (ruleset.enforcement !== "active" || !ruleset.conditions?.ref_name?.include?.
   fail("documented native main ruleset is no longer active/targeted at main");
 }
 
+const rulesByType = new Map((ruleset.rules || []).map(rule => [rule.type, rule]));
+for (const type of ["deletion", "non_fast_forward", "required_linear_history", "pull_request", "required_status_checks"]) {
+  if (!rulesByType.has(type)) {
+    fail(`documented main ruleset is missing required rule: ${type}`);
+  }
+}
+
+const pullRequestRule = rulesByType.get("pull_request");
+if ((pullRequestRule?.parameters?.required_approving_review_count || 0) < 1) {
+  fail("documented main ruleset must require at least one approving review");
+}
+if (pullRequestRule?.parameters?.dismiss_stale_reviews_on_push !== true) {
+  fail("documented main ruleset must dismiss stale reviews after new pushes");
+}
+
+const statusRule = rulesByType.get("required_status_checks");
+if (statusRule?.parameters?.strict_required_status_checks_policy !== true) {
+  fail("documented main ruleset must require branches to be up to date before merging");
+}
+
+const requiredContexts = new Set(
+  (statusRule?.parameters?.required_status_checks || []).map(check => check.context)
+);
+for (const context of ["test", "docker-build", "verify", "Vercel"]) {
+  if (!requiredContexts.has(context)) {
+    fail(`documented main ruleset is missing required status check: ${context}`);
+  }
+}
+
 if (failures.length) {
   console.error("Repository integrity policy failed:");
   for (const failure of failures) console.error(`- ${failure}`);
