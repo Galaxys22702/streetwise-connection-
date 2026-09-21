@@ -65,7 +65,7 @@ Verified on **2026-09-20**:
 
 ### Repository administration cleanup still needed
 
-- There are 34 non-`main` branches. They should be pruned only after each branch is proven merged or obsolete; they must not be bulk-deleted because some sampled branches contain unique/diverged commits.
+- Numerous non-`main` branches remain. They should be pruned only after each branch is proven merged or obsolete; they must not be bulk-deleted because some sampled branches contain unique/diverged commits. The merged September 20 audit/strategy branches also remain because the connected GitHub integration cannot delete refs.
 - `main` is currently unprotected. Branch protection/ruleset administration is not available through the connected GitHub integration, so this remains a repository-owner administration task.
 - Recommended protection: require successful `Build targets` and `Vercel compatibility` checks before merge, block force-pushes and branch deletion, and prefer pull requests for future code changes.
 - Repository description metadata remains empty and should be set in GitHub repository settings when repository-metadata editing is available.
