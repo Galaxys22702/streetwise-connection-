@@ -18,3 +18,16 @@ test("guard workflow runs only for pushes to main with scoped permissions", asyn
   assert.match(source, /pull-requests: read/);
   assert.match(source, /cancel-in-progress: false/);
 });
+
+test("production deployment provenance is fail-closed", async () => {
+  const source = await readFile(new URL("../scripts/verify-deployment-provenance.js", import.meta.url), "utf8");
+  assert.match(source, /VERCEL_ENV/);
+  assert.match(source, /env !== "production"/);
+  assert.match(source, /merge_commit_sha === sha/);
+  assert.match(source, /Blocked production deployment/);
+});
+
+test("Vercel build checks provenance before tests and build", async () => {
+  const config = JSON.parse(await readFile(new URL("../vercel.json", import.meta.url), "utf8"));
+  assert.match(config.buildCommand, /^node scripts\/verify-deployment-provenance\.js && /);
+});
