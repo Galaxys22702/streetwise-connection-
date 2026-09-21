@@ -1,10 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { selectMergedBranches, deleteMergedBranch } from "../scripts/cleanup-merged-branches.js";
+
+const gitAvailable = spawnSync("git", ["--version"], { stdio: "ignore" }).status === 0;
 
 const repository = "owner/project";
 const sha = "a".repeat(40);
@@ -60,14 +62,14 @@ function gitFixture(t) {
   return { cwd, run, candidate: { name: "finished", sha: run("rev-parse", "HEAD") } };
 }
 
-test("Git deletion removes the expected branch and preserves main", t => {
+test("Git deletion removes the expected branch and preserves main", { skip: !gitAvailable }, t => {
   const { cwd, run, candidate } = gitFixture(t);
   deleteMergedBranch(candidate, cwd);
   assert.equal(run("ls-remote", "--heads", "origin", "finished"), "");
   assert.match(run("ls-remote", "--heads", "origin", "main"), /refs\/heads\/main$/);
 });
 
-test("Git deletion refuses a branch that received a concurrent commit", t => {
+test("Git deletion refuses a branch that received a concurrent commit", { skip: !gitAvailable }, t => {
   const { cwd, run, candidate } = gitFixture(t);
   writeFileSync(join(cwd, "sample.txt"), "new work\n");
   run("commit", "-am", "work after inspection");
