@@ -1,0 +1,53 @@
+name: Clean merged branches
+
+on:
+  # A reviewed change to this maintenance task runs the initial cleanup.
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/cleanup-merged-branches.yml"
+      - "scripts/cleanup-merged-branches.js"
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: Delete qualifying branches (false previews only)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cleanup-merged-branches
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - name: Check out trusted main commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # This job needs Git authentication to delete refs with an exact-SHA lease.
+          persist-credentials: true
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - name: Clean unchanged merged branches
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          APPLY_CLEANUP: ${{ github.event_name == 'push' || inputs.apply }}
+        run: |
+          if [ "$APPLY_CLEANUP" = "true" ]; then
+            node scripts/cleanup-merged-branches.js --apply
+          else
+            node scripts/cleanup-merged-branches.js
+          fi

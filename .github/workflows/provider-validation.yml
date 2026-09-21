@@ -2,21 +2,6 @@ name: Provider validation
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches: [main]
-    paths:
-      - "src/providers/**"
-      - "src/services/esimService.js"
-      - "src/services/esimWebhookService.js"
-      - "src/config/env.js"
-      - "src/config/launchMode.js"
-      - "src/config/plans.js"
-      - "src/server.js"
-      - "scripts/esim-go-validation-diagnostics.js"
-      - "Dockerfile"
-      - "package.json"
-      - "package-lock.json"
-      - ".github/workflows/provider-validation.yml"
   push:
     branches: [main]
     paths:
@@ -42,9 +27,8 @@ concurrency:
 
 jobs:
   esim-go-connection:
-    # Dependabot PRs and external forks do not receive repository secrets. Skip
-    # live provider validation there instead of reporting a false failure.
-    if: github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]')
+    # Credentialed checks run only on main; pull requests use the mock/unit suite.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -52,7 +36,9 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Verify API secret is configured
         run: test -n "$ESIM_API_KEY"
