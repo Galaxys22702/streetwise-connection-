@@ -1,12 +1,11 @@
 name: Clean merged branches
 
 on:
-  # A reviewed change to this maintenance task runs the initial cleanup.
+  # Keep merged topic branches from accumulating after changes land on main.
+  # The cleanup script still requires an exact merged PR head SHA and skips
+  # protected, changed, or active branches before deleting anything.
   push:
     branches: [main]
-    paths:
-      - ".github/workflows/cleanup-merged-branches.yml"
-      - "scripts/cleanup-merged-branches.js"
   workflow_dispatch:
     inputs:
       apply:
