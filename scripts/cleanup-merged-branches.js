@@ -13,7 +13,9 @@ export function selectMergedBranches(
   { nowMs = Date.now(), minAgeDays = DEFAULT_MIN_AGE_DAYS } = {}
 ) {
   if (!Number.isFinite(nowMs)) throw new Error("Invalid cleanup clock");
-  if (!Number.isFinite(minAgeDays) || minAgeDays < 0) throw new Error("Invalid minimum branch age");
+  if (!Number.isFinite(minAgeDays) || minAgeDays < 0) {
+    throw new Error("Invalid minimum branch age");
+  }
 
   const minAgeMs = minAgeDays * DAY_MS;
 
@@ -21,10 +23,19 @@ export function selectMergedBranches(
     if (branch.name === defaultBranch || branch.protected) return [];
 
     const ownPullRequests = pullRequests.filter(pr =>
-      pr.head?.repo?.full_name === repository && pr.head.ref === branch.name
+      pr.head?.repo?.full_name === repository &&
+      pr.head.ref === branch.name
     );
 
     if (ownPullRequests.some(pr => pr.state === "open")) return [];
+
+    const openDependentPullRequest = pullRequests.some(pr =>
+      pr.state === "open" &&
+      pr.base?.repo?.full_name === repository &&
+      pr.base.ref === branch.name
+    );
+
+    if (openDependentPullRequest) return [];
 
     const merged = ownPullRequests.find(pr => {
       if (
@@ -49,27 +60,38 @@ export function selectMergedBranches(
 
 export function deleteMergedBranch(branch, cwd = process.cwd()) {
   const ref = `refs/heads/${branch.name}`;
-  if (!/^[a-f0-9]{40}$/.test(branch.sha)) throw new Error("Invalid expected commit SHA");
+
+  if (!/^[a-f0-9]{40}$/.test(branch.sha)) {
+    throw new Error("Invalid expected commit SHA");
+  }
+
   execFileSync("git", ["check-ref-format", ref], { cwd, stdio: "pipe" });
 
   // The server must still have exactly the inspected SHA. A concurrent push
   // therefore rejects the deletion instead of discarding new work.
-  execFileSync("git", ["push", `--force-with-lease=${ref}:${branch.sha}`, "--delete", "origin", ref], {
-    cwd,
-    stdio: "pipe"
-  });
+  execFileSync(
+    "git",
+    ["push", `--force-with-lease=${ref}:${branch.sha}`, "--delete", "origin", ref],
+    { cwd, stdio: "pipe" }
+  );
 }
 
 async function main() {
   const repository = process.env.GITHUB_REPOSITORY;
   const token = process.env.GITHUB_TOKEN;
   const apply = process.argv.includes("--apply");
-  const minAgeDays = Number(process.env.CLEANUP_MIN_AGE_DAYS || DEFAULT_MIN_AGE_DAYS);
+  const minAgeDays = Number(
+    process.env.CLEANUP_MIN_AGE_DAYS || DEFAULT_MIN_AGE_DAYS
+  );
 
   if (!repository) throw new Error("GITHUB_REPOSITORY is required");
   if (apply && !token) throw new Error("GITHUB_TOKEN is required for deletion");
-  if (!/^[\w.-]+\/[\w.-]+$/.test(repository)) throw new Error("Invalid repository");
-  if (!Number.isFinite(minAgeDays) || minAgeDays < 0) throw new Error("Invalid CLEANUP_MIN_AGE_DAYS");
+  if (!/^[\w.-]+\/[\w.-]+$/.test(repository)) {
+    throw new Error("Invalid repository");
+  }
+  if (!Number.isFinite(minAgeDays) || minAgeDays < 0) {
+    throw new Error("Invalid CLEANUP_MIN_AGE_DAYS");
+  }
 
   const apiBase = `https://api.github.com/repos/${repository}`;
 
@@ -84,7 +106,10 @@ async function main() {
       signal: AbortSignal.timeout(15_000)
     });
 
-    if (!response.ok) throw new Error(`GitHub read failed: HTTP ${response.status}`);
+    if (!response.ok) {
+      throw new Error(`GitHub read failed: HTTP ${response.status}`);
+    }
+
     return response.json();
   }
 
@@ -93,7 +118,10 @@ async function main() {
 
     for (let page = 1; ; page++) {
       const separator = path.includes("?") ? "&" : "?";
-      const batch = await api(`${path}${separator}per_page=100&page=${page}`);
+      const batch = await api(
+        `${path}${separator}per_page=100&page=${page}`
+      );
+
       items.push(...batch);
       if (batch.length < 100) return items;
     }
@@ -139,13 +167,30 @@ async function main() {
 
     if (!apply) continue;
 
-    const current = await api(`branches/${encodeURIComponent(branch.name)}`);
-    const open = await api(
-      `pulls?state=open&head=${encodeURIComponent(`${metadata.owner.login}:${branch.name}`)}&per_page=1`
+    const current = await api(
+      `branches/${encodeURIComponent(branch.name)}`
     );
 
-    if (current.protected || current.commit.sha !== branch.sha || open.length) {
-      console.log(`Preserved changed, protected or active branch: ${branch.name}`);
+    const [openFromBranch, openAgainstBranch] = await Promise.all([
+      api(
+        `pulls?state=open&head=${encodeURIComponent(
+          `${metadata.owner.login}:${branch.name}`
+        )}&per_page=1`
+      ),
+      api(
+        `pulls?state=open&base=${encodeURIComponent(branch.name)}&per_page=1`
+      )
+    ]);
+
+    if (
+      current.protected ||
+      current.commit.sha !== branch.sha ||
+      openFromBranch.length ||
+      openAgainstBranch.length
+    ) {
+      console.log(
+        `Preserved changed, protected, active, or depended-on branch: ${branch.name}`
+      );
       continue;
     }
 
@@ -163,7 +208,10 @@ async function main() {
   }
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
   main().catch(error => {
     console.error(error.message);
     process.exitCode = 1;
