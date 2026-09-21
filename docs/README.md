@@ -10,6 +10,7 @@ Use this file as the starting point for repository documentation. `PROJECT_STATU
 - [90-Day Launch Plan](./90_DAY_LAUNCH_PLAN.md) — execution schedule through the November 30 readiness decision
 - [Owner Actions](./OWNER_ACTIONS.md) — actions requiring the owner, provider, regulator, private credentials, or external portals
 - [Security & Support Runbooks](./SECURITY_SUPPORT_RUNBOOKS.md) — incident, fraud, outage, activation, refund, secret-rotation, and escalation procedures
+- [Repository Maintenance](./REPOSITORY_MAINTENANCE.md) — CI security, guarded merged-branch cleanup, and the main-branch protection ruleset
 
 ## Architecture and product
 
