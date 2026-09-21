@@ -31,6 +31,7 @@ import { handleEsimGoWebhook } from "../src/services/esimWebhookService.js";
 import { buildHealthStatus } from "../src/services/healthService.js";
 import { enforceWaitlistRateLimit } from "../src/services/waitlistRateLimit.js";
 import { joinWaitlist, waitlistStatus } from "../src/services/waitlistService.js";
+import { handleFacebookAdminApi } from "../src/services/facebookAdminApi.js";
 
 export const config = {
   api: {
@@ -127,6 +128,17 @@ export default async function handler(req, res) {
   if (req.method === "GET" && url.pathname === "/api/health") {
     const health = await buildHealthStatus({ runtime: "vercel" });
     return sendJson(res, health.statusCode, health.body);
+  }
+
+  if (url.pathname.startsWith("/api/admin/facebook")) {
+    return handleFacebookAdminApi({
+      req,
+      res,
+      url,
+      readJsonBody,
+      sendJson,
+      sendError
+    });
   }
 
   if (req.method === "GET" && url.pathname === "/api/public-status") {
