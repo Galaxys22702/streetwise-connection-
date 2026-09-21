@@ -1,4 +1,4 @@
-name: Sync Main Ruleset
+name: Validate Main Ruleset Policy
 
 on:
   push:
@@ -8,23 +8,17 @@ on:
       - .github/main-ruleset.json
       - .github/workflows/sync-main-ruleset.yml
   workflow_dispatch:
-    inputs:
-      dry_run:
-        description: "Preview drift only. Turn OFF to apply .github/main-ruleset.json to GitHub."
-        required: true
-        default: true
-        type: boolean
 
 permissions:
   contents: read
 
 concurrency:
-  group: sync-main-ruleset
+  group: validate-main-ruleset
   cancel-in-progress: false
 
 jobs:
-  sync:
-    name: Sync Protect main ruleset
+  validate:
+    name: Validate Protect main policy
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -42,94 +36,21 @@ jobs:
             .name == "Protect main" and
             .target == "branch" and
             .enforcement == "active" and
-            (.conditions.ref_name.include | index("refs/heads/main")) != null and
-            (.bypass_actors | any(
-              .actor_type == "User" and
-              .actor_id == 109320424 and
-              .bypass_mode == "pull_request"
-            ))
+            .bypass_actors == [] and
+            (.conditions.ref_name.include == ["refs/heads/main"]) and
+            (.conditions.ref_name.exclude == []) and
+            ([.rules[] | select(.type == "pull_request")][0].parameters.required_approving_review_count == 0) and
+            ([.rules[] | select(.type == "pull_request")][0].parameters.required_review_thread_resolution == true) and
+            ([.rules[] | select(.type == "pull_request")][0].parameters.allowed_merge_methods | sort == ["rebase", "squash"]) and
+            ([.rules[] | select(.type == "required_status_checks")][0].parameters.strict_required_status_checks_policy == true)
           ' .github/main-ruleset.json >/dev/null
 
-      - name: Check bootstrap credential
-        id: credential
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.RULESET_ADMIN_TOKEN }}
-        run: |
-          if [ -n "${GH_TOKEN:-}" ]; then
-            echo "available=true" >> "${GITHUB_OUTPUT}"
-          else
-            echo "available=false" >> "${GITHUB_OUTPUT}"
-            echo "## Main ruleset sync" >> "${GITHUB_STEP_SUMMARY}"
-            echo >> "${GITHUB_STEP_SUMMARY}"
-            echo "RULESET_ADMIN_TOKEN is not configured. No live setting was changed." >> "${GITHUB_STEP_SUMMARY}"
-          fi
-
-      - name: Compare live ruleset with repository policy
-        if: ${{ steps.credential.outputs.available == 'true' }}
-        id: compare
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.RULESET_ADMIN_TOKEN }}
-          RULESET_ID: "23781049"
-        run: |
-          set -euo pipefail
-
-          live="$(mktemp)"
-          desired="$(mktemp)"
-
-          curl --fail-with-body --silent --show-error             -H "Accept: application/vnd.github+json"             -H "Authorization: Bearer ${GH_TOKEN}"             -H "X-GitHub-Api-Version: 2026-03-10"             "https://api.github.com/repos/${GITHUB_REPOSITORY}/rulesets/${RULESET_ID}"             > "${live}"
-
-          jq '{
-            name,
-            target,
-            enforcement,
-            bypass_actors,
-            conditions,
-            rules
-          }' "${live}" | jq -S . > "${live}.normalized"
-
-          jq -S . .github/main-ruleset.json > "${desired}"
-
-          echo "## Main ruleset sync" >> "${GITHUB_STEP_SUMMARY}"
-          echo >> "${GITHUB_STEP_SUMMARY}"
-
-          if diff -u "${live}.normalized" "${desired}" > ruleset.diff; then
-            echo "drift=false" >> "${GITHUB_OUTPUT}"
-            echo "Live ruleset already matches .github/main-ruleset.json." >> "${GITHUB_STEP_SUMMARY}"
-          else
-            echo "drift=true" >> "${GITHUB_OUTPUT}"
-            echo "Ruleset drift detected." >> "${GITHUB_STEP_SUMMARY}"
-            echo >> "${GITHUB_STEP_SUMMARY}"
-            echo '~~~diff' >> "${GITHUB_STEP_SUMMARY}"
-            cat ruleset.diff >> "${GITHUB_STEP_SUMMARY}"
-            echo '~~~' >> "${GITHUB_STEP_SUMMARY}"
-          fi
-
-      - name: Apply repository ruleset policy
-        if: ${{ steps.credential.outputs.available == 'true' && steps.compare.outputs.drift == 'true' && (github.event_name == 'push' || inputs.dry_run == false) }}
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.RULESET_ADMIN_TOKEN }}
-          RULESET_ID: "23781049"
-        run: |
-          set -euo pipefail
-
-          curl --fail-with-body --silent --show-error             -X PUT             -H "Accept: application/vnd.github+json"             -H "Authorization: Bearer ${GH_TOKEN}"             -H "X-GitHub-Api-Version: 2026-03-10"             -H "Content-Type: application/json"             --data-binary @.github/main-ruleset.json             "https://api.github.com/repos/${GITHUB_REPOSITORY}/rulesets/${RULESET_ID}"             > updated-ruleset.json
-
-          jq -e '
-            (.bypass_actors | any(
-              .actor_type == "User" and
-              .actor_id == 109320424 and
-              .bypass_mode == "pull_request"
-            ))
-          ' updated-ruleset.json >/dev/null
-
-          echo "Applied PR-only bypass for Galaxys22702 while preserving the rest of Protect main." >> "${GITHUB_STEP_SUMMARY}"
-
-      - name: Dry-run summary
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == true }}
+      - name: Safety summary
         shell: bash
         run: |
-          echo >> "${GITHUB_STEP_SUMMARY}"
-          echo "Dry run is ON. No repository rule was changed." >> "${GITHUB_STEP_SUMMARY}"
+          {
+            echo "## Main ruleset policy validation"
+            echo
+            echo "Repository policy is valid."
+            echo "This workflow is read-only and does not modify the live GitHub ruleset."
+          } >> "${GITHUB_STEP_SUMMARY}"
