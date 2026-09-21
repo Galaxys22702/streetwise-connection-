@@ -15,14 +15,41 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
   group: cleanup-merged-branches
   cancel-in-progress: false
 
 jobs:
+  preview:
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.apply)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: read
+      pull-requests: read
+
+    steps:
+      - name: Check out trusted main commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - name: Preview unchanged merged branches
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CLEANUP_MIN_AGE_DAYS: "7"
+        run: node scripts/cleanup-merged-branches.js
+
   cleanup:
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.apply)
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -31,7 +58,7 @@ jobs:
       pull-requests: read
 
     steps:
-      - name: Check out trusted main commit
+      - name: Check out trusted default branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # Deletion uses an exact-SHA lease and needs Git authentication.
@@ -42,14 +69,8 @@ jobs:
         with:
           node-version: 24
 
-      - name: Preview or clean unchanged merged branches
+      - name: Delete only unchanged eligible branches
         env:
           GITHUB_TOKEN: ${{ github.token }}
           CLEANUP_MIN_AGE_DAYS: "7"
-          APPLY_CLEANUP: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.apply) }}
-        run: |
-          if [ "$APPLY_CLEANUP" = "true" ]; then
-            node scripts/cleanup-merged-branches.js --apply
-          else
-            node scripts/cleanup-merged-branches.js
-          fi
+        run: node scripts/cleanup-merged-branches.js --apply
