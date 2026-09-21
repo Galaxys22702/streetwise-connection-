@@ -54,17 +54,39 @@ for (const name of workflowFiles) {
   }
 }
 
-const guard = await readFile(path.join(root, ".github", "workflows", "guard-main-provenance.yml"), "utf8");
+const cleanupWorkflow = await readFile(
+  path.join(root, ".github", "workflows", "cleanup-merged-branches.yml"),
+  "utf8"
+);
+
+if (!cleanupWorkflow.includes("github.ref == 'refs/heads/main'")) {
+  fail("branch cleanup write job must be restricted to refs/heads/main before it receives write permissions");
+}
+if (!cleanupWorkflow.includes("persist-credentials: false")) {
+  fail("branch cleanup preview job must not persist Git credentials");
+}
+if (!cleanupWorkflow.includes("CLEANUP_MIN_AGE_DAYS: \"7\"")) {
+  fail("branch cleanup workflow must retain the seven-day cooling-off period");
+}
+
+const guard = await readFile(
+  path.join(root, ".github", "workflows", "guard-main-provenance.yml"),
+  "utf8"
+);
 if (!/branches:\s*\[main\]/.test(guard) || !/contents:\s*write/.test(guard)) {
   fail("main provenance guard lost its required trigger or write capability");
 }
 
-const vercel = JSON.parse(await readFile(path.join(root, "vercel.json"), "utf8"));
+const vercel = JSON.parse(
+  await readFile(path.join(root, "vercel.json"), "utf8")
+);
 if (!String(vercel.buildCommand || "").startsWith("node scripts/verify-deployment-provenance.js && ")) {
   fail("Vercel production provenance gate is no longer first in buildCommand");
 }
 
-const ruleset = JSON.parse(await readFile(path.join(root, ".github", "main-ruleset.json"), "utf8"));
+const ruleset = JSON.parse(
+  await readFile(path.join(root, ".github", "main-ruleset.json"), "utf8")
+);
 
 if (ruleset.name !== "Protect main") {
   fail("documented native main ruleset must remain named Protect main");
@@ -78,7 +100,11 @@ if (ruleset.enforcement !== "active") {
 
 const includedRefs = ruleset.conditions?.ref_name?.include || [];
 const excludedRefs = ruleset.conditions?.ref_name?.exclude || [];
-if (includedRefs.length !== 1 || includedRefs[0] !== "refs/heads/main" || excludedRefs.length !== 0) {
+if (
+  includedRefs.length !== 1 ||
+  includedRefs[0] !== "refs/heads/main" ||
+  excludedRefs.length !== 0
+) {
   fail("documented native main ruleset must target only refs/heads/main");
 }
 
@@ -87,7 +113,13 @@ if (!Array.isArray(ruleset.bypass_actors) || ruleset.bypass_actors.length !== 0)
 }
 
 const rulesByType = new Map((ruleset.rules || []).map(rule => [rule.type, rule]));
-for (const type of ["deletion", "non_fast_forward", "required_linear_history", "pull_request", "required_status_checks"]) {
+for (const type of [
+  "deletion",
+  "non_fast_forward",
+  "required_linear_history",
+  "pull_request",
+  "required_status_checks"
+]) {
   if (!rulesByType.has(type)) {
     fail(`documented main ruleset is missing required rule: ${type}`);
   }
