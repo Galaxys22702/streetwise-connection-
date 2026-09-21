@@ -1,11 +1,11 @@
 name: Clean merged branches
 
 on:
-  # Keep merged topic branches from accumulating after changes land on main.
-  # The cleanup script still requires an exact merged PR head SHA and skips
-  # protected, changed, or active branches before deleting anything.
+  # Preview after merges land, then apply only after a cooling-off period.
   push:
     branches: [main]
+  schedule:
+    - cron: "17 9 * * *"
   workflow_dispatch:
     inputs:
       apply:
@@ -25,14 +25,16 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+
     permissions:
       contents: write
       pull-requests: read
+
     steps:
       - name: Check out trusted main commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # This job needs Git authentication to delete refs with an exact-SHA lease.
+          # Deletion uses an exact-SHA lease and needs Git authentication.
           persist-credentials: true
 
       - name: Set up Node
@@ -40,10 +42,11 @@ jobs:
         with:
           node-version: 24
 
-      - name: Clean unchanged merged branches
+      - name: Preview or clean unchanged merged branches
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          APPLY_CLEANUP: ${{ github.event_name == 'push' || inputs.apply }}
+          CLEANUP_MIN_AGE_DAYS: "7"
+          APPLY_CLEANUP: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.apply) }}
         run: |
           if [ "$APPLY_CLEANUP" = "true" ]; then
             node scripts/cleanup-merged-branches.js --apply
