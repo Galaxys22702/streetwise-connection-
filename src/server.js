@@ -35,6 +35,7 @@ import { handleEsimGoWebhook } from "./services/esimWebhookService.js";
 import { buildHealthStatus } from "./services/healthService.js";
 import { enforceWaitlistRateLimit } from "./services/waitlistRateLimit.js";
 import { joinWaitlist, waitlistStatus } from "./services/waitlistService.js";
+import { handleFacebookAdminApi } from "./services/facebookAdminApi.js";
 
 const configuredPort = Number(process.env.PORT || 3000);
 if (!Number.isInteger(configuredPort) || configuredPort < 1 || configuredPort > 65535) {
@@ -144,6 +145,17 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && url.pathname === "/health") {
     const health = await buildHealthStatus({ runtime: "node" });
     return sendJson(res, health.statusCode, health.body);
+  }
+
+  if (url.pathname.startsWith("/api/admin/facebook")) {
+    return handleFacebookAdminApi({
+      req,
+      res,
+      url,
+      readJsonBody,
+      sendJson,
+      sendError
+    });
   }
 
   if (req.method === "GET" && url.pathname === "/api/public-status") {
