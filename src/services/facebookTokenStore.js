@@ -5,6 +5,8 @@ import {
 } from "node:crypto";
 import { query } from "../db/index.js";
 
+const GCM_AUTH_TAG_BYTES = 16;
+
 function configurationError(message) {
   const error = new Error(message);
   error.statusCode = 503;
@@ -37,7 +39,12 @@ function encryptToken(token, env) {
   if (value.length < 20) throw new Error("meta_page_token_invalid");
 
   const iv = randomBytes(12);
-  const cipher = createCipheriv("aes-256-gcm", tokenEncryptionKey(env), iv);
+  const cipher = createCipheriv(
+    "aes-256-gcm",
+    tokenEncryptionKey(env),
+    iv,
+    { authTagLength: GCM_AUTH_TAG_BYTES }
+  );
   const ciphertext = Buffer.concat([
     cipher.update(value, "utf8"),
     cipher.final()
@@ -56,7 +63,8 @@ function decryptToken(record, env) {
     const decipher = createDecipheriv(
       "aes-256-gcm",
       tokenEncryptionKey(env),
-      Buffer.from(record.token_iv, "base64url")
+      Buffer.from(record.token_iv, "base64url"),
+      { authTagLength: GCM_AUTH_TAG_BYTES }
     );
     decipher.setAuthTag(Buffer.from(record.token_tag, "base64url"));
     return Buffer.concat([
