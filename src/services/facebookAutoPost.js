@@ -12,7 +12,7 @@ export const STREETWISE_AUTO_POST_MESSAGES = [
   "No fake promises. Clear terms, controlled activation and security first. That is the Streetwise Connection build. Public waitlist: https://streetwise-connection.vercel.app/no-fake-promises.html",
   "Street Smart. Signal Strong. Follow Streetwise Connection as the service takes shape. Public waitlist: https://streetwise-connection.vercel.app/",
   "Connected by Hustle. Built with a security-first approach. Streetwise Connection public waitlist: https://streetwise-connection.vercel.app/security-first.html",
-  "The streets never lose signal. Streetwise Connection is preparing an affordable connectivity service with a public waitlist open now: https://streetwise-connection.vercel.app/",
+  "Strong signal is the goal; fake coverage promises are not. Streetwise Connection is preparing an affordable connectivity service. Public waitlist: https://streetwise-connection.vercel.app/",
   "Stay Connected. Stay Streetwise. Track the Streetwise Connection build and join the public waitlist: https://streetwise-connection.vercel.app/",
   "Streetwise Connection is being built in public, one verified step at a time. Join the waitlist: https://streetwise-connection.vercel.app/",
   "Security first, hype last. See how Streetwise Connection is approaching the build: https://streetwise-connection.vercel.app/security-first.html",
@@ -47,10 +47,10 @@ export const STREETWISE_AUTO_POST_MESSAGES = [
   "Stay Wired. Stay Wise. The Streetwise Connection build remains public and pre-launch: https://streetwise-connection.vercel.app/",
   "From the Block to the World starts with a reliable foundation. Follow Streetwise Connection: https://streetwise-connection.vercel.app/",
   "Streetwise Connection is working toward simple, affordable eSIM connectivity with security built into the operating model: https://streetwise-connection.vercel.app/",
-  "No Dead Zones. No Weak Moves. For now, the move is building it correctly. Streetwise Connection waitlist: https://streetwise-connection.vercel.app/",
+  "No Weak Moves. No fake coverage promises. Streetwise Connection is building the service carefully. Public waitlist: https://streetwise-connection.vercel.app/",
   "Signal Strong. Process Strong. Streetwise Connection is validating each launch gate before enabling sales: https://streetwise-connection.vercel.app/",
   "Streetwise Connection is not selling a finished story before the system is ready. Follow the documented build: https://streetwise-connection.vercel.app/",
-  "One day of half-hour posts, forty-eight different messages, one consistent point: Streetwise Connection is being built carefully. Waitlist: https://streetwise-connection.vercel.app/"
+  "Different angles, same build standard: Streetwise Connection is being built carefully. Public waitlist: https://streetwise-connection.vercel.app/"
 ];
 
 function normalizedBaseUrl(value) {
