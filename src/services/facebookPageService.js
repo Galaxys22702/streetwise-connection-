@@ -120,7 +120,15 @@ export function createFacebookPageService({
       const changes = {};
       if (about !== undefined) changes.about = String(about).trim();
       if (description !== undefined) changes.description = String(description).trim();
-      if (website !== undefined) changes.website = safeHttpUrl(website, "website");
+      if (website !== undefined) {
+        const normalizedWebsite = safeHttpUrl(website, "website");
+        if (!normalizedWebsite) {
+          const error = new Error("website_must_be_a_valid_url");
+          error.statusCode = 400;
+          throw error;
+        }
+        changes.website = normalizedWebsite;
+      }
 
       if (!Object.keys(changes).length) {
         const error = new Error("supported_page_change_required");
