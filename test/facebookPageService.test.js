@@ -21,15 +21,16 @@ function fakeResponse(body, status = 200) {
   };
 }
 
-test("facebook integration is fail-closed by default", () => {
+test("facebook integration is fail-closed by default", async () => {
   const service = createFacebookPageService({ env: {} });
-  assert.deepEqual(service.status(), {
+  assert.deepEqual(await service.status(), {
     enabled: false,
     writesEnabled: false,
     metadataWritesEnabled: false,
     graphVersion: "v26.0",
     pageIdConfigured: false,
-    tokenConfigured: false
+    tokenConfigured: false,
+    credentialSource: "none"
   });
 });
 
@@ -48,6 +49,37 @@ test("Meta token is sent in an Authorization header, never the URL", async () =>
   assert.equal(seen.options.headers.authorization, `Bearer ${baseEnv.META_PAGE_ACCESS_TOKEN}`);
   assert.equal(seen.url.includes(baseEnv.META_PAGE_ACCESS_TOKEN), false);
   assert.match(seen.url, /graph\.facebook\.com\/v26\.0\/108798728689570/);
+});
+
+test("encrypted OAuth Page credentials are used when no static token is configured", async () => {
+  let seenAuthorization;
+  const storedToken = "EAA-encrypted-store-token-that-is-long-enough";
+  const service = createFacebookPageService({
+    env: { ...baseEnv, META_PAGE_ACCESS_TOKEN: "" },
+    loadConnection: async pageId => ({
+      pageId,
+      pageName: "Streetwise Connection",
+      pageToken: storedToken,
+      tasks: ["CREATE_CONTENT"]
+    }),
+    fetchImpl: async (_url, options) => {
+      seenAuthorization = options.headers.authorization;
+      return fakeResponse({ id: baseEnv.META_PAGE_ID, name: "Streetwise Connection" });
+    }
+  });
+
+  assert.deepEqual(await service.status(), {
+    enabled: true,
+    writesEnabled: false,
+    metadataWritesEnabled: false,
+    graphVersion: "v26.0",
+    pageIdConfigured: true,
+    tokenConfigured: true,
+    credentialSource: "encrypted_store"
+  });
+
+  await service.getPage();
+  assert.equal(seenAuthorization, `Bearer ${storedToken}`);
 });
 
 test("post writes remain disabled until explicitly enabled", async () => {
