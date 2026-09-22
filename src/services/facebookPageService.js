@@ -2,6 +2,7 @@ import {
   createMetaClient,
   metaConfigurationStatus
 } from "../integrations/metaClient.js";
+import { loadMetaPageConnection } from "./facebookTokenStore.js";
 
 const PAGE_FIELDS = [
   "id",
@@ -89,26 +90,64 @@ function safeHttpUrl(value, fieldName) {
 
 export function createFacebookPageService({
   env = process.env,
-  fetchImpl = globalThis.fetch
+  fetchImpl = globalThis.fetch,
+  loadConnection = loadMetaPageConnection
 } = {}) {
-  const status = () => metaConfigurationStatus(env);
+  async function resolveCredentials() {
+    const pageId = String(env.META_PAGE_ID || "").trim();
+    const envToken = String(env.META_PAGE_ACCESS_TOKEN || "").trim();
 
-  function client() {
-    return createMetaClient({ env, fetchImpl });
+    if (/^\d+$/.test(pageId) && envToken.length >= 20) {
+      return { pageId, pageToken: envToken, source: "environment" };
+    }
+
+    if (/^\d+$/.test(pageId)) {
+      const stored = await loadConnection(pageId, { env });
+      if (stored?.pageToken) {
+        return {
+          pageId: stored.pageId,
+          pageToken: stored.pageToken,
+          source: "encrypted_store"
+        };
+      }
+    }
+
+    return { pageId, pageToken: envToken, source: "none" };
+  }
+
+  async function status() {
+    const configured = metaConfigurationStatus(env);
+    const credentials = await resolveCredentials();
+    return {
+      ...configured,
+      pageIdConfigured: /^\d+$/.test(credentials.pageId),
+      tokenConfigured: String(credentials.pageToken || "").length >= 20,
+      credentialSource: credentials.source
+    };
+  }
+
+  async function client() {
+    const credentials = await resolveCredentials();
+    return createMetaClient({
+      env,
+      fetchImpl,
+      pageIdOverride: credentials.pageId,
+      tokenOverride: credentials.pageToken
+    });
   }
 
   return {
     status,
 
     async getPage() {
-      const meta = client();
+      const meta = await client();
       return meta.request(meta.pageId, {
         query: { fields: PAGE_FIELDS }
       });
     },
 
     async listPosts({ limit = 10 } = {}) {
-      const meta = client();
+      const meta = await client();
       return meta.request(`${meta.pageId}/published_posts`, {
         query: {
           fields: "id,message,created_time,permalink_url,full_picture",
@@ -135,7 +174,7 @@ export function createFacebookPageService({
         throw error;
       }
 
-      const meta = client();
+      const meta = await client();
       return meta.request(`${meta.pageId}/feed`, {
         method: "POST",
         body: {
@@ -178,7 +217,7 @@ export function createFacebookPageService({
         throw error;
       }
 
-      const meta = client();
+      const meta = await client();
       return meta.request(meta.pageId, {
         method: "POST",
         body: changes
