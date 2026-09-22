@@ -1,6 +1,6 @@
 import { runFacebookAutoPost } from "../src/services/facebookAutoPost.js";
 
-const enabledValue = String(process.env.FACEBOOK_AUTO_POST_ENABLED ?? "true").trim();
+const enabledValue = String(process.env.FACEBOOK_AUTO_POST_ENABLED ?? "false").trim();
 if (!new Set(["true", "false"]).has(enabledValue)) {
   throw new Error("FACEBOOK_AUTO_POST_ENABLED must be exactly true or false");
 }
