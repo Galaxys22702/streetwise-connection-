@@ -48,11 +48,27 @@ function requireObjectPayload(value) {
   return value;
 }
 
+function optionalString(value, fieldName) {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value !== "string") {
+    const error = new Error(`${fieldName}_must_be_a_string`);
+    error.statusCode = 400;
+    throw error;
+  }
+  return value.trim();
+}
+
 function safeHttpUrl(value, fieldName) {
   if (value === undefined || value === null || value === "") return undefined;
+  if (typeof value !== "string") {
+    const error = new Error(`${fieldName}_must_be_a_string`);
+    error.statusCode = 400;
+    throw error;
+  }
+
   let url;
   try {
-    url = new URL(String(value));
+    url = new URL(value);
   } catch {
     const error = new Error(`${fieldName}_must_be_a_valid_url`);
     error.statusCode = 400;
@@ -60,6 +76,11 @@ function safeHttpUrl(value, fieldName) {
   }
   if (!["http:", "https:"].includes(url.protocol)) {
     const error = new Error(`${fieldName}_must_use_http_or_https`);
+    error.statusCode = 400;
+    throw error;
+  }
+  if (url.username || url.password) {
+    const error = new Error(`${fieldName}_must_not_contain_credentials`);
     error.statusCode = 400;
     throw error;
   }
@@ -100,7 +121,7 @@ export function createFacebookPageService({
       writeGuard(env);
       const { message, link } = requireObjectPayload(input);
 
-      const normalizedMessage = String(message || "").trim();
+      const normalizedMessage = optionalString(message, "message") || "";
       const normalizedLink = safeHttpUrl(link, "link");
 
       if (!normalizedMessage && !normalizedLink) {
@@ -129,8 +150,8 @@ export function createFacebookPageService({
       const { about, description, website } = requireObjectPayload(input);
 
       const changes = {};
-      if (about !== undefined) changes.about = String(about).trim();
-      if (description !== undefined) changes.description = String(description).trim();
+      if (about !== undefined) changes.about = optionalString(about, "about");
+      if (description !== undefined) changes.description = optionalString(description, "description");
       if (website !== undefined) {
         const normalizedWebsite = safeHttpUrl(website, "website");
         if (!normalizedWebsite) {
