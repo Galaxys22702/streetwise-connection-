@@ -83,15 +83,22 @@ export function metaConfigurationStatus(env = process.env) {
 
 export function createMetaClient({
   env = process.env,
-  fetchImpl = globalThis.fetch
+  fetchImpl = globalThis.fetch,
+  pageIdOverride,
+  tokenOverride
 } = {}) {
   if (typeof fetchImpl !== "function") {
     throw new Error("A fetch implementation is required");
   }
 
-  const status = metaConfigurationStatus(env);
-  const pageId = String(env.META_PAGE_ID || "").trim();
-  const token = String(env.META_PAGE_ACCESS_TOKEN || "").trim();
+  const configured = metaConfigurationStatus(env);
+  const pageId = String(pageIdOverride ?? env.META_PAGE_ID ?? "").trim();
+  const token = String(tokenOverride ?? env.META_PAGE_ACCESS_TOKEN ?? "").trim();
+  const status = {
+    ...configured,
+    pageIdConfigured: /^\d+$/.test(pageId),
+    tokenConfigured: token.length >= 20
+  };
 
   if (!status.enabled) {
     const error = new Error("meta_integration_disabled");
