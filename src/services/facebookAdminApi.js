@@ -58,6 +58,11 @@ export async function handleFacebookAdminApi({
       result: await service.updatePage(await readJsonBody(req))
     });
   } catch (error) {
+    if (error?.metaPublicCode) {
+      return sendJson(res, error.statusCode || 502, {
+        error: error.metaPublicCode
+      });
+    }
     return sendError(res, error);
   }
 }
