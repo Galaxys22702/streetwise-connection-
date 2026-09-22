@@ -104,3 +104,19 @@ test("Facebook post creation passes the parsed request body to the service", asy
   assert.deepEqual(result.payload, { post: { id: "123_456" } });
   assert.equal(args.res.headers["cache-control"], "no-store");
 });
+
+test("Facebook admin API exposes safe Meta recovery codes without raw provider text", async () => {
+  const args = baseArgs({ path: "/api/admin/facebook/page" });
+  args.service.getPage = async () => {
+    const error = new Error("meta_graph_error: secret provider detail");
+    error.statusCode = 503;
+    error.metaPublicCode = "meta_reauthorization_required";
+    throw error;
+  };
+
+  const result = await handleFacebookAdminApi(args);
+
+  assert.equal(result.status, 503);
+  assert.deepEqual(result.payload, { error: "meta_reauthorization_required" });
+  assert.equal(JSON.stringify(result).includes("secret provider detail"), false);
+});
