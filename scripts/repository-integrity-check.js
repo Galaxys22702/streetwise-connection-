@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -67,6 +68,67 @@ if (!String(vercel.buildCommand || "").startsWith("node scripts/verify-deploymen
 const ruleset = JSON.parse(await readFile(path.join(root, ".github", "main-ruleset.json"), "utf8"));
 if (ruleset.enforcement !== "active" || !ruleset.conditions?.ref_name?.include?.includes("refs/heads/main")) {
   fail("documented native main ruleset is no longer active/targeted at main");
+}
+if (Array.isArray(ruleset.bypass_actors) && ruleset.bypass_actors.length) {
+  fail("documented native main ruleset must not define broad bypass actors");
+}
+
+const ruleByType = new Map((ruleset.rules || []).map(rule => [rule.type, rule]));
+for (const type of ["deletion", "non_fast_forward", "required_linear_history", "pull_request", "required_status_checks"]) {
+  if (!ruleByType.has(type)) {
+    fail(`documented native main ruleset is missing ${type}`);
+  }
+}
+
+const pullRequestRule = ruleByType.get("pull_request");
+if (pullRequestRule?.parameters?.required_approving_review_count !== 0) {
+  fail("single-maintainer main ruleset must use zero mandatory approving reviews");
+}
+
+const statusRule = ruleByType.get("required_status_checks");
+if (statusRule?.parameters?.strict_required_status_checks_policy !== true) {
+  fail("main ruleset must keep strict required status checks enabled");
+}
+const requiredChecks = new Map(
+  (statusRule?.parameters?.required_status_checks || []).map(check => [check.context, check.integration_id])
+);
+for (const [context, integrationId] of [
+  ["test", 15368],
+  ["docker-build", 15368],
+  ["verify", 15368],
+  ["Vercel", 8329]
+]) {
+  if (requiredChecks.get(context) !== integrationId) {
+    fail(`main ruleset is missing required status check ${context}`);
+  }
+}
+
+let trackedFiles = [];
+try {
+  trackedFiles = execFileSync("git", ["ls-files", "-z"], {
+    cwd: root,
+    encoding: "utf8"
+  }).split("\0").filter(Boolean);
+} catch {
+  fail("unable to enumerate tracked files for secret scanning");
+}
+
+for (const relativePath of trackedFiles) {
+  if (/\.(?:png|jpe?g|gif|webp|ico|zip|gz|pdf)$/i.test(relativePath)) continue;
+
+  let source;
+  try {
+    source = await readFile(path.join(root, relativePath), "utf8");
+  } catch {
+    continue;
+  }
+
+  if (/\bEAA[A-Za-z0-9]{50,}\b/.test(source)) {
+    fail(`${relativePath}: possible live Meta/Facebook access token committed`);
+  }
+  if (/META_PAGE_ACCESS_TOKEN\s*=\s*[^\s#]+/.test(source)) {
+    fail(`${relativePath}: META_PAGE_ACCESS_TOKEN must not contain a committed value`);
+  }
 }
 
 if (failures.length) {
