@@ -85,6 +85,25 @@ for (const name of workflowFiles) {
   }
 }
 
+const facebookAutoPostWorkflow = await readFile(
+  path.join(workflowsDir, "facebook-auto-post.yml"),
+  "utf8"
+);
+if (!/FACEBOOK_AUTO_POST_ENABLED:[^\n]*\|\|\s*'false'/.test(facebookAutoPostWorkflow)) {
+  fail("facebook-auto-post.yml must default FACEBOOK_AUTO_POST_ENABLED to false");
+}
+if (/FACEBOOK_AUTO_POST_ENABLED:[^\n]*\|\|\s*'true'/.test(facebookAutoPostWorkflow)) {
+  fail("facebook-auto-post.yml must never opt into scheduled posting by default");
+}
+
+const facebookAutoPostRunner = await readFile(
+  path.join(root, "scripts", "facebook-auto-post.js"),
+  "utf8"
+);
+if (!/FACEBOOK_AUTO_POST_ENABLED\s*\?\?\s*"false"/.test(facebookAutoPostRunner)) {
+  fail("facebook-auto-post runner must default FACEBOOK_AUTO_POST_ENABLED to false");
+}
+
 const guard = await readFile(path.join(root, ".github", "workflows", "guard-main-provenance.yml"), "utf8");
 if (!/branches:\s*\[main\]/.test(guard) || !/contents:\s*write/.test(guard)) {
   fail("main provenance guard lost its required trigger or write capability");
