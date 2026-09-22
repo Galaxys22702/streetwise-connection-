@@ -7,6 +7,7 @@ import { metaConfigurationStatus } from "../integrations/metaClient.js";
 import { saveMetaPageConnection } from "./facebookTokenStore.js";
 
 const STATE_TTL_MS = 10 * 60 * 1000;
+const OAUTH_CALLBACK_PATH = "/api/admin/facebook/oauth/callback";
 
 function exactBoolean(env, name, fallback = false) {
   const value = env[name];
@@ -33,7 +34,9 @@ function safeRedirectUri(value) {
   if (url.protocol !== "https:" && !(local && url.protocol === "http:")) {
     throw configError("meta_oauth_redirect_uri_must_use_https");
   }
-  url.hash = "";
+  if (url.pathname !== OAUTH_CALLBACK_PATH || url.search || url.hash) {
+    throw configError("meta_oauth_redirect_uri_must_match_callback_path");
+  }
   return url.toString();
 }
 
@@ -231,9 +234,11 @@ export function metaOAuthStatus(env = process.env) {
     graphVersion: config.graphVersion,
     pageIdConfigured: /^\d+$/.test(config.pageId),
     appIdConfigured: Boolean(config.appId),
+    appSecretConfigured: config.appSecret.length >= 16,
     loginConfigConfigured: Boolean(config.configId),
     redirectUriConfigured: Boolean(config.redirectUriRaw),
-    stateSecretConfigured: config.stateSecret.length >= 32
+    stateSecretConfigured: config.stateSecret.length >= 32,
+    tokenEncryptionKeyConfigured: Boolean(String(env.META_TOKEN_ENCRYPTION_KEY || "").trim())
   };
 }
 
