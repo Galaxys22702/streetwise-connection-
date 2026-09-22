@@ -1,5 +1,9 @@
 import { requireFacebookAdmin } from "./facebookAdminAuth.js";
 import { facebookPageService } from "./facebookPageService.js";
+import {
+  handleFacebookOAuthApi,
+  isFacebookOAuthPath
+} from "./facebookOAuthApi.js";
 
 const ROUTE_METHODS = new Map([
   ["/api/admin/facebook/status", ["GET"]],
@@ -18,6 +22,16 @@ export async function handleFacebookAdminApi({
   authenticate = requireFacebookAdmin
 }) {
   res.setHeader("cache-control", "no-store");
+
+  if (isFacebookOAuthPath(url.pathname)) {
+    return handleFacebookOAuthApi({
+      req,
+      res,
+      url,
+      sendJson,
+      sendError
+    });
+  }
 
   const allowedMethods = ROUTE_METHODS.get(url.pathname);
   if (!allowedMethods) {
