@@ -47,6 +47,12 @@ Facebook UI automation:
 9. Pages API calls using the decrypted Page token only on the server
 10. optional Page webhooks for event-driven updates in a future change
 
+The Facebook Login for Business configuration for this implementation must be
+configured to return a **User access token**. Meta also offers a System-user access
+token model for continuous business-asset access, but this implementation does not
+consume that model; it deliberately exchanges the User token server-side and then
+uses `/me/accounts` to derive the authorised Streetwise Page access token.
+
 The temporary User access tokens are never written to the database. Only the
 Streetwise Page token is persisted, encrypted at rest. The callback refuses to
 store a token for any Page other than the configured Streetwise Page ID.
@@ -134,14 +140,15 @@ least 32 characters. Its responses are marked `Cache-Control: no-store`.
 1. Deploy with all Meta/OAuth enable flags false.
 2. Run database migrations so `meta_page_connections` exists.
 3. Create the Meta app and Facebook Login for Business configuration.
-4. Put the app secret, state secret and encryption key into deployment secret storage.
-5. Configure the exact OAuth callback URL and set `META_OAUTH_ENABLED=true`.
-6. Open `/api/admin/facebook/oauth/start` and complete Meta authorisation in the browser.
-7. Confirm the callback reports the Streetwise Page ID/name and stores the encrypted Page token.
-8. Enable `META_INTEGRATION_ENABLED=true` and verify read-only Page access.
-9. Only after read verification, enable `META_WRITES_ENABLED=true`.
-10. Keep `META_METADATA_WRITES_ENABLED=false` until Page-profile edits are required.
-11. Test a non-sensitive Streetwise Page operation and confirm the result in Facebook.
+4. Set the Business Login configuration to return a **User access token**.
+5. Put the app secret, state secret and encryption key into deployment secret storage.
+6. Configure the exact OAuth callback URL and set `META_OAUTH_ENABLED=true`.
+7. Open `/api/admin/facebook/oauth/start` and complete Meta authorisation in the browser.
+8. Confirm the callback reports the Streetwise Page ID/name and stores the encrypted Page token.
+9. Enable `META_INTEGRATION_ENABLED=true` and verify read-only Page access.
+10. Only after read verification, enable `META_WRITES_ENABLED=true`.
+11. Keep `META_METADATA_WRITES_ENABLED=false` until Page-profile edits are required.
+12. Test a non-sensitive Streetwise Page operation and confirm the result in Facebook.
 
 The first-party path is deliberately independent of the existing Windsor.ai
 connector. Windsor may remain as a temporary publishing fallback, but it is not
