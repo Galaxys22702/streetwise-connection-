@@ -13,7 +13,7 @@ export const STREETWISE_AUTO_POST_MESSAGES = [
   "Street Smart. Signal Strong. Follow Streetwise Connection as the service takes shape. Public waitlist: https://streetwise-connection.vercel.app/",
   "Connected by Hustle. Built with a security-first approach. Streetwise Connection public waitlist: https://streetwise-connection.vercel.app/security-first.html",
   "The streets never lose signal. Streetwise Connection is preparing an affordable connectivity service with a public waitlist open now: https://streetwise-connection.vercel.app/",
-  "Stay Connected. Stay Streetwise. Track the build and join the public waitlist: https://streetwise-connection.vercel.app/",
+  "Stay Connected. Stay Streetwise. Track the Streetwise Connection build and join the public waitlist: https://streetwise-connection.vercel.app/",
   "Streetwise Connection is being built in public, one verified step at a time. Join the waitlist: https://streetwise-connection.vercel.app/",
   "Security first, hype last. See how Streetwise Connection is approaching the build: https://streetwise-connection.vercel.app/security-first.html",
   "Clear terms matter. Streetwise Connection is documenting the service before launch, not after. Read more: https://streetwise-connection.vercel.app/clear-terms.html",
