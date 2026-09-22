@@ -118,3 +118,23 @@ test("shortened AES-GCM authentication tags are rejected", async () => {
     /meta_page_token_decryption_failed/
   );
 });
+
+test("encrypted Meta tokens are authenticated against their Page ID", async () => {
+  const memory = memoryQuery();
+
+  await saveMetaPageConnection({
+    pageId: "108798728689570",
+    pageToken: "EAA-page-token-that-is-long-enough"
+  }, { env, queryImpl: memory.query.bind(memory) });
+
+  // Simulate a valid ciphertext/IV/tag tuple being moved to a different row.
+  memory.row.page_id = "108798728689571";
+
+  await assert.rejects(
+    () => loadMetaPageConnection("108798728689571", {
+      env,
+      queryImpl: memory.query.bind(memory)
+    }),
+    /meta_page_token_decryption_failed/
+  );
+});
