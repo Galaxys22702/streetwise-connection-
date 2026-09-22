@@ -126,7 +126,7 @@ for (const relativePath of trackedFiles) {
   if (/\bEAA[A-Za-z0-9]{50,}\b/.test(source)) {
     fail(`${relativePath}: possible live Meta/Facebook access token committed`);
   }
-  if (/META_PAGE_ACCESS_TOKEN\s*=\s*[^\s#]+/.test(source)) {
+  if (/META_PAGE_ACCESS_TOKEN[ \t]*=[ \t]*[^\s#]+/.test(source)) {
     fail(`${relativePath}: META_PAGE_ACCESS_TOKEN must not contain a committed value`);
   }
 }
