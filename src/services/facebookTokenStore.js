@@ -35,6 +35,15 @@ function tokenEncryptionKey(env = process.env) {
   return key;
 }
 
+export function metaTokenEncryptionKeyConfigured(env = process.env) {
+  try {
+    tokenEncryptionKey(env);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function tokenAad(pageId) {
   const id = String(pageId || "").trim();
   if (!/^\d+$/.test(id)) throw new Error("meta_page_id_invalid");
