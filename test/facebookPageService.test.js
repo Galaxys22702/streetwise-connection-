@@ -96,6 +96,46 @@ test("empty website metadata is rejected before contacting Meta", async () => {
   );
 });
 
+test("non-object post payloads are rejected before contacting Meta", async () => {
+  const service = createFacebookPageService({
+    env: { ...baseEnv, META_WRITES_ENABLED: "true" },
+    fetchImpl: async () => {
+      throw new Error("network should not be reached");
+    }
+  });
+
+  await assert.rejects(
+    () => service.createPost(null),
+    /request_body_must_be_an_object/
+  );
+  await assert.rejects(
+    () => service.createPost([]),
+    /request_body_must_be_an_object/
+  );
+});
+
+test("non-object metadata payloads are rejected before contacting Meta", async () => {
+  const service = createFacebookPageService({
+    env: {
+      ...baseEnv,
+      META_WRITES_ENABLED: "true",
+      META_METADATA_WRITES_ENABLED: "true"
+    },
+    fetchImpl: async () => {
+      throw new Error("network should not be reached");
+    }
+  });
+
+  await assert.rejects(
+    () => service.updatePage(null),
+    /request_body_must_be_an_object/
+  );
+  await assert.rejects(
+    () => service.updatePage("not-an-object"),
+    /request_body_must_be_an_object/
+  );
+});
+
 test("enabled post write targets the Page feed", async () => {
   let seen;
   const service = createFacebookPageService({
