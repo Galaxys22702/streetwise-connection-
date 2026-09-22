@@ -42,6 +42,26 @@ test("OAuth authorization URL uses Meta Business Login configuration and signed 
   assert.match(url.searchParams.get("state"), /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/);
 });
 
+test("OAuth refuses to start until token encryption is actually ready", () => {
+  for (const tokenEncryptionKey of ["", "too-short"]) {
+    const service = createFacebookOAuthService({
+      env: {
+        ...baseEnv,
+        META_TOKEN_ENCRYPTION_KEY: tokenEncryptionKey
+      },
+      fetchImpl: async () => response({})
+    });
+
+    const status = service.status();
+    assert.equal(status.tokenEncryptionKeyConfigured, false);
+    assert.equal(status.configured, false);
+    assert.throws(
+      () => service.authorizationUrl(),
+      /meta_oauth_not_configured/
+    );
+  }
+});
+
 test("OAuth refuses a redirect URI outside the dedicated Streetwise callback path", () => {
   const service = createFacebookOAuthService({
     env: {
