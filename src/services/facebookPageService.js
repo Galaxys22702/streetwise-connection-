@@ -187,7 +187,7 @@ export function createFacebookPageService({
           body: {
             url: normalizedImageUrl,
             published: "true",
-            ...(normalizedMessage ? { message: normalizedMessage } : {})
+            ...(normalizedMessage ? { caption: normalizedMessage } : {})
           }
         });
       }
