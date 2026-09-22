@@ -17,6 +17,12 @@ const ignoredScanDirectories = new Set([
   ".vercel",
   "node_modules"
 ]);
+const forbiddenAssignedSecrets = [
+  "META_PAGE_ACCESS_TOKEN",
+  "META_APP_SECRET",
+  "META_OAUTH_STATE_SECRET",
+  "META_TOKEN_ENCRYPTION_KEY"
+];
 
 const failures = [];
 const fail = message => failures.push(message);
@@ -139,8 +145,12 @@ for (const relativePath of await listSourceFiles()) {
   if (/\bEAA[A-Za-z0-9]{50,}\b/.test(source)) {
     fail(`${relativePath}: possible live Meta/Facebook access token committed`);
   }
-  if (/META_PAGE_ACCESS_TOKEN[ \t]*=[ \t]*[^\s#]+/.test(source)) {
-    fail(`${relativePath}: META_PAGE_ACCESS_TOKEN must not contain a committed value`);
+
+  for (const secretName of forbiddenAssignedSecrets) {
+    const assignedValue = new RegExp(`${secretName}[ \\t]*=[ \\t]*[^\\s#]+`);
+    if (assignedValue.test(source)) {
+      fail(`${relativePath}: ${secretName} must not contain a committed value`);
+    }
   }
 }
 
