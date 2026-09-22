@@ -33,7 +33,7 @@ export async function handleFacebookAdminApi({
     }
 
     if (url.pathname === "/api/admin/facebook/status") {
-      return sendJson(res, 200, service.status());
+      return sendJson(res, 200, await service.status());
     }
 
     if (url.pathname === "/api/admin/facebook/page" && req.method === "GET") {
