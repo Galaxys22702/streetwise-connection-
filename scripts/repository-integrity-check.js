@@ -1,4 +1,3 @@
-import { execFileSync } from "node:child_process";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -12,9 +11,32 @@ const credentialedWorkflows = new Set([
   "provider-validation.yml",
   "stripe-test-validation.yml"
 ]);
+const ignoredScanDirectories = new Set([
+  ".git",
+  ".vercel",
+  "node_modules"
+]);
 
 const failures = [];
 const fail = message => failures.push(message);
+
+async function listSourceFiles(directory = root, prefix = "") {
+  const files = [];
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name;
+    const absolutePath = path.join(directory, entry.name);
+
+    if (entry.isDirectory()) {
+      if (!ignoredScanDirectories.has(entry.name)) {
+        files.push(...await listSourceFiles(absolutePath, relativePath));
+      }
+      continue;
+    }
+
+    if (entry.isFile()) files.push(relativePath);
+  }
+  return files;
+}
 
 const workflowFiles = (await readdir(workflowsDir))
   .filter(name => name.endsWith(".yml") || name.endsWith(".yaml"))
@@ -103,17 +125,7 @@ for (const [context, integrationId] of [
   }
 }
 
-let trackedFiles = [];
-try {
-  trackedFiles = execFileSync("git", ["ls-files", "-z"], {
-    cwd: root,
-    encoding: "utf8"
-  }).split("\0").filter(Boolean);
-} catch {
-  fail("unable to enumerate tracked files for secret scanning");
-}
-
-for (const relativePath of trackedFiles) {
+for (const relativePath of await listSourceFiles()) {
   if (/\.(?:png|jpe?g|gif|webp|ico|zip|gz|pdf)$/i.test(relativePath)) continue;
 
   let source;
