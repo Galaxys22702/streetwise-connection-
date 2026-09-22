@@ -17,6 +17,17 @@ function jsonResponse(body, status = 200) {
 
 const adminKey = "a".repeat(32);
 
+test("auto-post content covers a full day without duplicate half-hour captions", () => {
+  assert.equal(STREETWISE_AUTO_POST_MESSAGES.length, 48);
+  assert.equal(new Set(STREETWISE_AUTO_POST_MESSAGES).size, 48);
+
+  for (const message of STREETWISE_AUTO_POST_MESSAGES) {
+    assert.match(message, /Streetwise Connection/i);
+    assert.match(message, /https:\/\/streetwise-connection\.vercel\.app\//);
+    assert.doesNotMatch(message, /\b(?:live now|available now|unlimited|guaranteed)\b/i);
+  }
+});
+
 test("auto-post can be disabled without making network calls", async () => {
   const result = await runFacebookAutoPost({
     enabled: false,
