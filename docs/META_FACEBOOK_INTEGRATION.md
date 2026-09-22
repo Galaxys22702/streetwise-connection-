@@ -65,14 +65,27 @@ The existing Facebook router exposes three setup endpoints:
 - `GET /api/admin/facebook/oauth/start`
 - `GET /api/admin/facebook/oauth/callback`
 
-`/start` creates signed OAuth state that expires after ten minutes and redirects
-the browser to Meta. `/callback` is reachable without the Streetwise admin header
-because Meta must redirect the browser to it, but it still requires valid signed
-state, a valid Meta authorisation code, and proof that the authenticated account
-can access the configured Streetwise Page.
+`/status` and `/start` are private admin operations and require the
+`x-streetwise-admin-key` header. `/start` creates signed OAuth state that expires
+after ten minutes and responds with a redirect to Meta. The callback is the only
+OAuth endpoint intentionally exempt from the Streetwise admin header because Meta
+must redirect the browser to it. It still requires valid signed state, a valid Meta
+authorisation code, and proof that the authenticated account can access the exact
+configured Streetwise Page.
 
-The exact callback URL configured in Meta must match `META_OAUTH_REDIRECT_URI`.
-Keep `META_OAUTH_ENABLED=false` until the Meta app and Facebook Login for Business
+For manual setup, request the protected start endpoint without following redirects,
+then open its returned `Location` URL in the browser where the authorised Facebook
+account is signed in. For example:
+
+```bash
+curl -si \
+  -H "x-streetwise-admin-key: $META_ADMIN_API_KEY" \
+  https://streetwise-connection.vercel.app/api/admin/facebook/oauth/start
+```
+
+Do not put `META_ADMIN_API_KEY` in a URL or commit it to a script. The exact callback
+URL configured in Meta must match `META_OAUTH_REDIRECT_URI`. Keep
+`META_OAUTH_ENABLED=false` until the Meta app and Facebook Login for Business
 configuration are complete.
 
 ## Supported Streetwise controls
@@ -121,7 +134,9 @@ Migration `008_meta_page_connections.sql` stores:
 
 `META_TOKEN_ENCRYPTION_KEY` must represent exactly 32 random bytes, encoded as
 64 hexadecimal characters or base64url. It must be stored only in deployment
-secret storage and must not reuse the Meta app secret.
+secret storage and must not reuse the Meta app secret. Stored Page tokens use a
+12-byte GCM IV and a required 16-byte / 128-bit authentication tag; malformed or
+shortened tags fail closed during decryption.
 
 When a static `META_PAGE_ACCESS_TOKEN` is configured, the Page service uses it for
 backwards compatibility. Otherwise it loads and decrypts the OAuth Page token
@@ -143,8 +158,8 @@ least 32 characters. Its responses are marked `Cache-Control: no-store`.
 4. Set the Business Login configuration to return a **User access token**.
 5. Put the app secret, state secret and encryption key into deployment secret storage.
 6. Configure the exact OAuth callback URL and set `META_OAUTH_ENABLED=true`.
-7. Open `/api/admin/facebook/oauth/start` and complete Meta authorisation in the browser.
-8. Confirm the callback reports the Streetwise Page ID/name and stores the encrypted Page token.
+7. Call the protected `/api/admin/facebook/oauth/start` endpoint with the admin header and open the returned Meta `Location` URL in the browser.
+8. Complete Meta authorisation and confirm the callback reports the Streetwise Page ID/name and stores the encrypted Page token.
 9. Enable `META_INTEGRATION_ENABLED=true` and verify read-only Page access.
 10. Only after read verification, enable `META_WRITES_ENABLED=true`.
 11. Keep `META_METADATA_WRITES_ENABLED=false` until Page-profile edits are required.
