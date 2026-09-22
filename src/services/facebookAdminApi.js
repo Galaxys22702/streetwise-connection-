@@ -17,6 +17,8 @@ export async function handleFacebookAdminApi({
   service = facebookPageService,
   authenticate = requireFacebookAdmin
 }) {
+  res.setHeader("cache-control", "no-store");
+
   const allowedMethods = ROUTE_METHODS.get(url.pathname);
   if (!allowedMethods) {
     return sendJson(res, 404, { error: "not_found" });
