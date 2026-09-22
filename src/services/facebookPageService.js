@@ -158,13 +158,14 @@ export function createFacebookPageService({
 
     async createPost(input = {}) {
       writeGuard(env);
-      const { message, link } = requireObjectPayload(input);
+      const { message, link, imageUrl } = requireObjectPayload(input);
 
       const normalizedMessage = optionalString(message, "message") || "";
       const normalizedLink = safeHttpUrl(link, "link");
+      const normalizedImageUrl = safeHttpUrl(imageUrl, "imageUrl");
 
-      if (!normalizedMessage && !normalizedLink) {
-        const error = new Error("message_or_link_required");
+      if (!normalizedMessage && !normalizedLink && !normalizedImageUrl) {
+        const error = new Error("message_link_or_image_required");
         error.statusCode = 400;
         throw error;
       }
@@ -173,8 +174,24 @@ export function createFacebookPageService({
         error.statusCode = 400;
         throw error;
       }
+      if (normalizedLink && normalizedImageUrl) {
+        const error = new Error("link_and_image_url_are_mutually_exclusive");
+        error.statusCode = 400;
+        throw error;
+      }
 
       const meta = await client();
+      if (normalizedImageUrl) {
+        return meta.request(`${meta.pageId}/photos`, {
+          method: "POST",
+          body: {
+            url: normalizedImageUrl,
+            published: "true",
+            ...(normalizedMessage ? { message: normalizedMessage } : {})
+          }
+        });
+      }
+
       return meta.request(`${meta.pageId}/feed`, {
         method: "POST",
         body: {
