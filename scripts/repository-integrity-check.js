@@ -8,6 +8,7 @@ const allowedWriteWorkflows = new Set([
   "guard-main-provenance.yml"
 ]);
 const credentialedWorkflows = new Set([
+  "facebook-auto-post.yml",
   "facebook-ops-heartbeat.yml",
   "provider-validation.yml",
   "stripe-test-validation.yml"
