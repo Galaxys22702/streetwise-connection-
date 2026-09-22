@@ -21,6 +21,43 @@ function redact(value, token) {
   return token ? text.replaceAll(token, "[REDACTED]") : text;
 }
 
+function classifyGraphError(graphError, responseStatus) {
+  const code = Number(graphError?.code);
+
+  if (code === 190 || code === 102) {
+    return {
+      statusCode: 503,
+      publicCode: "meta_reauthorization_required"
+    };
+  }
+
+  if (code === 200 || code === 230 || code === 283) {
+    return {
+      statusCode: 503,
+      publicCode: "meta_permission_required"
+    };
+  }
+
+  if ([80001, 80002, 80005, 80006].includes(code)) {
+    return {
+      statusCode: 429,
+      publicCode: "meta_rate_limited"
+    };
+  }
+
+  if (code === 368) {
+    return {
+      statusCode: 403,
+      publicCode: "meta_action_disallowed"
+    };
+  }
+
+  return {
+    statusCode: responseStatus >= 400 && responseStatus < 500 ? 400 : 502,
+    publicCode: null
+  };
+}
+
 export function metaConfigurationStatus(env = process.env) {
   const pageId = String(env.META_PAGE_ID || "").trim();
   const token = String(env.META_PAGE_ACCESS_TOKEN || "").trim();
@@ -117,8 +154,10 @@ export function createMetaClient({
     if (!response.ok || data?.error) {
       const graphError = data?.error || {};
       const message = redact(graphError.message || `HTTP ${response.status}`, token);
+      const classification = classifyGraphError(graphError, response.status);
       const error = new Error(`meta_graph_error: ${message}`);
-      error.statusCode = response.status >= 400 && response.status < 500 ? 400 : 502;
+      error.statusCode = classification.statusCode;
+      error.metaPublicCode = classification.publicCode;
       error.metaCode = graphError.code ?? null;
       error.metaType = graphError.type ?? null;
       throw error;
