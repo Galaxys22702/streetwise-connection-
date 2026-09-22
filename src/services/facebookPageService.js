@@ -39,6 +39,15 @@ function normalizeLimit(value) {
   return parsed;
 }
 
+function requireObjectPayload(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    const error = new Error("request_body_must_be_an_object");
+    error.statusCode = 400;
+    throw error;
+  }
+  return value;
+}
+
 function safeHttpUrl(value, fieldName) {
   if (value === undefined || value === null || value === "") return undefined;
   let url;
@@ -87,8 +96,9 @@ export function createFacebookPageService({
       });
     },
 
-    async createPost({ message, link } = {}) {
+    async createPost(input = {}) {
       writeGuard(env);
+      const { message, link } = requireObjectPayload(input);
 
       const normalizedMessage = String(message || "").trim();
       const normalizedLink = safeHttpUrl(link, "link");
@@ -114,8 +124,9 @@ export function createFacebookPageService({
       });
     },
 
-    async updatePage({ about, description, website } = {}) {
+    async updatePage(input = {}) {
       writeGuard(env, true);
+      const { about, description, website } = requireObjectPayload(input);
 
       const changes = {};
       if (about !== undefined) changes.about = String(about).trim();
