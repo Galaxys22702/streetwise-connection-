@@ -1,10 +1,15 @@
 import { facebookOAuthService } from "./facebookOAuthService.js";
 
+const ROUTE_PREFIX = "/api/admin/facebook/oauth";
 const ROUTES = new Set([
-  "/api/facebook/oauth/status",
-  "/api/facebook/oauth/start",
-  "/api/facebook/oauth/callback"
+  `${ROUTE_PREFIX}/status`,
+  `${ROUTE_PREFIX}/start`,
+  `${ROUTE_PREFIX}/callback`
 ]);
+
+export function isFacebookOAuthPath(pathname) {
+  return String(pathname || "").startsWith(`${ROUTE_PREFIX}/`);
+}
 
 export async function handleFacebookOAuthApi({
   req,
@@ -26,11 +31,11 @@ export async function handleFacebookOAuthApi({
   }
 
   try {
-    if (url.pathname === "/api/facebook/oauth/status") {
+    if (url.pathname === `${ROUTE_PREFIX}/status`) {
       return sendJson(res, 200, service.status());
     }
 
-    if (url.pathname === "/api/facebook/oauth/start") {
+    if (url.pathname === `${ROUTE_PREFIX}/start`) {
       res.statusCode = 302;
       res.setHeader("location", service.authorizationUrl());
       return res.end();
