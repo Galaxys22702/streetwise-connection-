@@ -21,15 +21,16 @@ function fakeResponse(body, status = 200) {
   };
 }
 
-test("facebook integration is fail-closed by default", () => {
+test("facebook integration is fail-closed by default", async () => {
   const service = createFacebookPageService({ env: {} });
-  assert.deepEqual(service.status(), {
+  assert.deepEqual(await service.status(), {
     enabled: false,
     writesEnabled: false,
     metadataWritesEnabled: false,
     graphVersion: "v26.0",
     pageIdConfigured: false,
-    tokenConfigured: false
+    tokenConfigured: false,
+    credentialSource: "none"
   });
 });
 
@@ -48,6 +49,31 @@ test("Meta token is sent in an Authorization header, never the URL", async () =>
   assert.equal(seen.options.headers.authorization, `Bearer ${baseEnv.META_PAGE_ACCESS_TOKEN}`);
   assert.equal(seen.url.includes(baseEnv.META_PAGE_ACCESS_TOKEN), false);
   assert.match(seen.url, /graph\.facebook\.com\/v26\.0\/108798728689570/);
+});
+
+test("encrypted OAuth Page token is used when no environment token is present", async () => {
+  let seen;
+  const storedToken = "EAA-stored-page-token-that-is-long-enough";
+  const service = createFacebookPageService({
+    env: { ...baseEnv, META_PAGE_ACCESS_TOKEN: "" },
+    loadConnection: async pageId => ({
+      pageId,
+      pageName: "Streetwise Connection",
+      pageToken: storedToken,
+      tasks: ["CREATE_CONTENT"]
+    }),
+    fetchImpl: async (url, options) => {
+      seen = { url: String(url), options };
+      return fakeResponse({ id: baseEnv.META_PAGE_ID, name: "Streetwise Connection" });
+    }
+  });
+
+  const status = await service.status();
+  assert.equal(status.tokenConfigured, true);
+  assert.equal(status.credentialSource, "encrypted_store");
+
+  await service.getPage();
+  assert.equal(seen.options.headers.authorization, `Bearer ${storedToken}`);
 });
 
 test("post writes remain disabled until explicitly enabled", async () => {
@@ -152,6 +178,10 @@ test("post fields must be strings", async () => {
     () => service.createPost({ link: 123 }),
     /link_must_be_a_string/
   );
+  await assert.rejects(
+    () => service.createPost({ imageUrl: 123 }),
+    /imageUrl_must_be_a_string/
+  );
 });
 
 test("metadata fields must be strings and URLs cannot contain credentials", async () => {
@@ -200,6 +230,46 @@ test("enabled post write targets the Page feed", async () => {
   assert.equal(seen.options.method, "POST");
   assert.match(seen.options.body, /message=Streetwise\+test/);
   assert.match(seen.options.body, /streetwise-connection/);
+});
+
+test("enabled image post targets the Page photos endpoint", async () => {
+  let seen;
+  const service = createFacebookPageService({
+    env: { ...baseEnv, META_WRITES_ENABLED: "true" },
+    fetchImpl: async (url, options) => {
+      seen = { url: String(url), options };
+      return fakeResponse({ id: "987654321" });
+    }
+  });
+
+  const result = await service.createPost({
+    message: "Streetwise Connection",
+    imageUrl: "https://streetwise-connection.vercel.app/streetwise-mark.png"
+  });
+
+  assert.equal(result.id, "987654321");
+  assert.match(seen.url, /\/108798728689570\/photos$/);
+  assert.equal(seen.options.method, "POST");
+  assert.match(seen.options.body, /message=Streetwise\+Connection/);
+  assert.match(seen.options.body, /published=true/);
+  assert.match(seen.options.body, /streetwise-mark\.png/);
+});
+
+test("link and image URL cannot be combined in one Page post", async () => {
+  const service = createFacebookPageService({
+    env: { ...baseEnv, META_WRITES_ENABLED: "true" },
+    fetchImpl: async () => {
+      throw new Error("network should not be reached");
+    }
+  });
+
+  await assert.rejects(
+    () => service.createPost({
+      link: "https://streetwise-connection.vercel.app/",
+      imageUrl: "https://streetwise-connection.vercel.app/streetwise-mark.png"
+    }),
+    /link_and_image_url_are_mutually_exclusive/
+  );
 });
 
 test("invalid Meta access tokens are classified for reauthorization without leaking the token", async () => {
