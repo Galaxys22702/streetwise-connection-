@@ -54,6 +54,8 @@ test("Meta Page tokens are encrypted before database storage and decrypt on read
 
   assert.equal(memory.row.token_ciphertext.includes(pageToken), false);
   assert.notEqual(memory.row.token_ciphertext, pageToken);
+  assert.equal(Buffer.from(memory.row.token_iv, "base64url").length, 12);
+  assert.equal(Buffer.from(memory.row.token_tag, "base64url").length, 16);
   assert.equal(memory.row.tasks.length, 2);
 
   const loaded = await loadMetaPageConnection("108798728689570", {
@@ -87,6 +89,26 @@ test("tampered encrypted Meta tokens are rejected", async () => {
   }, { env, queryImpl: memory.query.bind(memory) });
 
   memory.row.token_tag = Buffer.from("tampered-tag").toString("base64url");
+
+  await assert.rejects(
+    () => loadMetaPageConnection("108798728689570", {
+      env,
+      queryImpl: memory.query.bind(memory)
+    }),
+    /meta_page_token_decryption_failed/
+  );
+});
+
+test("shortened AES-GCM authentication tags are rejected", async () => {
+  const memory = memoryQuery();
+
+  await saveMetaPageConnection({
+    pageId: "108798728689570",
+    pageToken: "EAA-page-token-that-is-long-enough"
+  }, { env, queryImpl: memory.query.bind(memory) });
+
+  const fullTag = Buffer.from(memory.row.token_tag, "base64url");
+  memory.row.token_tag = fullTag.subarray(0, 12).toString("base64url");
 
   await assert.rejects(
     () => loadMetaPageConnection("108798728689570", {
