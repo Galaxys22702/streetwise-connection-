@@ -1,10 +1,12 @@
+import { requireFacebookAdmin } from "./facebookAdminAuth.js";
 import { facebookOAuthService } from "./facebookOAuthService.js";
 
 const ROUTE_PREFIX = "/api/admin/facebook/oauth";
+const CALLBACK_PATH = `${ROUTE_PREFIX}/callback`;
 const ROUTES = new Set([
   `${ROUTE_PREFIX}/status`,
   `${ROUTE_PREFIX}/start`,
-  `${ROUTE_PREFIX}/callback`
+  CALLBACK_PATH
 ]);
 
 export function isFacebookOAuthPath(pathname) {
@@ -17,7 +19,8 @@ export async function handleFacebookOAuthApi({
   url,
   sendJson,
   sendError,
-  service = facebookOAuthService
+  service = facebookOAuthService,
+  authenticate = requireFacebookAdmin
 }) {
   res.setHeader("cache-control", "no-store");
   res.setHeader("x-robots-tag", "noindex");
@@ -25,12 +28,19 @@ export async function handleFacebookOAuthApi({
   if (!ROUTES.has(url.pathname)) {
     return sendJson(res, 404, { error: "not_found" });
   }
-  if (req.method !== "GET") {
-    res.setHeader("allow", "GET");
-    return sendJson(res, 405, { error: "method_not_allowed" });
-  }
 
   try {
+    // Meta must be able to reach the callback directly. OAuth initiation and
+    // configuration status remain private admin operations.
+    if (url.pathname !== CALLBACK_PATH) {
+      authenticate(req);
+    }
+
+    if (req.method !== "GET") {
+      res.setHeader("allow", "GET");
+      return sendJson(res, 405, { error: "method_not_allowed" });
+    }
+
     if (url.pathname === `${ROUTE_PREFIX}/status`) {
       return sendJson(res, 200, service.status());
     }
