@@ -58,6 +58,15 @@ function classifyGraphError(graphError, responseStatus) {
   };
 }
 
+function graphTransportError(error) {
+  const timedOut = error?.name === "TimeoutError" || error?.name === "AbortError";
+  const wrapped = new Error(timedOut ? "meta_graph_timeout" : "meta_graph_unavailable");
+  wrapped.statusCode = timedOut ? 504 : 502;
+  wrapped.metaPublicCode = timedOut ? "meta_timeout" : "meta_unavailable";
+  wrapped.cause = error;
+  return wrapped;
+}
+
 export function metaConfigurationStatus(env = process.env) {
   const pageId = String(env.META_PAGE_ID || "").trim();
   const token = String(env.META_PAGE_ACCESS_TOKEN || "").trim();
@@ -134,12 +143,17 @@ export function createMetaClient({
       requestBody = encoded.toString();
     }
 
-    const response = await fetchImpl(url, {
-      method,
-      headers,
-      body: requestBody,
-      signal: AbortSignal.timeout(15_000)
-    });
+    let response;
+    try {
+      response = await fetchImpl(url, {
+        method,
+        headers,
+        body: requestBody,
+        signal: AbortSignal.timeout(15_000)
+      });
+    } catch (error) {
+      throw graphTransportError(error);
+    }
 
     const raw = await response.text();
     let data;
@@ -148,6 +162,7 @@ export function createMetaClient({
     } catch {
       const error = new Error("meta_graph_invalid_response");
       error.statusCode = 502;
+      error.metaPublicCode = "meta_invalid_response";
       throw error;
     }
 
