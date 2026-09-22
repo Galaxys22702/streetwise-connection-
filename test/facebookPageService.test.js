@@ -136,6 +136,50 @@ test("non-object metadata payloads are rejected before contacting Meta", async (
   );
 });
 
+test("post fields must be strings", async () => {
+  const service = createFacebookPageService({
+    env: { ...baseEnv, META_WRITES_ENABLED: "true" },
+    fetchImpl: async () => {
+      throw new Error("network should not be reached");
+    }
+  });
+
+  await assert.rejects(
+    () => service.createPost({ message: { text: "bad" } }),
+    /message_must_be_a_string/
+  );
+  await assert.rejects(
+    () => service.createPost({ link: 123 }),
+    /link_must_be_a_string/
+  );
+});
+
+test("metadata fields must be strings and URLs cannot contain credentials", async () => {
+  const service = createFacebookPageService({
+    env: {
+      ...baseEnv,
+      META_WRITES_ENABLED: "true",
+      META_METADATA_WRITES_ENABLED: "true"
+    },
+    fetchImpl: async () => {
+      throw new Error("network should not be reached");
+    }
+  });
+
+  await assert.rejects(
+    () => service.updatePage({ about: { text: "bad" } }),
+    /about_must_be_a_string/
+  );
+  await assert.rejects(
+    () => service.updatePage({ description: 123 }),
+    /description_must_be_a_string/
+  );
+  await assert.rejects(
+    () => service.updatePage({ website: "https://user:pass@example.com" }),
+    /website_must_not_contain_credentials/
+  );
+});
+
 test("enabled post write targets the Page feed", async () => {
   let seen;
   const service = createFacebookPageService({
