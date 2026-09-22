@@ -1,10 +1,11 @@
-import { timingSafeEqual } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
+
+function digest(value) {
+  return createHash("sha256").update(String(value)).digest();
+}
 
 function constantTimeEqual(left, right) {
-  const a = Buffer.from(left);
-  const b = Buffer.from(right);
-  if (a.length !== b.length) return false;
-  return timingSafeEqual(a, b);
+  return timingSafeEqual(digest(left), digest(right));
 }
 
 export function requireFacebookAdmin(req, env = process.env) {
