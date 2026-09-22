@@ -6,6 +6,7 @@ import {
 import { query } from "../db/index.js";
 
 const GCM_AUTH_TAG_BYTES = 16;
+const TOKEN_AAD_PREFIX = "streetwise-meta-page-token:v1:";
 
 function configurationError(message) {
   const error = new Error(message);
@@ -34,7 +35,13 @@ function tokenEncryptionKey(env = process.env) {
   return key;
 }
 
-function encryptToken(token, env) {
+function tokenAad(pageId) {
+  const id = String(pageId || "").trim();
+  if (!/^\d+$/.test(id)) throw new Error("meta_page_id_invalid");
+  return Buffer.from(`${TOKEN_AAD_PREFIX}${id}`, "utf8");
+}
+
+function encryptToken(token, env, pageId) {
   const value = String(token || "").trim();
   if (value.length < 20) throw new Error("meta_page_token_invalid");
 
@@ -45,6 +52,7 @@ function encryptToken(token, env) {
     iv,
     { authTagLength: GCM_AUTH_TAG_BYTES }
   );
+  cipher.setAAD(tokenAad(pageId));
   const ciphertext = Buffer.concat([
     cipher.update(value, "utf8"),
     cipher.final()
@@ -66,6 +74,7 @@ function decryptToken(record, env) {
       Buffer.from(record.token_iv, "base64url"),
       { authTagLength: GCM_AUTH_TAG_BYTES }
     );
+    decipher.setAAD(tokenAad(record.page_id));
     decipher.setAuthTag(Buffer.from(record.token_tag, "base64url"));
     return Buffer.concat([
       decipher.update(Buffer.from(record.token_ciphertext, "base64url")),
@@ -95,7 +104,7 @@ export async function saveMetaPageConnection({
   const id = String(pageId || "").trim();
   if (!/^\d+$/.test(id)) throw new Error("meta_page_id_invalid");
 
-  const encrypted = encryptToken(pageToken, env);
+  const encrypted = encryptToken(pageToken, env, id);
   const safeTasks = normalizedTasks(tasks);
 
   await queryImpl(
