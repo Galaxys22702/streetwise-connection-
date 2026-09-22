@@ -78,6 +78,24 @@ test("metadata writes require their own second safety switch", async () => {
   );
 });
 
+test("empty website metadata is rejected before contacting Meta", async () => {
+  const service = createFacebookPageService({
+    env: {
+      ...baseEnv,
+      META_WRITES_ENABLED: "true",
+      META_METADATA_WRITES_ENABLED: "true"
+    },
+    fetchImpl: async () => {
+      throw new Error("network should not be reached");
+    }
+  });
+
+  await assert.rejects(
+    () => service.updatePage({ website: "" }),
+    /website_must_be_a_valid_url/
+  );
+});
+
 test("enabled post write targets the Page feed", async () => {
   let seen;
   const service = createFacebookPageService({
