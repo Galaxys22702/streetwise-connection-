@@ -4,7 +4,10 @@ import {
   timingSafeEqual
 } from "node:crypto";
 import { metaConfigurationStatus } from "../integrations/metaClient.js";
-import { saveMetaPageConnection } from "./facebookTokenStore.js";
+import {
+  metaTokenEncryptionKeyConfigured,
+  saveMetaPageConnection
+} from "./facebookTokenStore.js";
 
 const STATE_TTL_MS = 10 * 60 * 1000;
 const OAUTH_CALLBACK_PATH = "/api/admin/facebook/oauth/callback";
@@ -49,6 +52,7 @@ function oauthConfiguration(env = process.env) {
   const pageId = String(env.META_PAGE_ID || "").trim();
   const redirectUriRaw = String(env.META_OAUTH_REDIRECT_URI || "").trim();
   const graphVersion = metaConfigurationStatus(env).graphVersion;
+  const tokenEncryptionKeyReady = metaTokenEncryptionKeyConfigured(env);
 
   return {
     enabled,
@@ -59,13 +63,15 @@ function oauthConfiguration(env = process.env) {
     pageId,
     redirectUriRaw,
     graphVersion,
+    tokenEncryptionKeyReady,
     configured: Boolean(
       appId &&
       appSecret.length >= 16 &&
       configId &&
       stateSecret.length >= 32 &&
       /^\d+$/.test(pageId) &&
-      redirectUriRaw
+      redirectUriRaw &&
+      tokenEncryptionKeyReady
     )
   };
 }
@@ -238,7 +244,7 @@ export function metaOAuthStatus(env = process.env) {
     loginConfigConfigured: Boolean(config.configId),
     redirectUriConfigured: Boolean(config.redirectUriRaw),
     stateSecretConfigured: config.stateSecret.length >= 32,
-    tokenEncryptionKeyConfigured: Boolean(String(env.META_TOKEN_ENCRYPTION_KEY || "").trim())
+    tokenEncryptionKeyConfigured: config.tokenEncryptionKeyReady
   };
 }
 
