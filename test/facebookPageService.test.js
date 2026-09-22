@@ -184,6 +184,10 @@ test("post fields must be strings", async () => {
     () => service.createPost({ link: 123 }),
     /link_must_be_a_string/
   );
+  await assert.rejects(
+    () => service.createPost({ imageUrl: 123 }),
+    /imageUrl_must_be_a_string/
+  );
 });
 
 test("metadata fields must be strings and URLs cannot contain credentials", async () => {
@@ -232,6 +236,46 @@ test("enabled post write targets the Page feed", async () => {
   assert.equal(seen.options.method, "POST");
   assert.match(seen.options.body, /message=Streetwise\+test/);
   assert.match(seen.options.body, /streetwise-connection/);
+});
+
+test("enabled image post targets the Page photos endpoint", async () => {
+  let seen;
+  const service = createFacebookPageService({
+    env: { ...baseEnv, META_WRITES_ENABLED: "true" },
+    fetchImpl: async (url, options) => {
+      seen = { url: String(url), options };
+      return fakeResponse({ id: "987654321" });
+    }
+  });
+
+  const result = await service.createPost({
+    message: "Streetwise Connection",
+    imageUrl: "https://streetwise-connection.vercel.app/streetwise-mark.png"
+  });
+
+  assert.equal(result.id, "987654321");
+  assert.match(seen.url, /\/108798728689570\/photos$/);
+  assert.equal(seen.options.method, "POST");
+  assert.match(seen.options.body, /message=Streetwise\+Connection/);
+  assert.match(seen.options.body, /published=true/);
+  assert.match(seen.options.body, /streetwise-mark\.png/);
+});
+
+test("link and image URL cannot be combined in one Page post", async () => {
+  const service = createFacebookPageService({
+    env: { ...baseEnv, META_WRITES_ENABLED: "true" },
+    fetchImpl: async () => {
+      throw new Error("network should not be reached");
+    }
+  });
+
+  await assert.rejects(
+    () => service.createPost({
+      link: "https://streetwise-connection.vercel.app/",
+      imageUrl: "https://streetwise-connection.vercel.app/streetwise-mark.png"
+    }),
+    /link_and_image_url_are_mutually_exclusive/
+  );
 });
 
 test("invalid Meta access tokens are classified for reauthorization without leaking the token", async () => {
