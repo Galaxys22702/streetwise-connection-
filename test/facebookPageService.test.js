@@ -238,7 +238,7 @@ test("enabled post write targets the Page feed", async () => {
   assert.match(seen.options.body, /streetwise-connection/);
 });
 
-test("enabled image post targets the Page photos endpoint", async () => {
+test("enabled image post targets the Page photos endpoint with a caption", async () => {
   let seen;
   const service = createFacebookPageService({
     env: { ...baseEnv, META_WRITES_ENABLED: "true" },
@@ -256,7 +256,8 @@ test("enabled image post targets the Page photos endpoint", async () => {
   assert.equal(result.id, "987654321");
   assert.match(seen.url, /\/108798728689570\/photos$/);
   assert.equal(seen.options.method, "POST");
-  assert.match(seen.options.body, /message=Streetwise\+Connection/);
+  assert.match(seen.options.body, /caption=Streetwise\+Connection/);
+  assert.doesNotMatch(seen.options.body, /(?:^|&)message=/);
   assert.match(seen.options.body, /published=true/);
   assert.match(seen.options.body, /streetwise-mark\.png/);
 });
