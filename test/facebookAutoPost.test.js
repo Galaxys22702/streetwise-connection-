@@ -24,7 +24,10 @@ test("auto-post content covers a full day without duplicate half-hour captions",
   for (const message of STREETWISE_AUTO_POST_MESSAGES) {
     assert.match(message, /Streetwise Connection/i);
     assert.match(message, /https:\/\/streetwise-connection\.vercel\.app\//);
-    assert.doesNotMatch(message, /\b(?:live now|available now|unlimited|guaranteed)\b/i);
+    assert.doesNotMatch(
+      message,
+      /\b(?:live now|available now|unlimited|guaranteed|no dead zones|never lose signal)\b/i
+    );
   }
 });
 
