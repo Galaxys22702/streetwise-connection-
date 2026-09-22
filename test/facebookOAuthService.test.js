@@ -9,7 +9,7 @@ const baseEnv = {
   META_APP_ID: "123456789012345",
   META_APP_SECRET: "meta-app-secret-long-enough",
   META_LOGIN_CONFIG_ID: "987654321098765",
-  META_OAUTH_REDIRECT_URI: "https://streetwise.example/api/facebook/oauth/callback",
+  META_OAUTH_REDIRECT_URI: "https://streetwise.example/api/admin/facebook/oauth/callback",
   META_OAUTH_STATE_SECRET: "state-secret-that-is-at-least-thirty-two-characters",
   META_TOKEN_ENCRYPTION_KEY: "22".repeat(32)
 };
@@ -40,6 +40,21 @@ test("OAuth authorization URL uses Meta Business Login configuration and signed 
   assert.equal(url.searchParams.get("response_type"), "code");
   assert.equal(url.searchParams.has("client_secret"), false);
   assert.match(url.searchParams.get("state"), /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/);
+});
+
+test("OAuth refuses a redirect URI outside the dedicated Streetwise callback path", () => {
+  const service = createFacebookOAuthService({
+    env: {
+      ...baseEnv,
+      META_OAUTH_REDIRECT_URI: "https://streetwise.example/not-the-callback"
+    },
+    fetchImpl: async () => response({})
+  });
+
+  assert.throws(
+    () => service.authorizationUrl(),
+    /meta_oauth_redirect_uri_must_match_callback_path/
+  );
 });
 
 test("OAuth callback exchanges the code, finds only the configured Page and stores its Page token", async () => {
