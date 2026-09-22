@@ -50,6 +50,7 @@ test("unknown Facebook admin routes return 404 without invoking authentication",
   assert.equal(result.status, 404);
   assert.deepEqual(result.payload, { error: "not_found" });
   assert.equal(authenticated, false);
+  assert.equal(args.res.headers["cache-control"], "no-store");
 });
 
 test("Facebook posts endpoint advertises only its supported methods", async () => {
@@ -60,6 +61,7 @@ test("Facebook posts endpoint advertises only its supported methods", async () =
   assert.equal(result.status, 405);
   assert.deepEqual(result.payload, { error: "method_not_allowed" });
   assert.equal(args.res.headers.allow, "GET, POST");
+  assert.equal(args.res.headers["cache-control"], "no-store");
 });
 
 test("Facebook page endpoint advertises GET and PATCH only", async () => {
@@ -83,6 +85,7 @@ test("Facebook status route remains protected", async () => {
 
   assert.equal(result.status, 401);
   assert.deepEqual(result.payload, { error: "facebook_admin_authentication_required" });
+  assert.equal(args.res.headers["cache-control"], "no-store");
 });
 
 test("Facebook post creation passes the parsed request body to the service", async () => {
@@ -99,4 +102,5 @@ test("Facebook post creation passes the parsed request body to the service", asy
   assert.equal(result.status, 201);
   assert.deepEqual(receivedBody, { message: "Streetwise test" });
   assert.deepEqual(result.payload, { post: { id: "123_456" } });
+  assert.equal(args.res.headers["cache-control"], "no-store");
 });
