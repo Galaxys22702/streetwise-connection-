@@ -202,7 +202,7 @@ test("enabled post write targets the Page feed", async () => {
   assert.match(seen.options.body, /streetwise-connection/);
 });
 
-test("Graph errors do not leak the configured access token", async () => {
+test("invalid Meta access tokens are classified for reauthorization without leaking the token", async () => {
   const service = createFacebookPageService({
     env: { ...baseEnv },
     fetchImpl: async () =>
@@ -220,7 +220,40 @@ test("Graph errors do not leak the configured access token", async () => {
     error => {
       assert.equal(error.message.includes(baseEnv.META_PAGE_ACCESS_TOKEN), false);
       assert.match(error.message, /\[REDACTED\]/);
+      assert.equal(error.statusCode, 503);
+      assert.equal(error.metaPublicCode, "meta_reauthorization_required");
+      assert.equal(error.metaCode, 190);
       return true;
     }
   );
+});
+
+test("Meta permission and rate-limit failures receive safe recovery classifications", async () => {
+  for (const scenario of [
+    { code: 200, status: 400, localStatus: 503, publicCode: "meta_permission_required" },
+    { code: 283, status: 400, localStatus: 503, publicCode: "meta_permission_required" },
+    { code: 80001, status: 400, localStatus: 429, publicCode: "meta_rate_limited" }
+  ]) {
+    const service = createFacebookPageService({
+      env: { ...baseEnv },
+      fetchImpl: async () =>
+        fakeResponse({
+          error: {
+            code: scenario.code,
+            type: "OAuthException",
+            message: "provider detail that should stay internal"
+          }
+        }, scenario.status)
+    });
+
+    await assert.rejects(
+      () => service.getPage(),
+      error => {
+        assert.equal(error.statusCode, scenario.localStatus);
+        assert.equal(error.metaPublicCode, scenario.publicCode);
+        assert.equal(error.metaCode, scenario.code);
+        return true;
+      }
+    );
+  }
 });
