@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM node:24-alpine AS builder
+FROM node:25-alpine AS builder
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
@@ -21,7 +21,7 @@ RUN node --check src/server.js \
  && node --check src/providers/esimGoWebhook.js \
  && npm test
 
-FROM node:24-alpine AS production
+FROM node:25-alpine AS production
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
