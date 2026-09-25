@@ -1,6 +1,6 @@
 # Streetwise Connection — Documentation Map
 
-Last reviewed: **2026-09-15**
+Last reviewed: **2026-09-25**
 
 Use this file as the starting point for repository documentation. `PROJECT_STATUS.md` is the current readiness source of truth; historical planning documents must not override newer evidence.
 
@@ -21,6 +21,7 @@ Use this file as the starting point for repository documentation. `PROJECT_STATU
 - [Open Network Technology](./OPEN_NETWORK_TECHNOLOGY.md) — network-technology research and constraints
 - [Customer Dashboard](./CUSTOMER_DASHBOARD.md) — planned customer experience
 - [Accounts & Payments](./ACCOUNTS_AND_PAYMENTS.md) — account/payment architecture
+- [Financial Readiness](./FINANCIAL_READINESS.md) — pricing, cost evidence, unit economics, reserves, and launch-capital gate
 
 ## Provider work
 
