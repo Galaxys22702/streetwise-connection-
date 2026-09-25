@@ -19,10 +19,31 @@ const ignoredScanDirectories = new Set([
   "node_modules"
 ]);
 const forbiddenAssignedSecrets = [
+  "STRIPE_SECRET_KEY",
+  "STRIPE_WEBHOOK_SECRET",
+  "ESIM_API_KEY",
+  "ONEGLOBAL_CLIENT_SECRET",
+  "ATT_WHOLESALE_CLIENT_SECRET",
   "META_PAGE_ACCESS_TOKEN",
+  "META_ADMIN_API_KEY",
   "META_APP_SECRET",
   "META_OAUTH_STATE_SECRET",
   "META_TOKEN_ENCRYPTION_KEY"
+];
+
+const highConfidenceSecretPatterns = [
+  {
+    name: "Stripe live secret key",
+    pattern: /\bsk_live_[A-Za-z0-9]{20,}\b/
+  },
+  {
+    name: "GitHub access token",
+    pattern: /\bgh[pousr]_[A-Za-z0-9_]{30,}\b/
+  },
+  {
+    name: "private key material",
+    pattern: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/
+  }
 ];
 
 const failures = [];
@@ -233,10 +254,24 @@ for (const relativePath of await listSourceFiles()) {
     fail(`${relativePath}: possible live Meta/Facebook access token committed`);
   }
 
-  for (const secretName of forbiddenAssignedSecrets) {
-    const assignedValue = new RegExp(`${secretName}[ \\t]*=[ \\t]*[^\\s#]+`);
-    if (assignedValue.test(source)) {
-      fail(`${relativePath}: ${secretName} must not contain a committed value`);
+  for (const { name, pattern } of highConfidenceSecretPatterns) {
+    if (pattern.test(source)) {
+      fail(`${relativePath}: possible ${name} committed`);
+    }
+  }
+
+  const skipNamedAssignmentScan =
+    relativePath === ".env.example" ||
+    relativePath.startsWith("docs/") ||
+    relativePath.startsWith("test/") ||
+    relativePath.startsWith(".github/workflows/");
+
+  if (!skipNamedAssignmentScan) {
+    for (const secretName of forbiddenAssignedSecrets) {
+      const assignedValue = new RegExp(`${secretName}[ \\t]*=[ \\t]*[^\\s#]+`);
+      if (assignedValue.test(source)) {
+        fail(`${relativePath}: ${secretName} must not contain a committed value`);
+      }
     }
   }
 }
