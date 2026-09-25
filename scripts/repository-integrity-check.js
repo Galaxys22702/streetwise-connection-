@@ -85,6 +85,20 @@ for (const name of workflowFiles) {
   }
 }
 
+const cleanupWorkflow = await readFile(
+  path.join(root, ".github", "workflows", "cleanup-merged-branches.yml"),
+  "utf8"
+);
+if (!cleanupWorkflow.includes("github.ref == 'refs/heads/main'")) {
+  fail("branch cleanup write job must be restricted to refs/heads/main before it receives write permissions");
+}
+if (!cleanupWorkflow.includes("persist-credentials: false")) {
+  fail("branch cleanup preview job must not persist Git credentials");
+}
+if (!cleanupWorkflow.includes('CLEANUP_MIN_AGE_DAYS: "7"')) {
+  fail("branch cleanup workflow must retain the seven-day cooling-off period");
+}
+
 const facebookAutoPostWorkflow = await readFile(
   path.join(workflowsDir, "facebook-auto-post.yml"),
   "utf8"
@@ -122,6 +136,25 @@ if (Array.isArray(ruleset.bypass_actors) && ruleset.bypass_actors.length) {
   fail("documented native main ruleset must not define broad bypass actors");
 }
 
+if (ruleset.name !== "Protect main") {
+  fail("documented native main ruleset must remain named Protect main");
+}
+if (ruleset.target !== "branch") {
+  fail("documented native main ruleset must target branches");
+}
+const includedRefs = ruleset.conditions?.ref_name?.include || [];
+const excludedRefs = ruleset.conditions?.ref_name?.exclude || [];
+if (
+  includedRefs.length !== 1 ||
+  includedRefs[0] !== "refs/heads/main" ||
+  excludedRefs.length !== 0
+) {
+  fail("documented native main ruleset must target only refs/heads/main");
+}
+if (!Array.isArray(ruleset.bypass_actors) || ruleset.bypass_actors.length !== 0) {
+  fail("documented native main ruleset must not grant bypass actors");
+}
+
 const ruleByType = new Map((ruleset.rules || []).map(rule => [rule.type, rule]));
 for (const type of ["deletion", "non_fast_forward", "required_linear_history", "pull_request", "required_status_checks"]) {
   if (!ruleByType.has(type)) {
@@ -134,10 +167,44 @@ if (pullRequestRule?.parameters?.required_approving_review_count !== 0) {
   fail("single-maintainer main ruleset must use zero mandatory approving reviews");
 }
 
+const prParameters = pullRequestRule?.parameters || {};
+if (prParameters.dismiss_stale_reviews_on_push !== true) {
+  fail("documented main ruleset must dismiss stale reviews after new pushes");
+}
+if (prParameters.required_review_thread_resolution !== true) {
+  fail("documented main ruleset must require review conversations to be resolved");
+}
+if (prParameters.require_code_owner_review !== false) {
+  fail("documented solo-maintainer policy must not require code-owner approval");
+}
+if (prParameters.require_last_push_approval !== false) {
+  fail("documented solo-maintainer policy must not require last-push approval");
+}
+if (prParameters.require_extra_approval_for_unattributed_changes !== false) {
+  fail("documented solo-maintainer policy must not require unattributed-change approval");
+}
+const allowedMergeMethods = new Set(prParameters.allowed_merge_methods || []);
+if (
+  allowedMergeMethods.size !== 2 ||
+  !allowedMergeMethods.has("squash") ||
+  !allowedMergeMethods.has("rebase") ||
+  allowedMergeMethods.has("merge")
+) {
+  fail("documented main ruleset must allow only squash and rebase merges");
+}
+
 const statusRule = ruleByType.get("required_status_checks");
 if (statusRule?.parameters?.strict_required_status_checks_policy !== true) {
   fail("main ruleset must keep strict required status checks enabled");
 }
+if (statusRule?.parameters?.do_not_enforce_on_create !== false) {
+  fail("documented main ruleset must enforce required checks on created refs");
+}
+const configuredStatusChecks = statusRule?.parameters?.required_status_checks || [];
+if (configuredStatusChecks.length !== 4) {
+  fail("documented main ruleset has an unexpected number of required status checks");
+}
+
 const requiredChecks = new Map(
   (statusRule?.parameters?.required_status_checks || []).map(check => [check.context, check.integration_id])
 );
