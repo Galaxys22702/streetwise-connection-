@@ -174,6 +174,7 @@ export default async function handler(req, res) {
       enforceRateLimit(req, { scope: "auth_register", maxAttempts: 5 });
       return sendJson(res, 201, await registerUser(await readJsonBody(req)));
     } catch (error) {
+      if (error.retryAfterSeconds) res.setHeader("retry-after", String(error.retryAfterSeconds));
       return sendError(res, error);
     }
   }
@@ -183,6 +184,7 @@ export default async function handler(req, res) {
       enforceRateLimit(req, { scope: "auth_login", maxAttempts: 10 });
       return sendJson(res, 200, await loginUser(await readJsonBody(req)));
     } catch (error) {
+      if (error.retryAfterSeconds) res.setHeader("retry-after", String(error.retryAfterSeconds));
       return sendError(res, error);
     }
   }
