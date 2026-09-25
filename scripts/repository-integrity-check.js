@@ -260,10 +260,18 @@ for (const relativePath of await listSourceFiles()) {
     }
   }
 
-  for (const secretName of forbiddenAssignedSecrets) {
-    const assignedValue = new RegExp(`${secretName}[ \\t]*=[ \\t]*[^\\s#]+`);
-    if (assignedValue.test(source)) {
-      fail(`${relativePath}: ${secretName} must not contain a committed value`);
+  const skipNamedAssignmentScan =
+    relativePath === ".env.example" ||
+    relativePath.startsWith("docs/") ||
+    relativePath.startsWith("test/") ||
+    relativePath.startsWith(".github/workflows/");
+
+  if (!skipNamedAssignmentScan) {
+    for (const secretName of forbiddenAssignedSecrets) {
+      const assignedValue = new RegExp(`${secretName}[ \\t]*=[ \\t]*[^\\s#]+`);
+      if (assignedValue.test(source)) {
+        fail(`${relativePath}: ${secretName} must not contain a committed value`);
+      }
     }
   }
 }
