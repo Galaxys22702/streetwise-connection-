@@ -6,6 +6,10 @@ const apiSource = await readFile(
   new URL("../api/[...path].js", import.meta.url),
   "utf8"
 );
+const nodeServerSource = await readFile(
+  new URL("../src/server.js", import.meta.url),
+  "utf8"
+);
 
 test("Vercel eSIM detail routes pass authenticated user context", () => {
   assert.match(
@@ -34,4 +38,18 @@ test("Vercel authentication routes enforce the same abuse limits as Node", () =>
     apiSource,
     /\/api\/auth\/login"[\s\S]*?enforceRateLimit\(req,\s*\{\s*scope:\s*"auth_login",\s*maxAttempts:\s*10\s*\}\)/
   );
+});
+
+
+test("authentication throttling returns Retry-After in Node and Vercel runtimes", () => {
+  for (const source of [nodeServerSource, apiSource]) {
+    assert.match(
+      source,
+      /\/api\/auth\/register"[\s\S]*?retryAfterSeconds[\s\S]*?setHeader\("retry-after"/
+    );
+    assert.match(
+      source,
+      /\/api\/auth\/login"[\s\S]*?retryAfterSeconds[\s\S]*?setHeader\("retry-after"/
+    );
+  }
 });
