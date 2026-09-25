@@ -30,6 +30,7 @@ import {
 import { handleEsimGoWebhook } from "../src/services/esimWebhookService.js";
 import { buildHealthStatus } from "../src/services/healthService.js";
 import { enforceWaitlistRateLimit } from "../src/services/waitlistRateLimit.js";
+import { enforceRateLimit } from "../src/services/requestRateLimit.js";
 import { joinWaitlist, waitlistStatus } from "../src/services/waitlistService.js";
 import { handleFacebookAdminApi } from "../src/services/facebookAdminApi.js";
 
@@ -170,6 +171,7 @@ export default async function handler(req, res) {
 
   if (req.method === "POST" && url.pathname === "/api/auth/register") {
     try {
+      enforceRateLimit(req, { scope: "auth_register", maxAttempts: 5 });
       return sendJson(res, 201, await registerUser(await readJsonBody(req)));
     } catch (error) {
       return sendError(res, error);
@@ -178,6 +180,7 @@ export default async function handler(req, res) {
 
   if (req.method === "POST" && url.pathname === "/api/auth/login") {
     try {
+      enforceRateLimit(req, { scope: "auth_login", maxAttempts: 10 });
       return sendJson(res, 200, await loginUser(await readJsonBody(req)));
     } catch (error) {
       return sendError(res, error);
