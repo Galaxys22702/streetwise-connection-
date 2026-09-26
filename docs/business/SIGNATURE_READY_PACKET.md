@@ -99,7 +99,7 @@ Date: ______________________________
 
 ## 6. Provider commercial onboarding declaration
 
-Streetwise Connection LLC seeks an AT&T-approved reseller/wholesale path as its primary domestic provider strategy, with 1GLOBAL retained as fallback. The intended service includes recurring U.S. cellular connectivity for residential and small-business customers, subject to written approval. The customer experience may include plan selection, compatibility guidance, SIM/eSIM provisioning, voice, SMS, phone-number features, hotspot, account support, security-focused controls and roaming where the selected provider agreement permits them.
+Streetwise Connection LLC is evaluating AT&T and 1GLOBAL in parallel as domestic commercial provider candidates. Neither is treated as selected or approved until written commercial, pricing, regulatory, and technical evidence supports that decision. The intended service includes recurring U.S. cellular connectivity for residential and small-business customers, subject to written approval. The customer experience may include plan selection, compatibility guidance, SIM/eSIM provisioning, voice, SMS, phone-number features, hotspot, account support, security-focused controls and roaming where the selected provider agreement permits them.
 
 Requested written provider confirmations before launch:
 

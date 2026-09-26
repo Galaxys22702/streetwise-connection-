@@ -1,6 +1,6 @@
 # Accounts, PostgreSQL, and Payments
 
-Streetwise Connection 0.3 adds the minimum account and payment foundation required before live eSIM provisioning.
+Streetwise Connection 0.4 adds the minimum account and payment foundation required before live eSIM provisioning.
 
 ## 1. PostgreSQL
 
@@ -108,11 +108,11 @@ Authorization: Bearer SESSION_TOKEN
 Content-Type: application/json
 
 {
-  "planId": "starter-10"
+  "planId": "residential-home-25"
 }
 ```
 
-The server returns a hosted Checkout URL.
+The server returns a hosted Checkout URL. Current planning plan IDs are `residential-home-25`, `business-starter-20`, `business-volume-15`, and `business-pro-30`. These remain planning offers only until provider economics and commercial launch gates pass.
 
 ## 5. Stripe webhook
 
