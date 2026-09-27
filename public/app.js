@@ -2,6 +2,7 @@ const waitlistForm = document.querySelector("#waitlist-form");
 const waitlistSubmit = document.querySelector("#waitlist-submit");
 const waitlistResult = document.querySelector("#waitlist-result");
 const waitlistContact = document.querySelector("#waitlist-contact");
+const waitlistStatus = document.querySelector("#waitlist-status");
 let consentVersion = "";
 
 function setWaitlistOpen(open, message, updateMessage = true) {
@@ -18,7 +19,9 @@ async function loadPublicStatus({ updateMessage = true } = {}) {
 
   const waitlist = data.waitlist || {};
   consentVersion = String(waitlist.consentVersion || "");
-  setWaitlistOpen(Boolean(waitlist.open), String(waitlist.message || "Waitlist status is unavailable."), updateMessage);
+  const isOpen = Boolean(waitlist.open);
+  setWaitlistOpen(isOpen, String(waitlist.message || "Waitlist status is unavailable."), updateMessage);
+  if (waitlistStatus) waitlistStatus.textContent = isOpen ? "Open" : "Closed";
 
   if (waitlist.supportEmail) {
     waitlistContact.hidden = false;
@@ -57,5 +60,6 @@ waitlistForm.addEventListener("submit", async (event) => {
 });
 
 loadPublicStatus().catch(() => {
+  if (waitlistStatus) waitlistStatus.textContent = "Unavailable";
   setWaitlistOpen(false, "The waitlist is temporarily unavailable. Please check back soon.");
 });
