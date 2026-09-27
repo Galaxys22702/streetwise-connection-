@@ -71,7 +71,7 @@
           </div>
           <strong>Building it right</strong>
           <div class="status-row"><span>Opening target</span><b>Jan 1, 2027</b></div>
-          <div class="status-row"><span>Waitlist</span><b>Status checked live</b></div>
+          <div class="status-row"><span>Waitlist</span><b id="waitlist-status">Checking…</b></div>
           <div class="status-row"><span>Public sales</span><b class="locked">Locked</b></div>
         </div>
       </div>
@@ -226,13 +226,13 @@
         <p class="fine-print">Planned public opening: January 1, 2027, subject to provider, legal, regulatory, security and launch-readiness gates. No checkout, payment, line activation, phone-number transfer or live eSIM order is available today.</p>
         <p id="waitlist-contact" class="result" hidden></p>
       </div>
-      <form id="waitlist-form" class="waitlist-form">
+      <form id="waitlist-form" class="waitlist-form" aria-describedby="waitlist-result">
         <div class="form-heading">
           <span>Streetwise access</span>
           <strong>Join the waitlist</strong>
         </div>
         <label for="waitlist-email">Email address</label>
-        <input id="waitlist-email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" required />
+        <input id="waitlist-email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" maxlength="254" required />
         <label class="consent">
           <input name="consent" type="checkbox" required />
           <span>I agree to receive Streetwise Connection launch updates and have read the <a href="/waitlist-privacy.html">waitlist privacy notice</a>.</span>
