@@ -35,12 +35,14 @@ export function createJarvis({ registry, policy, audit, memory }) {
         return { ok: false, requestId: request.requestId, error: "invalid_tool_input" };
       }
 
-      const result = await tool.execute(request.input, {
+      const executionContext = Object.freeze({
         requestId: request.requestId,
         actorId: request.actorId,
-        memory,
-        metadata: request.metadata
+        environment,
+        memory
       });
+
+      const result = await tool.execute(request.input, executionContext);
 
       if (tool.validateResult && (await tool.validateResult(result)) !== true) {
         audit.record({
@@ -62,7 +64,7 @@ export function createJarvis({ registry, policy, audit, memory }) {
         ok: true
       });
       return { ok: true, requestId: request.requestId, result };
-    } catch (error) {
+    } catch {
       audit.record({
         type: "tool_execution",
         requestId: request.requestId,
@@ -70,7 +72,7 @@ export function createJarvis({ registry, policy, audit, memory }) {
         capability: tool.id,
         riskTier: tool.riskTier,
         ok: false,
-        error: error instanceof Error ? error.message : "tool_execution_failed"
+        errorCode: "tool_execution_failed"
       });
       return { ok: false, requestId: request.requestId, error: "tool_execution_failed" };
     }
