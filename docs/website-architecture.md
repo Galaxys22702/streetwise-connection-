@@ -88,3 +88,10 @@ Supabase can provide the database/authentication/storage layer, while Vercel can
 ## Existing cellular foundation
 
 Existing cellular/eSIM functionality remains isolated behind product/provider gates. It should not dominate the public technology-services website until the cellular product is independently validated and intentionally launched.
+
+
+## Implemented foundation
+
+The current rebuild includes a public `/request-service.html` intake form and a protected application-server endpoint at `POST /api/service-requests`. Requests are stored in the `service_requests` table through the existing PostgreSQL application connection. The public form intentionally excludes passwords, authentication codes, payment-card data, SSNs, and identity-document numbers.
+
+The existing cellular/eSIM foundation remains in the same repository and is not part of the public service-request catalogue.
