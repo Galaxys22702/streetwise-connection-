@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#040816" />
+  <meta name="description" content="Request technology, connectivity, cybersecurity, or small-business IT support from Streetwise Connection." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://streetwise-connection.vercel.app/request-service.html" />
+  <title>Request Service | Streetwise Connection</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .request-shell { max-width: 980px; margin: 0 auto; padding: 72px 24px 96px; }
+    .request-form { display: grid; gap: 18px; margin-top: 36px; }
+    .request-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .request-field { display: grid; gap: 8px; }
+    .request-field.full { grid-column: 1 / -1; }
+    .request-field label { font-weight: 700; }
+    .request-field input, .request-field select, .request-field textarea {
+      width: 100%; box-sizing: border-box; padding: 14px 15px; border: 1px solid rgba(255,255,255,.18);
+      border-radius: 10px; background: rgba(4,8,22,.75); color: inherit; font: inherit;
+    }
+    .request-field textarea { min-height: 150px; resize: vertical; }
+    .request-note { font-size: .92rem; opacity: .78; }
+    .request-result { padding: 14px 0; min-height: 24px; }
+    @media (max-width: 700px) { .request-grid { grid-template-columns: 1fr; } .request-field.full { grid-column: auto; } }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a class="brand" href="/" aria-label="Streetwise Connection home">
+        <span class="brand-icon"><img src="/streetwise-mark.png" alt="" /></span>
+        <span class="brand-name"><strong>Streetwise</strong><small>Connection℠</small></span>
+      </a>
+      <a class="text-link" href="/">← Home</a>
+    </nav>
+  </header>
+
+  <main class="request-shell">
+    <p class="eyebrow">Streetwise Connection</p>
+    <h1>Request Service</h1>
+    <p class="lead">Tell us what you need. We will review the request, confirm the scope, and provide the next step before paid work begins.</p>
+
+    <form id="service-request-form" class="request-form">
+      <div class="request-grid">
+        <div class="request-field">
+          <label for="name">Name</label>
+          <input id="name" name="name" autocomplete="name" maxlength="120" required />
+        </div>
+        <div class="request-field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" autocomplete="email" maxlength="254" required />
+        </div>
+        <div class="request-field">
+          <label for="phone">Phone <span class="request-note">(optional)</span></label>
+          <input id="phone" name="phone" type="tel" autocomplete="tel" maxlength="40" />
+        </div>
+        <div class="request-field">
+          <label for="customerType">Customer type</label>
+          <select id="customerType" name="customerType" required>
+            <option value="">Select one</option>
+            <option value="residential">Individual / household</option>
+            <option value="commercial">Business / organisation</option>
+          </select>
+        </div>
+        <div class="request-field">
+          <label for="division">Service area</label>
+          <select id="division" name="division" required>
+            <option value="">Select one</option>
+            <option value="connect">Connect</option>
+            <option value="support">Support</option>
+            <option value="secure">Secure</option>
+            <option value="business">Business</option>
+          </select>
+        </div>
+        <div class="request-field">
+          <label for="service">Service</label>
+          <select id="service" name="service" required disabled>
+            <option value="">Choose a service area first</option>
+          </select>
+        </div>
+        <div class="request-field">
+          <label for="deliveryPreference">Delivery</label>
+          <select id="deliveryPreference" name="deliveryPreference" required>
+            <option value="no-preference">No preference</option>
+            <option value="remote">Remote</option>
+            <option value="on-site">On-site</option>
+          </select>
+        </div>
+        <div class="request-field">
+          <label for="preferredContactTime">Preferred contact time <span class="request-note">(optional)</span></label>
+          <input id="preferredContactTime" name="preferredContactTime" maxlength="120" placeholder="e.g. weekday evenings" />
+        </div>
+        <div class="request-field full">
+          <label for="description">What do you need help with?</label>
+          <textarea id="description" name="description" minlength="10" maxlength="4000" required placeholder="Describe the problem, setup, or technology goal. Do not include passwords, authentication codes, payment-card data, or identity-document numbers."></textarea>
+        </div>
+      </div>
+      <p class="request-note">Only provide information needed to understand the service request. Streetwise will never need your passwords or authentication codes to receive this form.</p>
+      <button class="button" type="submit" id="service-request-submit">Submit service request ↗</button>
+      <div id="service-request-result" class="request-result" aria-live="polite"></div>
+    </form>
+  </main>
+
+  <script type="module" src="/request-service.js"></script>
+</body>
+</html>
