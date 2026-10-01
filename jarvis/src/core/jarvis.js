@@ -1,7 +1,9 @@
 import { createRequest } from "../types.js";
 
 export function createJarvis({ registry, policy, audit, memory }) {
-  if (!registry || !policy || !audit || !memory) throw new TypeError("registry, policy, audit and memory are required");
+  if (!registry || !policy || !audit || !memory) {
+    throw new TypeError("registry, policy, audit and memory are required");
+  }
 
   async function run(input) {
     const request = createRequest(input);
@@ -24,15 +26,22 @@ export function createJarvis({ registry, policy, audit, memory }) {
     }
 
     try {
-      if (tool.validateInput) {\n        const validation = await tool.validateInput(request.input);\n        if (validation !== true && validation?.valid !== true) {
-        audit.record({
-          type: "input_validation",
-          requestId: request.requestId,
-          actorId: request.actorId,
-          capability: tool.id,
-          ok: false
-        });
-        return { ok: false, requestId: request.requestId, error: "invalid_tool_input" };
+      if (tool.validateInput) {
+        const validation = await tool.validateInput(request.input);
+        if (validation !== true && validation?.valid !== true) {
+          audit.record({
+            type: "input_validation",
+            requestId: request.requestId,
+            actorId: request.actorId,
+            capability: tool.id,
+            ok: false
+          });
+          return {
+            ok: false,
+            requestId: request.requestId,
+            error: validation?.reason || "invalid_tool_input"
+          };
+        }
       }
 
       const executionContext = Object.freeze({
