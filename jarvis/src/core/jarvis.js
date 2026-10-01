@@ -7,23 +7,7 @@ export function createJarvis({ registry, policy, audit, memory }) {
     const request = createRequest(input);
     const tool = registry.get(request.capability);
     const environment = request.metadata.environment || "development";
-    const approved = request.metadata.approved === true;
-    const validation = typeof tool.validateInput === "function" ? tool.validateInput(request.input) : { valid: true };
-    if (!validation || validation.valid !== true) {
-      const reason = validation?.reason || "invalid_input";
-      audit.record({
-        type: "input_validation",
-        requestId: request.requestId,
-        actorId: request.actorId,
-        capability: request.capability,
-        riskTier: tool.riskTier,
-        allowed: false,
-        reason
-      });
-      return { ok: false, requestId: request.requestId, error: reason };
-    }
-
-    const decision = policy.evaluate({ request, tool, approved, environment });
+    const decision = await policy.evaluate({ request, tool, environment });
 
     audit.record({
       type: "policy_decision",
@@ -40,12 +24,35 @@ export function createJarvis({ registry, policy, audit, memory }) {
     }
 
     try {
+      if (tool.validateInput && (await tool.validateInput(request.input)) !== true) {
+        audit.record({
+          type: "input_validation",
+          requestId: request.requestId,
+          actorId: request.actorId,
+          capability: tool.id,
+          ok: false
+        });
+        return { ok: false, requestId: request.requestId, error: "invalid_tool_input" };
+      }
+
       const result = await tool.execute(request.input, {
         requestId: request.requestId,
         actorId: request.actorId,
         memory,
         metadata: request.metadata
       });
+
+      if (tool.validateResult && (await tool.validateResult(result)) !== true) {
+        audit.record({
+          type: "result_validation",
+          requestId: request.requestId,
+          actorId: request.actorId,
+          capability: tool.id,
+          ok: false
+        });
+        return { ok: false, requestId: request.requestId, error: "invalid_tool_result" };
+      }
+
       audit.record({
         type: "tool_execution",
         requestId: request.requestId,
