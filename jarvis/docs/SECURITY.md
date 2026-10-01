@@ -7,15 +7,15 @@ Jarvis must preserve the security controls already required by Streetwise Connec
 ### Rules
 
 1. Never commit API keys, passwords, tokens, private keys, database credentials, or service-role credentials.
-2. Never expose secrets through model context unless a specific integration requires it and the exposure is authorised.
-3. Treat tool input as untrusted.
-4. Validate tool arguments at the boundary.
-5. Apply least privilege to every tool.
-6. Require explicit authorisation for consequential actions.
-7. Keep production credentials separate from development and laboratory credentials.
-8. Preserve the existing waitlist-only launch state until the documented Streetwise launch gates pass.
-9. Never use Jarvis to bypass provider, billing, regulatory, security, or approval controls.
-10. Record security-relevant actions in an auditable form without logging secret values.
+2. Treat all request input and request metadata as untrusted.
+3. Validate tool input before execution and validate tool output before returning it when a validator is defined.
+4. Apply least privilege to every tool.
+5. Consequential actions require approval from a trusted approval boundary. A request cannot authorise itself merely by setting an `approved` flag.
+6. Keep production credentials separate from development and laboratory credentials.
+7. Preserve the existing waitlist-only launch state until the documented Streetwise launch gates pass.
+8. Never use Jarvis to bypass provider, billing, regulatory, security, or approval controls.
+9. Record security-relevant actions without storing credential-like values, including nested credential fields.
+10. Fail closed when identity, permissions, environment, validation, or approval verification is ambiguous or unavailable.
 
 ## Risk tiers
 
@@ -27,17 +27,33 @@ Examples: health/status checks, documentation lookup, non-sensitive configuratio
 
 Examples: creating a development issue, updating non-production documentation, or changing a development setting.
 
+These require trusted approval by default.
+
 ### Tier 2: Operational changes
 
 Examples: modifying production configuration or customer-impacting data.
 
-These require explicit authorisation and additional verification.
+These require trusted approval and additional verification.
 
 ### Tier 3: High-impact actions
 
 Examples: billing, provisioning, credential changes, account recovery, deletion, or actions with significant financial/customer impact.
 
-These should require explicit confirmation and a dedicated control path. They are not part of the initial foundation.
+These require a dedicated control path with explicit confirmation and stronger verification. They are not part of the initial foundation.
+
+## Approval boundary
+
+The Jarvis policy layer accepts an `approvalVerifier` supplied by the integration boundary. The verifier is responsible for deciding whether an approval is authentic, current, scoped to the requested capability, and bound to the intended actor/environment.
+
+Jarvis does not treat a boolean supplied by the request as proof of approval.
+
+## Tool boundary
+
+Tools may define `validateInput` and `validateResult` functions. Validation happens inside Jarvis immediately before execution and immediately after execution, respectively. A failed validator prevents the operation from being treated as successful.
+
+## Audit boundary
+
+Audit events are recursively sanitised for common credential-like field names. Secret values must never be supplied to audit events in the first place. Audit records should contain identifiers, outcomes, and safe metadata rather than credentials or raw provider responses.
 
 ## Fail-closed behaviour
 
