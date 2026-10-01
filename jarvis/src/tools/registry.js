@@ -7,6 +7,12 @@ export function createToolRegistry() {
     if (!Number.isInteger(tool.riskTier) || tool.riskTier < 0 || tool.riskTier > 3) {
       throw new TypeError("tool.riskTier must be an integer from 0 to 3");
     }
+    if (tool.validateInput !== undefined && typeof tool.validateInput !== "function") {
+      throw new TypeError("tool.validateInput must be a function");
+    }
+    if (tool.validateResult !== undefined && typeof tool.validateResult !== "function") {
+      throw new TypeError("tool.validateResult must be a function");
+    }
     if (tools.has(tool.id)) throw new Error(`tool_already_registered:${tool.id}`);
     tools.set(tool.id, Object.freeze({ ...tool }));
     return tool.id;
@@ -16,6 +22,6 @@ export function createToolRegistry() {
     register,
     get(id) { return tools.get(id); },
     has(id) { return tools.has(id); },
-    list() { return [...tools.values()].map(({ execute, ...tool }) => tool); }
+    list() { return [...tools.values()].map(({ execute, validateInput, validateResult, ...tool }) => tool); }
   });
 }
