@@ -7,7 +7,7 @@ export function createPricingTool({ catalogue }) {
     id: "commerce.pricing.get",
     description: "Return the authoritative storefront price for a published product.",
     riskTier: riskTiers.READ_ONLY,
-    productionEnabled: true,
+    productionEnabled: false,
     validateInput(input = {}) {
       return !!input && typeof input === "object" && !Array.isArray(input) &&
         typeof input.productId === "string" && input.productId.trim().length > 0;
