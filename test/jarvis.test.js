@@ -109,6 +109,27 @@ test("Jarvis validates tool input before execution", async () => {
   assert.equal(executed, false);
 });
 
+test("tool execution receives only trusted execution context", async () => {
+  let received;
+  const { jarvis } = buildJarvis({
+    id: "test.tool",
+    riskTier: riskTiers.READ_ONLY,
+    execute: async (_input, context) => {
+      received = context;
+      return "ok";
+    }
+  });
+
+  await jarvis.run({
+    actorId: "test",
+    capability: "test.tool",
+    metadata: { environment: "development", secret: "must-not-cross-boundary" }
+  });
+
+  assert.deepEqual(Object.keys(received).sort(), ["actorId", "environment", "memory", "requestId"]);
+  assert.equal("secret" in received, false);
+});
+
 test("Jarvis validates tool results before returning them", async () => {
   const { jarvis } = buildJarvis({
     id: "test.tool",
@@ -120,6 +141,22 @@ test("Jarvis validates tool results before returning them", async () => {
   const result = await jarvis.run({ actorId: "test", capability: "test.tool" });
 
   assert.equal(result.error, "invalid_tool_result");
+});
+
+test("tool failures return bounded errors without storing raw error messages", async () => {
+  const { jarvis, audit } = buildJarvis({
+    id: "test.tool",
+    riskTier: riskTiers.READ_ONLY,
+    execute: async () => {
+      throw new Error("provider secret=DO_NOT_STORE");
+    }
+  });
+
+  const result = await jarvis.run({ actorId: "test", capability: "test.tool" });
+
+  assert.equal(result.error, "tool_execution_failed");
+  assert.equal(audit.list().at(-1).errorCode, "tool_execution_failed");
+  assert.equal(audit.list().at(-1).error, undefined);
 });
 
 test("audit recursively redacts credential-like fields", () => {
