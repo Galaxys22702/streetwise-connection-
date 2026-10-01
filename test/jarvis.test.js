@@ -9,25 +9,33 @@ import {
   riskTiers
 } from "../jarvis/src/index.js";
 
-test("Jarvis executes an authorised read-only tool and audits the execution", async () => {
+function buildJarvis(tool, { permissions = ["test.tool"], approvalVerifier } = {}) {
   const registry = createToolRegistry();
-  registry.register({
-    id: "system.status",
+  registry.register(tool);
+  const audit = createAuditLog();
+  const jarvis = createJarvis({
+    registry,
+    policy: createPolicy({
+      permissions: { test: permissions },
+      approvalVerifier
+    }),
+    audit,
+    memory: createMemory()
+  });
+  return { jarvis, audit };
+}
+
+test("Jarvis executes an authorised read-only tool and audits the execution", async () => {
+  const { jarvis, audit } = buildJarvis({
+    id: "test.tool",
     riskTier: riskTiers.READ_ONLY,
     productionEnabled: true,
     execute: async () => ({ status: "ok" })
   });
-  const audit = createAuditLog();
-  const jarvis = createJarvis({
-    registry,
-    policy: createPolicy({ permissions: { rob: ["system.status"] } }),
-    audit,
-    memory: createMemory()
-  });
 
   const result = await jarvis.run({
-    actorId: "rob",
-    capability: "system.status",
+    actorId: "test",
+    capability: "test.tool",
     metadata: { environment: "production" }
   });
 
@@ -37,43 +45,92 @@ test("Jarvis executes an authorised read-only tool and audits the execution", as
 });
 
 test("Jarvis fails closed when a capability is not authorised", async () => {
-  const registry = createToolRegistry();
-  registry.register({ id: "device.restart", riskTier: riskTiers.OPERATIONAL, execute: async () => "restarted" });
-  const audit = createAuditLog();
-  const jarvis = createJarvis({
-    registry,
-    policy: createPolicy({ permissions: { rob: [] } }),
-    audit,
-    memory: createMemory()
-  });
+  const { jarvis, audit } = buildJarvis({
+    id: "device.restart",
+    riskTier: riskTiers.OPERATIONAL,
+    execute: async () => "restarted"
+  }, { permissions: [] });
 
-  const result = await jarvis.run({ actorId: "rob", capability: "device.restart" });
+  const result = await jarvis.run({ actorId: "test", capability: "device.restart" });
 
-  assert.deepEqual(result, { ok: false, requestId: result.requestId, error: "capability_not_authorized" });
+  assert.equal(result.ok, false);
+  assert.equal(result.error, "capability_not_authorized");
+  assert.equal(typeof result.requestId, "string");
   assert.equal(audit.list().at(-1).allowed, false);
 });
 
-test("Jarvis requires explicit approval for non-read-only actions", async () => {
-  const registry = createToolRegistry();
-  registry.register({ id: "account.change", riskTier: riskTiers.REVERSIBLE, execute: async () => "changed" });
-  const policy = createPolicy({ permissions: { rob: ["account.change"] } });
-  const audit = createAuditLog();
-  const jarvis = createJarvis({ registry, policy, audit, memory: createMemory() });
+test("Jarvis requires trusted approval for non-read-only actions", async () => {
+  let approvalCalls = 0;
+  const approvalVerifier = async ({ request }) => {
+    approvalCalls += 1;
+    return request.metadata.approvalTicket === "valid-ticket";
+  };
+  const { jarvis } = buildJarvis({
+    id: "test.tool",
+    riskTier: riskTiers.REVERSIBLE,
+    execute: async () => "changed"
+  }, { approvalVerifier });
 
-  const denied = await jarvis.run({ actorId: "rob", capability: "account.change" });
-  const approved = await jarvis.run({
-    actorId: "rob",
-    capability: "account.change",
+  const denied = await jarvis.run({
+    actorId: "test",
+    capability: "test.tool",
     metadata: { approved: true }
+  });
+  const approved = await jarvis.run({
+    actorId: "test",
+    capability: "test.tool",
+    metadata: { approvalTicket: "valid-ticket" }
   });
 
   assert.equal(denied.error, "approval_required");
   assert.equal(approved.ok, true);
+  assert.equal(approvalCalls, 2);
 });
 
-test("audit events do not retain credential-like fields", () => {
+test("Jarvis validates tool input before execution", async () => {
+  let executed = false;
+  const { jarvis } = buildJarvis({
+    id: "test.tool",
+    riskTier: riskTiers.READ_ONLY,
+    validateInput: input => typeof input === "object" && input.allowed === true,
+    execute: async () => {
+      executed = true;
+      return "ran";
+    }
+  });
+
+  const result = await jarvis.run({
+    actorId: "test",
+    capability: "test.tool",
+    input: { allowed: false }
+  });
+
+  assert.equal(result.error, "invalid_tool_input");
+  assert.equal(executed, false);
+});
+
+test("Jarvis validates tool results before returning them", async () => {
+  const { jarvis } = buildJarvis({
+    id: "test.tool",
+    riskTier: riskTiers.READ_ONLY,
+    execute: async () => ({ status: "unexpected" }),
+    validateResult: result => result.status === "ok"
+  });
+
+  const result = await jarvis.run({ actorId: "test", capability: "test.tool" });
+
+  assert.equal(result.error, "invalid_tool_result");
+});
+
+test("audit recursively redacts credential-like fields", () => {
   const audit = createAuditLog();
-  const event = audit.record({ type: "test", token: "not-for-storage", value: "safe" });
-  assert.equal("token" in event, false);
-  assert.equal(audit.list()[0].value, "safe");
+  const event = audit.record({
+    type: "test",
+    token: "not-for-storage",
+    nested: { apiKey: "secret", safe: "value" }
+  });
+
+  assert.equal(event.token, "[redacted]");
+  assert.equal(event.nested.apiKey, "[redacted]");
+  assert.equal(event.nested.safe, "value");
 });
