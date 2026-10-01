@@ -7,7 +7,7 @@ export function createProductTool({ catalogue }) {
     id: "commerce.products.list",
     description: "List products currently published to the Streetwise storefront.",
     riskTier: riskTiers.READ_ONLY,
-    productionEnabled: true,
+    productionEnabled: false,
     validateInput(input = {}) {
       return input && typeof input === "object" && !Array.isArray(input);
     },
