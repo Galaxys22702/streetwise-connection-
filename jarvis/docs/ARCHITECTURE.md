@@ -60,7 +60,7 @@ Consequential actions should emit structured events containing enough informatio
 
 ### External systems
 
-Examples include Streetwise application services, provider systems, payment systems, communications services, and approved development infrastructure. Production access remains governed by the existing Streetwise launch and security gates.
+Examples include Streetwise application services, provider systems, payment systems, communications services, and approved development infrastructure. The commerce boundary covers catalogue, pricing, carts, checkout-session preparation, and payment-verified order confirmation. Production access remains governed by the existing Streetwise launch and security gates.
 
 ## Execution model
 
