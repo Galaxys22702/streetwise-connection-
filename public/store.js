@@ -5,6 +5,8 @@ const cartItemsEl = document.querySelector("#cart-items");
 const cartTotalEl = document.querySelector("#cart-total");
 const checkoutButton = document.querySelector("#checkout-button");
 const checkoutResult = document.querySelector("#checkout-result");
+const TOKEN_KEY = "streetwise_session_token";
+function token() { return localStorage.getItem(TOKEN_KEY) || ""; }
 
 let plans = [];
 let storeOpen = false;
@@ -92,6 +94,10 @@ async function loadStore() {
 
 checkoutButton.addEventListener("click", async () => {
   if (!selectedPlan) return;
+  if (!token()) {
+    window.location.assign("/account.html?return=store");
+    return;
+  }
 
   checkoutButton.disabled = true;
   checkoutResult.textContent = "Preparing secure checkout…";
@@ -99,14 +105,15 @@ checkoutButton.addEventListener("click", async () => {
   try {
     const response = await fetch("/api/payments/checkout", {
       method: "POST",
-      headers: { "content-type": "application/json", accept: "application/json" },
+      headers: { "content-type": "application/json", accept: "application/json", authorization: "Bearer " + token() },
       body: JSON.stringify({ planId: selectedPlan.id })
     });
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
       if (data.error === "authentication_required") {
-        throw new Error("Please sign in to continue to checkout.");
+        window.location.assign("/account.html?return=store");
+        return;
       }
       throw new Error(String(data.error || "checkout_unavailable").replaceAll("_", " "));
     }
