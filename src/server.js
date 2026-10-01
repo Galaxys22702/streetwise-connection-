@@ -37,6 +37,7 @@ import { enforceWaitlistRateLimit } from "./services/waitlistRateLimit.js";
 import { enforceRateLimit } from "./services/requestRateLimit.js";
 import { joinWaitlist, waitlistStatus } from "./services/waitlistService.js";
 import { handleFacebookAdminApi } from "./services/facebookAdminApi.js";
+import { createServiceRequest } from "./services/serviceRequestService.js";
 
 const configuredPort = Number(process.env.PORT || 3000);
 if (!Number.isInteger(configuredPort) || configuredPort < 1 || configuredPort > 65535) {
@@ -172,6 +173,16 @@ const server = http.createServer(async (req, res) => {
     try {
       enforceWaitlistRateLimit(req);
       return sendJson(res, 201, await joinWaitlist(await readJsonBody(req)));
+    } catch (error) {
+      if (error.retryAfterSeconds) res.setHeader("retry-after", String(error.retryAfterSeconds));
+      return sendError(res, error);
+    }
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/service-requests") {
+    try {
+      enforceRateLimit(req, { scope: "service_request", maxAttempts: 5 });
+      return sendJson(res, 201, await createServiceRequest(await readJsonBody(req)));
     } catch (error) {
       if (error.retryAfterSeconds) res.setHeader("retry-after", String(error.retryAfterSeconds));
       return sendError(res, error);
