@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#040816" />
+  <meta name="description" content="Streetwise Connection customer account." />
+  <link rel="stylesheet" href="/styles.css" />
+  <title>Streetwise Connection | Account</title>
+</head>
+<body>
+  <header class="hero" style="min-height:auto">
+    <nav class="site-nav" aria-label="Account navigation">
+      <a class="brand" href="/" aria-label="Streetwise Connection home">
+        <span class="brand-icon"><img src="/streetwise-mark.png" alt="" /></span>
+        <span class="brand-name"><strong>Streetwise</strong><small>Connection℠</small></span>
+      </a>
+      <div class="site-nav-actions">
+        <a class="text-link" href="/store.html">Store</a>
+        <a class="text-link" href="/">Home</a>
+      </div>
+    </nav>
+  </header>
+  <main>
+    <section class="waitlist-panel account-panel" aria-labelledby="account-heading">
+      <div class="waitlist-copy">
+        <p class="eyebrow">Streetwise account</p>
+        <h1 id="account-heading">Sign in or create your account.</h1>
+        <p>Accounts are required before a live Streetwise plan can be purchased. Your payment details stay with the approved payment provider.</p>
+        <p id="account-status" class="result" aria-live="polite"></p>
+      </div>
+      <div class="waitlist-form">
+        <div class="form-heading"><span>Customer access</span><strong id="form-title">Sign in</strong></div>
+        <label for="account-email">Email address</label>
+        <input id="account-email" type="email" autocomplete="email" maxlength="254" required />
+        <label for="account-password">Password</label>
+        <input id="account-password" type="password" autocomplete="current-password" minlength="10" maxlength="256" required />
+        <button id="account-submit" class="button" type="button">Sign in ↗</button>
+        <button id="account-toggle" class="text-link" type="button">Create an account instead</button>
+        <button id="account-logout" class="text-link" type="button" hidden>Sign out</button>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <a class="brand footer-brand" href="/">
+      <span class="brand-icon"><img src="/streetwise-mark.png" alt="" /></span>
+      <span class="brand-name"><strong>Streetwise</strong><small>Connection℠</small></span>
+    </a>
+    <p>Stay Connected. Stay Streetwise.℠</p>
+  </footer>
+  <script type="module" src="/account.js"></script>
+</body>
+</html>
