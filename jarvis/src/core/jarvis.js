@@ -24,7 +24,7 @@ export function createJarvis({ registry, policy, audit, memory }) {
     }
 
     try {
-      if (tool.validateInput && (await tool.validateInput(request.input)) !== true) {
+      if (tool.validateInput) {\n        const validation = await tool.validateInput(request.input);\n        if (validation !== true && validation?.valid !== true) {
         audit.record({
           type: "input_validation",
           requestId: request.requestId,
