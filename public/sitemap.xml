@@ -6,4 +6,5 @@
   <url><loc>https://streetwise-connection.vercel.app/security-first.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://streetwise-connection.vercel.app/no-fake-promises.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://streetwise-connection.vercel.app/waitlist-privacy.html</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://streetwise-connection.vercel.app/account.html</loc></url>
 </urlset>
