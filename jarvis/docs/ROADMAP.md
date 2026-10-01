@@ -5,20 +5,22 @@
 - [x] Repository/module boundary
 - [x] Architecture documentation
 - [x] Security model
-- [ ] Core request/context types
-- [ ] Tool registry
-- [ ] Policy engine
-- [ ] Audit event model
-- [ ] Memory interface
-- [ ] Unit tests
+- [x] Core request/context types
+- [x] Tool registry
+- [x] Policy engine
+- [x] Audit event model
+- [x] Memory interface
+- [x] Unit tests
+- [x] Storefront commerce foundation (catalogue, pricing, cart, checkout/order boundaries)
 
 ## Phase 2: Controlled integrations
 
-- [ ] Read-only Streetwise status tools
-- [ ] GitHub development tools
+- [x] Read-only Streetwise status tools
+- [x] GitHub development tools
 - [ ] Documentation/memory integration
 - [ ] Structured error handling
 - [ ] Integration tests
+- [ ] Commerce integration with authoritative product/pricing/payment services
 
 ## Phase 3: Human-approved workflows
 
