@@ -8,6 +8,21 @@ export function createJarvis({ registry, policy, audit, memory }) {
     const tool = registry.get(request.capability);
     const environment = request.metadata.environment || "development";
     const approved = request.metadata.approved === true;
+    const validation = typeof tool.validateInput === "function" ? tool.validateInput(request.input) : { valid: true };
+    if (!validation || validation.valid !== true) {
+      const reason = validation?.reason || "invalid_input";
+      audit.record({
+        type: "input_validation",
+        requestId: request.requestId,
+        actorId: request.actorId,
+        capability: request.capability,
+        riskTier: tool.riskTier,
+        allowed: false,
+        reason
+      });
+      return { ok: false, requestId: request.requestId, error: reason };
+    }
+
     const decision = policy.evaluate({ request, tool, approved, environment });
 
     audit.record({
