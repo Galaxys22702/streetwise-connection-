@@ -1,7 +1,7 @@
 const SENSITIVE_KEYS = new Set([
   "secret", "secrets", "token", "tokens", "authorization", "password",
-  "passwd", "privateKey", "private_key", "apiKey", "api_key", "accessToken",
-  "refreshToken", "clientSecret", "serviceRoleKey"
+  "passwd", "privatekey", "private_key", "apikey", "api_key", "accesstoken",
+  "refreshtoken", "clientsecret", "servicerolekey"
 ]);
 
 function sanitize(value, seen = new WeakSet()) {
