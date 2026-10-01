@@ -1,4 +1,4 @@
-import { buildHealthStatus } from "../../src/services/healthService.js";
+import { buildHealthStatus } from "../../../src/services/healthService.js";
 
 export function createStreetwiseStatusTool() {
   return Object.freeze({
