@@ -6,6 +6,9 @@ export { createAuditLog } from "./audit/audit.js";
 export { createMemory } from "./memory/memory.js";
 export { createJarvis } from "./core/jarvis.js";
 
+export { createOperationTask, updateOperationTask, operationRoutes, operationStatuses } from "./operations/task.js";
+export { createOperationRouter } from "./operations/router.js";
+
 export { createStreetwiseStatusTool } from "./tools/streetwiseStatus.js";
 
 export { createCatalogue } from "./tools/commerce/catalog.js";
