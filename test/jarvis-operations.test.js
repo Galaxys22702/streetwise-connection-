@@ -77,13 +77,18 @@ test("operation task status updates are immutable and timestamped", () => {
     now: () => "2026-10-02T20:00:00.000Z"
   });
 
-  const updated = updateOperationTask(task, {
+  const running = updateOperationTask(task, {
+    status: operationStatuses.RUNNING
+  });
+
+  const updated = updateOperationTask(running, {
     status: operationStatuses.SUCCEEDED
   }, {
     now: () => "2026-10-02T20:01:00.000Z"
   });
 
   assert.equal(task.status, operationStatuses.QUEUED);
+  assert.equal(running.status, operationStatuses.RUNNING);
   assert.equal(updated.status, operationStatuses.SUCCEEDED);
   assert.equal(updated.updatedAt, "2026-10-02T20:01:00.000Z");
   assert.notEqual(updated, task);
