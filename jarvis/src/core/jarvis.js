@@ -1,9 +1,13 @@
 import { createRequest } from "../types.js";
 import { errorCodes, failure } from "../errors.js";
+import { createOperationTask, operationRoutes } from "../operations/task.js";
 
-export function createJarvis({ registry, policy, audit, memory }) {
+export function createJarvis({ registry, policy, audit, memory, operationRouter = null }) {
   if (!registry || !policy || !audit || !memory) {
     throw new TypeError("registry, policy, audit and memory are required");
+  }
+  if (operationRouter !== null && typeof operationRouter.resolve !== "function") {
+    throw new TypeError("operationRouter.resolve must be a function");
   }
 
   async function run(input) {
@@ -46,6 +50,81 @@ export function createJarvis({ registry, policy, audit, memory }) {
       return failure(request.requestId, decision.reason);
     }
 
+    let operation = null;
+    if (operationRouter) {
+      let route;
+      try {
+        route = operationRouter.resolve(request.capability);
+      } catch {
+        audit.record({
+          type: "operation_route_error",
+          requestId: request.requestId,
+          actorId: request.actorId,
+          capability: request.capability,
+          ok: false,
+          errorCode: errorCodes.OPERATION_ROUTE_NOT_FOUND
+        });
+        return failure(request.requestId, errorCodes.OPERATION_ROUTE_NOT_FOUND);
+      }
+
+      if (!route || !Object.values(operationRoutes).includes(route)) {
+        audit.record({
+          type: "operation_route_error",
+          requestId: request.requestId,
+          actorId: request.actorId,
+          capability: request.capability,
+          ok: false,
+          errorCode: errorCodes.OPERATION_ROUTE_NOT_FOUND
+        });
+        return failure(request.requestId, errorCodes.OPERATION_ROUTE_NOT_FOUND);
+      }
+
+      try {
+        operation = createOperationTask({
+          requestId: request.requestId,
+          actorId: request.actorId,
+          intent: typeof request.metadata.intent === "string" && request.metadata.intent.trim()
+            ? request.metadata.intent
+            : request.capability,
+          capability: request.capability,
+          route,
+          riskTier: tool.riskTier,
+          environment,
+          approval: decision.approvalVerified
+            ? { status: "approved", approvalId: null }
+            : null,
+          dryRun: request.metadata.dryRun === true,
+          idempotencyKey: typeof request.metadata.idempotencyKey === "string"
+            ? request.metadata.idempotencyKey
+            : null
+        });
+      } catch {
+        audit.record({
+          type: "operation_task_error",
+          requestId: request.requestId,
+          actorId: request.actorId,
+          capability: request.capability,
+          ok: false,
+          errorCode: errorCodes.INVALID_REQUEST
+        });
+        return failure(request.requestId, errorCodes.INVALID_REQUEST);
+      }
+
+      audit.record({
+        type: "operation_task",
+        requestId: request.requestId,
+        actorId: request.actorId,
+        capability: request.capability,
+        operationId: operation.operationId,
+        route: operation.route,
+        riskTier: operation.riskTier,
+        approvalRequired: operation.approvalRequired,
+        approvalStatus: operation.approval.status,
+        dryRun: operation.dryRun,
+        ok: true
+      });
+    }
+
     try {
       if (tool.validateInput) {
         const validation = await tool.validateInput(request.input);
@@ -77,7 +156,8 @@ export function createJarvis({ registry, policy, audit, memory }) {
       requestId: request.requestId,
       actorId: request.actorId,
       environment,
-      memory
+      memory,
+      operation
     });
 
     let result;
@@ -128,10 +208,11 @@ export function createJarvis({ registry, policy, audit, memory }) {
       actorId: request.actorId,
       capability: tool.id,
       riskTier: tool.riskTier,
+      operationId: operation?.operationId ?? null,
       ok: true
     });
 
-    return { ok: true, requestId: request.requestId, result };
+    return { ok: true, requestId: request.requestId, operation, result };
   }
 
   return Object.freeze({ run });
