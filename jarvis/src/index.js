@@ -10,6 +10,7 @@ export { createOperationTask, updateOperationTask, operationRoutes, operationSta
 export { createOperationRouter } from "./operations/router.js";
 export { createApprovalStore } from "./operations/approval.js";
 export { createIdempotencyStore } from "./operations/idempotency.js";
+export { createRetryController, retryableFailureCodes } from "./operations/retry.js";
 
 export { createStreetwiseStatusTool } from "./tools/streetwiseStatus.js";
 
