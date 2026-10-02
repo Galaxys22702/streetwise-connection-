@@ -122,10 +122,16 @@ function normaliseApproval(approval) {
     throw new TypeError("invalid approval status");
   }
 
-  return Object.freeze({
+  const normalised = {
     status,
     approvalId: approval.approvalId == null ? null : String(approval.approvalId)
-  });
+  };
+
+  for (const key of ["approvedBy", "approvedAt", "expiresAt"]) {
+    if (approval[key] != null) normalised[key] = String(approval[key]);
+  }
+
+  return Object.freeze(normalised);
 }
 
 function freezeTask(task) {
