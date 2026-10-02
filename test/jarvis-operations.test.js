@@ -167,3 +167,29 @@ test("Jarvis fails closed when an operation router has no explicit capability ro
   assert.equal(result.error, "operation_route_not_found");
   assert.equal(executed, false);
 });
+
+
+test("generic operation task updates cannot rewrite identity or skip lifecycle states", () => {
+  const task = createOperationTask({
+    requestId: "req-4",
+    actorId: "operator",
+    intent: "run a safe check",
+    capability: "tech.check",
+    route: operationRoutes.TECH
+  });
+
+  assert.throws(
+    () => updateOperationTask(task, { actorId: "attacker" }),
+    /only status may be changed/
+  );
+  assert.throws(
+    () => updateOperationTask(task, { status: operationStatuses.SUCCEEDED }),
+    /invalid operation status transition/
+  );
+
+  const running = updateOperationTask(task, { status: operationStatuses.RUNNING });
+  const succeeded = updateOperationTask(running, { status: operationStatuses.SUCCEEDED });
+
+  assert.equal(running.status, operationStatuses.RUNNING);
+  assert.equal(succeeded.status, operationStatuses.SUCCEEDED);
+});
