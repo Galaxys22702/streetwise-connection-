@@ -362,3 +362,56 @@ test("Jarvis blocks a duplicate idempotency key before tool execution", async ()
   assert.equal(executions, 1);
   assert.equal(second.operation.status, operationStatuses.BLOCKED);
 });
+
+
+test("Jarvis accepts a real, single-use approval record and preserves its provenance", async () => {
+  const approvals = createApprovalStore({
+    now: () => new Date("2026-10-02T20:00:00.000Z")
+  });
+  approvals.issue({
+    approvalId: "approval-real-1",
+    approvedBy: "supervisor",
+    actorId: "operator",
+    capability: "ops.approved",
+    environment: "test",
+    expiresAt: "2026-10-02T21:00:00.000Z"
+  });
+
+  const registry = createToolRegistry();
+  registry.register({
+    id: "ops.approved",
+    riskTier: riskTiers.OPERATIONAL,
+    productionEnabled: true,
+    execute: async (_input, context) => ({ operationId: context.operation.operationId })
+  });
+
+  const audit = createAuditLog();
+  const jarvis = createJarvis({
+    registry,
+    policy: createPolicy({
+      permissions: { operator: ["ops.approved"] },
+      approvalVerifier: async ({ request, environment }) =>
+        approvals.verifyAndConsume(request.metadata.approvalId, {
+          actorId: request.actorId,
+          capability: request.capability,
+          environment
+        })
+    }),
+    audit,
+    memory: createMemory(),
+    operationRouter: createOperationRouter({
+      routes: { "ops.approved": operationRoutes.OPS }
+    })
+  });
+
+  const result = await jarvis.run({
+    actorId: "operator",
+    capability: "ops.approved",
+    metadata: { environment: "test", approvalId: "approval-real-1" }
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.operation.approval.approvalId, "approval-real-1");
+  assert.equal(result.operation.approval.approvedBy, "supervisor");
+  assert.equal(result.operation.approval.status, "approved");
+});
