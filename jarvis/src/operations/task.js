@@ -91,8 +91,16 @@ export function createOperationTask({
 export function updateOperationTask(task, patch, { now = () => new Date().toISOString() } = {}) {
   if (!task || typeof task !== "object") throw new TypeError("task is required");
   if (!isRecord(patch)) throw new TypeError("patch must be an object");
-  if (patch.status !== undefined && !STATUSES.has(patch.status)) {
+
+  const keys = Object.keys(patch);
+  if (keys.some(key => key !== "status")) {
+    throw new TypeError("only status may be changed by the generic task updater");
+  }
+  if (!STATUSES.has(patch.status)) {
     throw new TypeError("invalid operation status");
+  }
+  if (!isAllowedTransition(task.status, patch.status)) {
+    throw new TypeError("invalid operation status transition");
   }
 
   const updatedAt = String(now());
@@ -126,6 +134,18 @@ function freezeTask(task) {
     approval: Object.freeze({ ...task.approval }),
     metadata: Object.freeze(structuredClone(task.metadata))
   });
+}
+
+function isAllowedTransition(from, to) {
+  if (from === operationStatuses.QUEUED) {
+    return to === operationStatuses.RUNNING || to === operationStatuses.BLOCKED;
+  }
+  if (from === operationStatuses.RUNNING) {
+    return to === operationStatuses.SUCCEEDED ||
+      to === operationStatuses.FAILED ||
+      to === operationStatuses.BLOCKED;
+  }
+  return false;
 }
 
 function requireNonEmptyString(value, name) {
