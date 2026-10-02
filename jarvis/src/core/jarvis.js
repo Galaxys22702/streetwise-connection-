@@ -58,10 +58,7 @@ export function createJarvis({ registry, policy, audit, memory }) {
             ok: false,
             errorCode: errorCodes.INPUT_VALIDATION_FAILED
           });
-          return failure(
-            request.requestId,
-            validation?.reason || errorCodes.INPUT_VALIDATION_FAILED
-          );
+          return failure(request.requestId, errorCodes.INPUT_VALIDATION_FAILED);
         }
       }
     } catch {
