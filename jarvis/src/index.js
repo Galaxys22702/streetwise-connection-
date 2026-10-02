@@ -8,6 +8,8 @@ export { createJarvis } from "./core/jarvis.js";
 
 export { createOperationTask, updateOperationTask, operationRoutes, operationStatuses } from "./operations/task.js";
 export { createOperationRouter } from "./operations/router.js";
+export { createApprovalStore } from "./operations/approval.js";
+export { createIdempotencyStore } from "./operations/idempotency.js";
 
 export { createStreetwiseStatusTool } from "./tools/streetwiseStatus.js";
 
