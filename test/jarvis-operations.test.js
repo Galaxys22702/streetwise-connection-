@@ -136,8 +136,16 @@ test("Jarvis attaches an explicitly routed operation task without widening tool 
   assert.equal(result.operation.dryRun, true);
   assert.equal(result.operation.idempotencyKey, "op-123");
   assert.equal(receivedOperation.operationId, result.operation.operationId);
+  assert.equal(receivedOperation.status, operationStatuses.RUNNING);
+  assert.equal(result.operation.status, operationStatuses.SUCCEEDED);
   assert.equal(receivedOperation.approval.status, "not_required");
   assert.equal(audit.list().some(event => event.type === "operation_task"), true);
+  assert.deepEqual(
+    audit.list()
+      .filter(event => event.type === "operation_status")
+      .map(event => event.status),
+    [operationStatuses.RUNNING, operationStatuses.SUCCEEDED]
+  );
 });
 
 test("Jarvis fails closed when an operation router has no explicit capability route", async () => {
@@ -197,4 +205,43 @@ test("generic operation task updates cannot rewrite identity or skip lifecycle s
 
   assert.equal(running.status, operationStatuses.RUNNING);
   assert.equal(succeeded.status, operationStatuses.SUCCEEDED);
+});
+
+
+test("Jarvis marks an operation failed when tool execution fails", async () => {
+  const registry = createToolRegistry();
+  registry.register({
+    id: "tech.failure",
+    riskTier: riskTiers.READ_ONLY,
+    productionEnabled: true,
+    execute: async () => {
+      throw new Error("internal failure");
+    }
+  });
+
+  const audit = createAuditLog();
+  const jarvis = createJarvis({
+    registry,
+    policy: createPolicy({ permissions: { operator: ["tech.failure"] } }),
+    audit,
+    memory: createMemory(),
+    operationRouter: createOperationRouter({
+      routes: { "tech.failure": operationRoutes.TECH }
+    })
+  });
+
+  const result = await jarvis.run({
+    actorId: "operator",
+    capability: "tech.failure",
+    metadata: { environment: "test" }
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.error, "tool_execution_failed");
+  assert.deepEqual(
+    audit.list()
+      .filter(event => event.type === "operation_status")
+      .map(event => event.status),
+    [operationStatuses.RUNNING, operationStatuses.FAILED]
+  );
 });
