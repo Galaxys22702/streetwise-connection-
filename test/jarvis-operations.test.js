@@ -4,6 +4,7 @@ import {
   createAuditLog,
   createApprovalStore,
   createIdempotencyStore,
+  createRetryController,
   createJarvis,
   createMemory,
   createOperationRouter,
@@ -414,4 +415,54 @@ test("Jarvis accepts a real, single-use approval record and preserves its proven
   assert.equal(result.operation.approval.approvalId, "approval-real-1");
   assert.equal(result.operation.approval.approvedBy, "supervisor");
   assert.equal(result.operation.approval.status, "approved");
+});
+
+
+test("retry controller is bounded and fail-closed for elevated risk", () => {
+  const retry = createRetryController({ maxAttempts: 3 });
+
+  assert.equal(retry.shouldRetry({
+    attempt: 1,
+    errorCode: "tool_execution_failed",
+    riskTier: riskTiers.READ_ONLY,
+    environment: "test"
+  }), true);
+
+  assert.equal(retry.shouldRetry({
+    attempt: 2,
+    errorCode: "tool_execution_failed",
+    riskTier: riskTiers.READ_ONLY,
+    environment: "test"
+  }), true);
+
+  assert.equal(retry.shouldRetry({
+    attempt: 3,
+    errorCode: "tool_execution_failed",
+    riskTier: riskTiers.READ_ONLY,
+    environment: "test"
+  }), false);
+
+  assert.equal(retry.shouldRetry({
+    attempt: 1,
+    errorCode: "tool_execution_failed",
+    riskTier: riskTiers.OPERATIONAL,
+    environment: "test"
+  }), false);
+
+  assert.equal(retry.shouldRetry({
+    attempt: 1,
+    errorCode: "tool_execution_failed",
+    riskTier: riskTiers.OPERATIONAL,
+    environment: "test",
+    explicitRetry: true
+  }), true);
+
+  assert.equal(retry.shouldRetry({
+    attempt: 1,
+    errorCode: "unknown",
+    riskTier: riskTiers.READ_ONLY,
+    environment: "test"
+  }), false);
+  assert.equal(retry.nextAttempt(1), 2);
+  assert.equal(retry.nextAttempt(3), null);
 });
