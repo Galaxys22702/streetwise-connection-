@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   createAuditLog,
+  createApprovalStore,
+  createIdempotencyStore,
   createJarvis,
   createMemory,
   createOperationRouter,
@@ -244,4 +246,119 @@ test("Jarvis marks an operation failed when tool execution fails", async () => {
       .map(event => event.status),
     [operationStatuses.RUNNING, operationStatuses.FAILED]
   );
+});
+
+
+test("approval records are bound, expiring, and single-use", () => {
+  let now = new Date("2026-10-02T20:00:00.000Z");
+  const approvals = createApprovalStore({ now: () => now });
+  const issued = approvals.issue({
+    approvalId: "approval-1",
+    approvedBy: "operator-manager",
+    actorId: "operator",
+    capability: "ops.settings.update",
+    environment: "production",
+    expiresAt: "2026-10-02T21:00:00.000Z"
+  });
+
+  const verified = approvals.verifyAndConsume("approval-1", {
+    actorId: "operator",
+    capability: "ops.settings.update",
+    environment: "production"
+  });
+
+  assert.equal(verified.approvalId, issued.approvalId);
+  assert.equal(verified.approvedBy, "operator-manager");
+  assert.equal(approvals.verifyAndConsume("approval-1", {
+    actorId: "operator",
+    capability: "ops.settings.update",
+    environment: "production"
+  }), null);
+
+  const other = approvals.issue({
+    approvalId: "approval-2",
+    approvedBy: "operator-manager",
+    actorId: "operator",
+    capability: "ops.settings.update",
+    environment: "production",
+    expiresAt: "2026-10-02T20:30:00.000Z"
+  });
+  now = new Date("2026-10-02T20:31:00.000Z");
+  assert.equal(approvals.verifyAndConsume(other.approvalId, {
+    actorId: "operator",
+    capability: "ops.settings.update",
+    environment: "production"
+  }), null);
+});
+
+test("idempotency blocks replay and conflicting reuse without executing twice", () => {
+  const store = createIdempotencyStore();
+  const first = store.reserve("key-1", {
+    operationId: "op-1",
+    actorId: "operator",
+    capability: "tech.check",
+    environment: "test",
+    input: { target: "gateway" }
+  });
+  const replay = store.reserve("key-1", {
+    operationId: "op-2",
+    actorId: "operator",
+    capability: "tech.check",
+    environment: "test",
+    input: { target: "gateway" }
+  });
+  const conflict = store.reserve("key-1", {
+    operationId: "op-3",
+    actorId: "operator",
+    capability: "tech.check",
+    environment: "test",
+    input: { target: "different-gateway" }
+  });
+
+  assert.equal(first.accepted, true);
+  assert.equal(replay.reason, "idempotency_replay");
+  assert.equal(conflict.reason, "idempotency_conflict");
+});
+
+test("Jarvis blocks a duplicate idempotency key before tool execution", async () => {
+  let executions = 0;
+  const registry = createToolRegistry();
+  registry.register({
+    id: "tech.idempotent",
+    riskTier: riskTiers.READ_ONLY,
+    productionEnabled: true,
+    execute: async () => {
+      executions += 1;
+      return { status: "ok" };
+    }
+  });
+
+  const audit = createAuditLog();
+  const idempotencyStore = createIdempotencyStore();
+  const jarvis = createJarvis({
+    registry,
+    policy: createPolicy({ permissions: { operator: ["tech.idempotent"] } }),
+    audit,
+    memory: createMemory(),
+    operationRouter: createOperationRouter({
+      routes: { "tech.idempotent": operationRoutes.TECH }
+    }),
+    idempotencyStore
+  });
+
+  const request = {
+    actorId: "operator",
+    capability: "tech.idempotent",
+    input: { target: "gateway" },
+    metadata: { environment: "test", idempotencyKey: "same-operation" }
+  };
+
+  const first = await jarvis.run(request);
+  const second = await jarvis.run(request);
+
+  assert.equal(first.ok, true);
+  assert.equal(second.ok, false);
+  assert.equal(second.error, "idempotency_replay");
+  assert.equal(executions, 1);
+  assert.equal(second.operation.status, operationStatuses.BLOCKED);
 });
