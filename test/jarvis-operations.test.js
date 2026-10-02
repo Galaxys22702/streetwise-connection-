@@ -1,11 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  createAuditLog,
+  createJarvis,
+  createMemory,
   createOperationRouter,
   createOperationTask,
   operationRoutes,
   operationStatuses,
   riskTiers,
+  createPolicy,
+  createToolRegistry,
   updateOperationTask
 } from "../jarvis/src/index.js";
 
@@ -87,7 +92,7 @@ test("operation task status updates are immutable and timestamped", () => {
 
 test("Jarvis attaches an explicitly routed operation task without widening tool authority", async () => {
   let receivedOperation;
-  const registry = (await import("../jarvis/src/index.js")).createToolRegistry();
+  const registry = createToolRegistry();
   registry.register({
     id: "tech.provider.status",
     riskTier: riskTiers.READ_ONLY,
@@ -98,8 +103,6 @@ test("Jarvis attaches an explicitly routed operation task without widening tool 
     }
   });
 
-  const { createAuditLog, createJarvis, createMemory, createPolicy } =
-    await import("../jarvis/src/index.js");
   const audit = createAuditLog();
   const router = createOperationRouter({
     routes: { "tech.provider.status": operationRoutes.TECH }
@@ -133,8 +136,6 @@ test("Jarvis attaches an explicitly routed operation task without widening tool 
 });
 
 test("Jarvis fails closed when an operation router has no explicit capability route", async () => {
-  const { createAuditLog, createJarvis, createMemory, createPolicy, createToolRegistry } =
-    await import("../jarvis/src/index.js");
   const registry = createToolRegistry();
   let executed = false;
   registry.register({
