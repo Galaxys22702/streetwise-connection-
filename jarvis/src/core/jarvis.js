@@ -2,12 +2,22 @@ import { createRequest } from "../types.js";
 import { errorCodes, failure } from "../errors.js";
 import { createOperationTask, updateOperationTask, operationRoutes, operationStatuses } from "../operations/task.js";
 
-export function createJarvis({ registry, policy, audit, memory, operationRouter = null }) {
+export function createJarvis({
+  registry,
+  policy,
+  audit,
+  memory,
+  operationRouter = null,
+  idempotencyStore = null
+}) {
   if (!registry || !policy || !audit || !memory) {
     throw new TypeError("registry, policy, audit and memory are required");
   }
   if (operationRouter !== null && typeof operationRouter.resolve !== "function") {
     throw new TypeError("operationRouter.resolve must be a function");
+  }
+  if (idempotencyStore !== null && typeof idempotencyStore.reserve !== "function") {
+    throw new TypeError("idempotencyStore.reserve must be a function");
   }
 
   async function run(input) {
@@ -46,9 +56,7 @@ export function createJarvis({ registry, policy, audit, memory, operationRouter 
       reason: decision.reason
     });
 
-    if (!decision.allowed) {
-      return failure(request.requestId, decision.reason);
-    }
+    if (!decision.allowed) return failure(request.requestId, decision.reason);
 
     let operation = null;
     if (operationRouter) {
@@ -90,9 +98,7 @@ export function createJarvis({ registry, policy, audit, memory, operationRouter 
           route,
           riskTier: tool.riskTier,
           environment,
-          approval: decision.approvalVerified
-            ? { status: "approved", approvalId: null }
-            : null,
+          approval: decision.approval,
           dryRun: request.metadata.dryRun === true,
           idempotencyKey: typeof request.metadata.idempotencyKey === "string"
             ? request.metadata.idempotencyKey
@@ -125,6 +131,32 @@ export function createJarvis({ registry, policy, audit, memory, operationRouter 
       });
     }
 
+    const setStatus = (status, extra = {}) => {
+      if (!operation) return true;
+      try {
+        operation = updateOperationTask(operation, { status });
+        audit.record({
+          type: "operation_status",
+          requestId: request.requestId,
+          actorId: request.actorId,
+          operationId: operation.operationId,
+          status: operation.status,
+          ...extra
+        });
+        return true;
+      } catch {
+        audit.record({
+          type: "operation_status_error",
+          requestId: request.requestId,
+          actorId: request.actorId,
+          capability: request.capability,
+          ok: false,
+          errorCode: errorCodes.INVALID_REQUEST
+        });
+        return false;
+      }
+    };
+
     try {
       if (tool.validateInput) {
         const validation = await tool.validateInput(request.input);
@@ -137,6 +169,7 @@ export function createJarvis({ registry, policy, audit, memory, operationRouter 
             ok: false,
             errorCode: errorCodes.INPUT_VALIDATION_FAILED
           });
+          setStatus(operationStatuses.BLOCKED, { ok: false, errorCode: errorCodes.INPUT_VALIDATION_FAILED });
           return failure(request.requestId, errorCodes.INPUT_VALIDATION_FAILED);
         }
       }
@@ -149,7 +182,56 @@ export function createJarvis({ registry, policy, audit, memory, operationRouter 
         ok: false,
         errorCode: errorCodes.INPUT_VALIDATION_FAILED
       });
+      setStatus(operationStatuses.BLOCKED, { ok: false, errorCode: errorCodes.INPUT_VALIDATION_FAILED });
       return failure(request.requestId, errorCodes.INPUT_VALIDATION_FAILED);
+    }
+
+    if (operation && !setStatus(operationStatuses.RUNNING, { ok: true })) {
+      return failure(request.requestId, errorCodes.INVALID_REQUEST);
+    }
+
+    if (operation?.idempotencyKey) {
+      if (!idempotencyStore) {
+        setStatus(operationStatuses.BLOCKED, { ok: false, errorCode: errorCodes.IDEMPOTENCY_UNAVAILABLE });
+        return failure(request.requestId, errorCodes.IDEMPOTENCY_UNAVAILABLE);
+      }
+
+      let reservation;
+      try {
+        reservation = idempotencyStore.reserve(operation.idempotencyKey, {
+          operationId: operation.operationId,
+          actorId: request.actorId,
+          capability: request.capability,
+          environment,
+          input: request.input
+        });
+      } catch {
+        reservation = { accepted: false, reason: "idempotency_conflict" };
+      }
+
+      if (!reservation.accepted) {
+        const code = reservation.reason === "idempotency_replay"
+          ? errorCodes.IDEMPOTENCY_REPLAY
+          : errorCodes.IDEMPOTENCY_CONFLICT;
+        setStatus(operationStatuses.BLOCKED, { ok: false, errorCode: code });
+        audit.record({
+          type: "idempotency_block",
+          requestId: request.requestId,
+          actorId: request.actorId,
+          operationId: operation.operationId,
+          errorCode: code,
+          ok: false
+        });
+        return failure(request.requestId, code);
+      }
+
+      audit.record({
+        type: "idempotency_reserved",
+        requestId: request.requestId,
+        actorId: request.actorId,
+        operationId: operation.operationId,
+        ok: true
+      });
     }
 
     const executionContext = Object.freeze({
@@ -160,34 +242,11 @@ export function createJarvis({ registry, policy, audit, memory, operationRouter 
       operation
     });
 
-    if (operation) {
-      try {
-        operation = updateOperationTask(operation, { status: operationStatuses.RUNNING });
-        audit.record({
-          type: "operation_status",
-          requestId: request.requestId,
-          actorId: request.actorId,
-          operationId: operation.operationId,
-          status: operation.status,
-          ok: true
-        });
-      } catch {
-        audit.record({
-          type: "operation_status_error",
-          requestId: request.requestId,
-          actorId: request.actorId,
-          capability: request.capability,
-          ok: false,
-          errorCode: errorCodes.INVALID_REQUEST
-        });
-        return failure(request.requestId, errorCodes.INVALID_REQUEST);
-      }
-    }
-
     let result;
     try {
       result = await tool.execute(request.input, executionContext);
     } catch {
+      if (operation?.idempotencyKey) idempotencyStore.fail(operation.idempotencyKey);
       audit.record({
         type: "tool_execution",
         requestId: request.requestId,
@@ -197,24 +256,14 @@ export function createJarvis({ registry, policy, audit, memory, operationRouter 
         ok: false,
         errorCode: errorCodes.TOOL_EXECUTION_FAILED
       });
-      if (operation) {
-        operation = updateOperationTask(operation, { status: operationStatuses.FAILED });
-        audit.record({
-          type: "operation_status",
-          requestId: request.requestId,
-          actorId: request.actorId,
-          operationId: operation.operationId,
-          status: operation.status,
-          ok: false,
-          errorCode: errorCodes.TOOL_EXECUTION_FAILED
-        });
-      }
+      setStatus(operationStatuses.FAILED, { ok: false, errorCode: errorCodes.TOOL_EXECUTION_FAILED });
       return failure(request.requestId, errorCodes.TOOL_EXECUTION_FAILED);
     }
 
     if (tool.validateResult) {
       try {
         if ((await tool.validateResult(result)) !== true) {
+          if (operation?.idempotencyKey) idempotencyStore.fail(operation.idempotencyKey);
           audit.record({
             type: "result_validation",
             requestId: request.requestId,
@@ -223,21 +272,11 @@ export function createJarvis({ registry, policy, audit, memory, operationRouter 
             ok: false,
             errorCode: errorCodes.RESULT_VALIDATION_FAILED
           });
-          if (operation) {
-            operation = updateOperationTask(operation, { status: operationStatuses.FAILED });
-            audit.record({
-              type: "operation_status",
-              requestId: request.requestId,
-              actorId: request.actorId,
-              operationId: operation.operationId,
-              status: operation.status,
-              ok: false,
-              errorCode: errorCodes.RESULT_VALIDATION_FAILED
-            });
-          }
+          setStatus(operationStatuses.FAILED, { ok: false, errorCode: errorCodes.RESULT_VALIDATION_FAILED });
           return failure(request.requestId, errorCodes.RESULT_VALIDATION_FAILED);
         }
       } catch {
+        if (operation?.idempotencyKey) idempotencyStore.fail(operation.idempotencyKey);
         audit.record({
           type: "result_validation",
           requestId: request.requestId,
@@ -246,32 +285,14 @@ export function createJarvis({ registry, policy, audit, memory, operationRouter 
           ok: false,
           errorCode: errorCodes.RESULT_VALIDATION_FAILED
         });
-        if (operation) {
-          operation = updateOperationTask(operation, { status: operationStatuses.FAILED });
-          audit.record({
-            type: "operation_status",
-            requestId: request.requestId,
-            actorId: request.actorId,
-            operationId: operation.operationId,
-            status: operation.status,
-            ok: false,
-            errorCode: errorCodes.RESULT_VALIDATION_FAILED
-          });
-        }
+        setStatus(operationStatuses.FAILED, { ok: false, errorCode: errorCodes.RESULT_VALIDATION_FAILED });
         return failure(request.requestId, errorCodes.RESULT_VALIDATION_FAILED);
       }
     }
 
-    if (operation) {
-      operation = updateOperationTask(operation, { status: operationStatuses.SUCCEEDED });
-      audit.record({
-        type: "operation_status",
-        requestId: request.requestId,
-        actorId: request.actorId,
-        operationId: operation.operationId,
-        status: operation.status,
-        ok: true
-      });
+    if (operation?.idempotencyKey) idempotencyStore.complete(operation.idempotencyKey);
+    if (operation && !setStatus(operationStatuses.SUCCEEDED, { ok: true })) {
+      return failure(request.requestId, errorCodes.INVALID_REQUEST);
     }
 
     audit.record({
