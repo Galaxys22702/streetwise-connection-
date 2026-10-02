@@ -83,3 +83,86 @@ test("operation task status updates are immutable and timestamped", () => {
   assert.equal(updated.updatedAt, "2026-10-02T20:01:00.000Z");
   assert.notEqual(updated, task);
 });
+
+
+test("Jarvis attaches an explicitly routed operation task without widening tool authority", async () => {
+  let receivedOperation;
+  const registry = (await import("../jarvis/src/index.js")).createToolRegistry();
+  registry.register({
+    id: "tech.provider.status",
+    riskTier: riskTiers.READ_ONLY,
+    productionEnabled: true,
+    execute: async (_input, context) => {
+      receivedOperation = context.operation;
+      return { status: "ok" };
+    }
+  });
+
+  const { createAuditLog, createJarvis, createMemory, createPolicy } =
+    await import("../jarvis/src/index.js");
+  const audit = createAuditLog();
+  const router = createOperationRouter({
+    routes: { "tech.provider.status": operationRoutes.TECH }
+  });
+  const jarvis = createJarvis({
+    registry,
+    policy: createPolicy({ permissions: { operator: ["tech.provider.status"] } }),
+    audit,
+    memory: createMemory(),
+    operationRouter: router
+  });
+
+  const result = await jarvis.run({
+    actorId: "operator",
+    capability: "tech.provider.status",
+    metadata: {
+      environment: "test",
+      intent: "inspect provider health",
+      dryRun: true,
+      idempotencyKey: "op-123"
+    }
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.operation.route, operationRoutes.TECH);
+  assert.equal(result.operation.dryRun, true);
+  assert.equal(result.operation.idempotencyKey, "op-123");
+  assert.equal(receivedOperation.operationId, result.operation.operationId);
+  assert.equal(receivedOperation.approval.status, "not_required");
+  assert.equal(audit.list().some(event => event.type === "operation_task"), true);
+});
+
+test("Jarvis fails closed when an operation router has no explicit capability route", async () => {
+  const { createAuditLog, createJarvis, createMemory, createPolicy, createToolRegistry } =
+    await import("../jarvis/src/index.js");
+  const registry = createToolRegistry();
+  let executed = false;
+  registry.register({
+    id: "ops.unmapped",
+    riskTier: riskTiers.READ_ONLY,
+    productionEnabled: true,
+    execute: async () => {
+      executed = true;
+      return "should-not-run";
+    }
+  });
+
+  const audit = createAuditLog();
+  const jarvis = createJarvis({
+    registry,
+    policy: createPolicy({ permissions: { operator: ["ops.unmapped"] } }),
+    audit,
+    memory: createMemory(),
+    operationRouter: createOperationRouter({ routes: {} })
+  });
+
+  const result = await jarvis.run({
+    actorId: "operator",
+    capability: "ops.unmapped",
+    metadata: { environment: "test" }
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.error, "operation_route_not_found");
+  assert.equal(executed, false);
+});
