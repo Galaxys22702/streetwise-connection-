@@ -1,6 +1,6 @@
 import { createRequest } from "../types.js";
 import { errorCodes, failure } from "../errors.js";
-import { createOperationTask, operationRoutes } from "../operations/task.js";
+import { createOperationTask, updateOperationTask, operationRoutes, operationStatuses } from "../operations/task.js";
 
 export function createJarvis({ registry, policy, audit, memory, operationRouter = null }) {
   if (!registry || !policy || !audit || !memory) {
@@ -160,6 +160,30 @@ export function createJarvis({ registry, policy, audit, memory, operationRouter 
       operation
     });
 
+    if (operation) {
+      try {
+        operation = updateOperationTask(operation, { status: operationStatuses.RUNNING });
+        audit.record({
+          type: "operation_status",
+          requestId: request.requestId,
+          actorId: request.actorId,
+          operationId: operation.operationId,
+          status: operation.status,
+          ok: true
+        });
+      } catch {
+        audit.record({
+          type: "operation_status_error",
+          requestId: request.requestId,
+          actorId: request.actorId,
+          capability: request.capability,
+          ok: false,
+          errorCode: errorCodes.INVALID_REQUEST
+        });
+        return failure(request.requestId, errorCodes.INVALID_REQUEST);
+      }
+    }
+
     let result;
     try {
       result = await tool.execute(request.input, executionContext);
@@ -173,6 +197,18 @@ export function createJarvis({ registry, policy, audit, memory, operationRouter 
         ok: false,
         errorCode: errorCodes.TOOL_EXECUTION_FAILED
       });
+      if (operation) {
+        operation = updateOperationTask(operation, { status: operationStatuses.FAILED });
+        audit.record({
+          type: "operation_status",
+          requestId: request.requestId,
+          actorId: request.actorId,
+          operationId: operation.operationId,
+          status: operation.status,
+          ok: false,
+          errorCode: errorCodes.TOOL_EXECUTION_FAILED
+        });
+      }
       return failure(request.requestId, errorCodes.TOOL_EXECUTION_FAILED);
     }
 
@@ -187,6 +223,18 @@ export function createJarvis({ registry, policy, audit, memory, operationRouter 
             ok: false,
             errorCode: errorCodes.RESULT_VALIDATION_FAILED
           });
+          if (operation) {
+            operation = updateOperationTask(operation, { status: operationStatuses.FAILED });
+            audit.record({
+              type: "operation_status",
+              requestId: request.requestId,
+              actorId: request.actorId,
+              operationId: operation.operationId,
+              status: operation.status,
+              ok: false,
+              errorCode: errorCodes.RESULT_VALIDATION_FAILED
+            });
+          }
           return failure(request.requestId, errorCodes.RESULT_VALIDATION_FAILED);
         }
       } catch {
@@ -198,8 +246,32 @@ export function createJarvis({ registry, policy, audit, memory, operationRouter 
           ok: false,
           errorCode: errorCodes.RESULT_VALIDATION_FAILED
         });
+        if (operation) {
+          operation = updateOperationTask(operation, { status: operationStatuses.FAILED });
+          audit.record({
+            type: "operation_status",
+            requestId: request.requestId,
+            actorId: request.actorId,
+            operationId: operation.operationId,
+            status: operation.status,
+            ok: false,
+            errorCode: errorCodes.RESULT_VALIDATION_FAILED
+          });
+        }
         return failure(request.requestId, errorCodes.RESULT_VALIDATION_FAILED);
       }
+    }
+
+    if (operation) {
+      operation = updateOperationTask(operation, { status: operationStatuses.SUCCEEDED });
+      audit.record({
+        type: "operation_status",
+        requestId: request.requestId,
+        actorId: request.actorId,
+        operationId: operation.operationId,
+        status: operation.status,
+        ok: true
+      });
     }
 
     audit.record({
