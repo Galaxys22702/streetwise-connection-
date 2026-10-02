@@ -14,22 +14,22 @@ export function createPolicy({
     }
     if (environment === "production" && tool.productionEnabled !== true) return deny("production_execution_disabled");
 
+    let approvalVerified = false;
     if (tool.riskTier >= requireApprovalAtOrAbove) {
-      let approved = false;
       try {
-        approved = (await approvalVerifier({ request, tool, environment })) === true;
+        approvalVerified = (await approvalVerifier({ request, tool, environment })) === true;
       } catch {
         return deny("approval_verification_failed");
       }
-      if (!approved) return deny("approval_required");
+      if (!approvalVerified) return deny("approval_required");
     }
 
-    return { allowed: true, reason: "authorized" };
+    return { allowed: true, reason: "authorized", approvalVerified };
   }
 
   return Object.freeze({ evaluate });
 }
 
 function deny(reason) {
-  return { allowed: false, reason };
+  return { allowed: false, reason, approvalVerified: false };
 }
