@@ -1,4 +1,5 @@
 import { createRequest } from "../types.js";
+import { errorCodes, failure } from "../errors.js";
 
 export function createJarvis({ registry, policy, audit, memory }) {
   if (!registry || !policy || !audit || !memory) {
@@ -6,10 +7,30 @@ export function createJarvis({ registry, policy, audit, memory }) {
   }
 
   async function run(input) {
-    const request = createRequest(input);
+    let request;
+    try {
+      request = createRequest(input);
+    } catch {
+      return failure(null, errorCodes.INVALID_REQUEST);
+    }
+
     const tool = registry.get(request.capability);
     const environment = request.metadata.environment || "development";
-    const decision = await policy.evaluate({ request, tool, environment });
+
+    let decision;
+    try {
+      decision = await policy.evaluate({ request, tool, environment });
+    } catch {
+      audit.record({
+        type: "policy_error",
+        requestId: request.requestId,
+        actorId: request.actorId,
+        capability: request.capability,
+        ok: false,
+        errorCode: errorCodes.POLICY_EVALUATION_FAILED
+      });
+      return failure(request.requestId, errorCodes.POLICY_EVALUATION_FAILED);
+    }
 
     audit.record({
       type: "policy_decision",
@@ -22,7 +43,7 @@ export function createJarvis({ registry, policy, audit, memory }) {
     });
 
     if (!decision.allowed) {
-      return { ok: false, requestId: request.requestId, error: decision.reason };
+      return failure(request.requestId, decision.reason);
     }
 
     try {
@@ -34,45 +55,34 @@ export function createJarvis({ registry, policy, audit, memory }) {
             requestId: request.requestId,
             actorId: request.actorId,
             capability: tool.id,
-            ok: false
-          });
-          return {
             ok: false,
-            requestId: request.requestId,
-            error: validation?.reason || "invalid_tool_input"
-          };
+            errorCode: errorCodes.INPUT_VALIDATION_FAILED
+          });
+          return failure(request.requestId, errorCodes.INPUT_VALIDATION_FAILED);
         }
       }
-
-      const executionContext = Object.freeze({
-        requestId: request.requestId,
-        actorId: request.actorId,
-        environment,
-        memory
-      });
-
-      const result = await tool.execute(request.input, executionContext);
-
-      if (tool.validateResult && (await tool.validateResult(result)) !== true) {
-        audit.record({
-          type: "result_validation",
-          requestId: request.requestId,
-          actorId: request.actorId,
-          capability: tool.id,
-          ok: false
-        });
-        return { ok: false, requestId: request.requestId, error: "invalid_tool_result" };
-      }
-
+    } catch {
       audit.record({
-        type: "tool_execution",
+        type: "input_validation",
         requestId: request.requestId,
         actorId: request.actorId,
         capability: tool.id,
-        riskTier: tool.riskTier,
-        ok: true
+        ok: false,
+        errorCode: errorCodes.INPUT_VALIDATION_FAILED
       });
-      return { ok: true, requestId: request.requestId, result };
+      return failure(request.requestId, errorCodes.INPUT_VALIDATION_FAILED);
+    }
+
+    const executionContext = Object.freeze({
+      requestId: request.requestId,
+      actorId: request.actorId,
+      environment,
+      memory
+    });
+
+    let result;
+    try {
+      result = await tool.execute(request.input, executionContext);
     } catch {
       audit.record({
         type: "tool_execution",
@@ -81,10 +91,47 @@ export function createJarvis({ registry, policy, audit, memory }) {
         capability: tool.id,
         riskTier: tool.riskTier,
         ok: false,
-        errorCode: "tool_execution_failed"
+        errorCode: errorCodes.TOOL_EXECUTION_FAILED
       });
-      return { ok: false, requestId: request.requestId, error: "tool_execution_failed" };
+      return failure(request.requestId, errorCodes.TOOL_EXECUTION_FAILED);
     }
+
+    if (tool.validateResult) {
+      try {
+        if ((await tool.validateResult(result)) !== true) {
+          audit.record({
+            type: "result_validation",
+            requestId: request.requestId,
+            actorId: request.actorId,
+            capability: tool.id,
+            ok: false,
+            errorCode: errorCodes.RESULT_VALIDATION_FAILED
+          });
+          return failure(request.requestId, errorCodes.RESULT_VALIDATION_FAILED);
+        }
+      } catch {
+        audit.record({
+          type: "result_validation",
+          requestId: request.requestId,
+          actorId: request.actorId,
+          capability: tool.id,
+          ok: false,
+          errorCode: errorCodes.RESULT_VALIDATION_FAILED
+        });
+        return failure(request.requestId, errorCodes.RESULT_VALIDATION_FAILED);
+      }
+    }
+
+    audit.record({
+      type: "tool_execution",
+      requestId: request.requestId,
+      actorId: request.actorId,
+      capability: tool.id,
+      riskTier: tool.riskTier,
+      ok: true
+    });
+
+    return { ok: true, requestId: request.requestId, result };
   }
 
   return Object.freeze({ run });

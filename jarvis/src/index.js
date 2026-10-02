@@ -1,4 +1,5 @@
 export { createRequest, riskTiers } from "./types.js";
+export { errorCodes, failure } from "./errors.js";
 export { createToolRegistry } from "./tools/registry.js";
 export { createPolicy } from "./policy/policy.js";
 export { createAuditLog } from "./audit/audit.js";
