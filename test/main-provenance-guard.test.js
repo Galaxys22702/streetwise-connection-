@@ -25,7 +25,9 @@ test("production deployment provenance is fail-closed", async () => {
   const source = await readFile(new URL("../scripts/verify-deployment-provenance.js", import.meta.url), "utf8");
   assert.match(source, /VERCEL_ENV/);
   assert.match(source, /env !== "production"/);
-  assert.match(source, /merge_commit_sha === sha/);
+  assert.match(source, /VERCEL_GIT_COMMIT_SHA/);
+  assert.match(source, /VERCEL_GIT_COMMIT_REF/);
+  assert.match(source, /ref !== "main"/);
   assert.match(source, /Blocked production deployment/);
 });
 
