@@ -171,3 +171,18 @@ test("audit recursively redacts credential-like fields", () => {
   assert.equal(event.nested.apiKey, "[redacted]");
   assert.equal(event.nested.safe, "value");
 });
+
+
+test("Jarvis returns a stable error for malformed requests", async () => {
+  const { jarvis } = buildJarvis({
+    id: "test.tool",
+    riskTier: riskTiers.READ_ONLY,
+    execute: async () => "never"
+  });
+
+  const result = await jarvis.run({ capability: "test.tool" });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.requestId, null);
+  assert.equal(result.error, "invalid_request");
+});
