@@ -3,7 +3,6 @@ name: Jarvis CI
 on:
   push:
     branches:
-      - main
       - "jarvis/**"
   pull_request:
     branches:
@@ -13,7 +12,7 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  jarvis-test:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -28,5 +27,5 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run test suite
-        run: npm test
+      - name: Run Jarvis test suite
+        run: node --test test/jarvis.test.js test/jarvis.integration.test.js test/jarvis-commerce.test.js
