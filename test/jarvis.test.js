@@ -126,7 +126,7 @@ test("tool execution receives only trusted execution context", async () => {
     metadata: { environment: "development", secret: "must-not-cross-boundary" }
   });
 
-  assert.deepEqual(Object.keys(received).sort(), ["actorId", "environment", "memory", "requestId"]);
+  assert.deepEqual(Object.keys(received).sort(), ["actorId", "environment", "memory", "operation", "requestId"]);
   assert.equal("secret" in received, false);
 });
 
