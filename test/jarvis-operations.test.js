@@ -377,7 +377,7 @@ test("Jarvis accepts a real, single-use approval record and preserves its proven
     actorId: "operator",
     capability: "ops.approved",
     environment: "test",
-    expiresAt: "2026-10-02T21:00:00.000Z"
+    expiresAt: "2026-10-09T21:00:00.000Z"
   });
 
   const registry = createToolRegistry();
