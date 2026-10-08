@@ -115,12 +115,14 @@ test("Jarvis attaches an explicitly routed operation task without widening tool 
   const router = createOperationRouter({
     routes: { "tech.provider.status": operationRoutes.TECH }
   });
+  const idempotencyStore = createIdempotencyStore();
   const jarvis = createJarvis({
     registry,
     policy: createPolicy({ permissions: { operator: ["tech.provider.status"] } }),
     audit,
     memory: createMemory(),
-    operationRouter: router
+    operationRouter: router,
+    idempotencyStore
   });
 
   const result = await jarvis.run({
