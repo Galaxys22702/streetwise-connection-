@@ -50,6 +50,35 @@ A positive contribution is only a screening result. Launch still requires writte
 - Launch working-capital requirement: **cannot yet be calculated reliably**
 - Final gross/contribution margin by plan: **not yet validated**
 
+## Financial register
+
+Use this register as the checklist for replacing unknowns with dated evidence.
+
+| Input | Current value | Evidence required |
+| --- | --- | --- |
+| Wholesale cost by plan | Unknown | Provider rate card/catalogue + mapped SKU |
+| Provider setup/deposit/minimum | Unknown | Written provider commercial terms |
+| Activation/SIM/eSIM lifecycle fees | Unknown | Provider fee schedule |
+| Payment processing | Unknown for launch | Processor production pricing/contract |
+| Telecom taxes/surcharges | Unresolved | Tax/regulatory determination for final model |
+| Nevada formation/licensing | Incomplete | Filed receipts and official fee evidence |
+| Hosting/database/monitoring | Not consolidated | Current vendor invoices/plan pricing |
+| Support/fraud reserve | Not approved | Operating assumption backed by test/actual data |
+| Refund/chargeback reserve | Not approved | Payment/refund policy + operating assumption |
+| Launch working capital | Not quantified | Completed cost stack + provider settlement timing |
+
+### Monthly planning formula
+
+For a scenario with multiple plan types:
+
+`monthly contribution = Σ(active lines × per-line contribution) - fixed monthly operating costs`
+
+For launch cash:
+
+`minimum launch cash = one-time setup costs + provider deposits/pre-funding + fixed-cost runway + refund/fraud reserve + settlement-timing buffer`
+
+Do not publish a break-even customer count until wholesale costs, taxes and fixed operating costs are evidenced. A neat spreadsheet built on imaginary inputs is still imaginary.
+
 ## Required evidence
 
 Store confidential provider pricing outside the public repository. Record only sanitised conclusions here after validation. Financial approval should reference dated evidence for provider pricing, payment fees, tax treatment, fixed operating costs and required reserves.
