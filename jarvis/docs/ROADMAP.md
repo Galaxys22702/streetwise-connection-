@@ -20,6 +20,9 @@
 - [ ] Documentation/memory integration
 - [x] Structured error handling
 - [x] Integration tests
+- [x] Shared operation task envelope and explicit TECH/CALLER/OPS routing
+- [x] One-time approval records with expiry and replay protection
+- [x] Idempotency reservation and duplicate-execution blocking
 - [ ] Commerce integration with authoritative product/pricing/payment services
 
 ## Phase 3: Human-approved workflows
