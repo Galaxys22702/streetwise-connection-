@@ -11,6 +11,9 @@ User
 Request / Context
   |
   v
+Operation Task
+  |
+  v
 Jarvis Core
   |
   +--> Policy / Authorisation
@@ -27,9 +30,17 @@ Response
 
 ## Components
 
+### Operation task and routing
+
+Every routed operation can be represented by a bounded task envelope containing the request identity, actor, capability, risk tier, environment, approval state, dry-run intent, idempotency key, lifecycle status, and timestamps.
+
+The routing table is explicit. A capability is not assigned to TECH, CALLER, or OPS by guessing from a name, and an unrouted capability fails closed when routing is enabled.
+
+Generic task updates may advance only the lifecycle status and may not rewrite the task's identity, capability, route, risk tier, or approval state.
+
 ### Core
 
-Normalises requests, maintains execution context, and coordinates tool calls.
+Normalises requests, maintains execution context, attaches an approved operation task when routing is configured, and coordinates tool calls.
 
 ### Policy
 
@@ -68,12 +79,14 @@ The initial execution model is synchronous and explicit:
 
 1. Parse request.
 2. Resolve permitted capability.
-3. Validate inputs.
-4. Evaluate policy.
-5. Execute the tool.
-6. Validate the result.
-7. Record an audit event.
-8. Return a bounded response.
+3. Evaluate policy.
+4. Resolve an explicit operation route when configured.
+5. Create a bounded operation task.
+6. Validate inputs.
+7. Execute the tool.
+8. Validate the result.
+9. Record audit events.
+10. Return a bounded response.
 
 Autonomous multi-step execution should be introduced only after this foundation is tested.
 
