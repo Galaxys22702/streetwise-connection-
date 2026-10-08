@@ -77,6 +77,26 @@ body::before {
   background: radial-gradient(circle, var(--violet), transparent 68%);
 }
 
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 100;
+  transform: translateY(-160%);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: #07132d;
+  color: var(--ink);
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.skip-link:focus { transform: translateY(0); }
+
+section[id] { scroll-margin-top: 28px; }
+
 a { color: inherit; }
 button, input { font: inherit; }
 img { display: block; max-width: 100%; }
@@ -608,5 +628,5 @@ code { display: block; margin-top: 12px; border-radius: 10px; padding: 12px; ove
 }
 @media (max-width: 700px) {
   .site-nav-actions { gap: 10px; }
-  .site-nav-actions .text-link { display: none; }
+  .site-nav-actions .text-link:first-child { display: none; }
 }
