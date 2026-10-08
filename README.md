@@ -35,6 +35,15 @@ Current launch blockers are external/project-gate items rather than the latest m
 
 See `docs/launch/PROJECT_STATUS.md` for the current readiness snapshot, `docs/launch/90_DAY_LAUNCH_PLAN.md` for the August 31-November 30 launch-readiness schedule, and `docs/launch/OWNER_ACTIONS.md` for owner/provider/regulator actions that cannot be completed safely in code.
 
+## Streetwise ecosystem
+
+**Streetwise Connection℠** is the umbrella brand for the broader Streetwise ecosystem. **Bread + Master Ventures** is a joint venture project operated under that umbrella, covering practical entrepreneurship, business development, community-focused initiatives, and related ventures developed by Bread and Master.
+
+Master & Bread is therefore treated as a **Streetwise-affiliated venture project**, while individual ventures remain operationally and legally distinct where required. The Bread + Master repository is the planning workspace for those ventures and should not be treated as the cellular service backend or as evidence that any venture is already operating commercially.
+
+Repository: https://github.com/Galaxys22702/bread-master-ventures-repository-
+
+
 ## Product direction
 
 Streetwise is being prepared as a cellular/MVNO brand rather than a data-only eSIM storefront.
