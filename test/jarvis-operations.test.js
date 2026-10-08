@@ -115,12 +115,14 @@ test("Jarvis attaches an explicitly routed operation task without widening tool 
   const router = createOperationRouter({
     routes: { "tech.provider.status": operationRoutes.TECH }
   });
+  const idempotencyStore = createIdempotencyStore();
   const jarvis = createJarvis({
     registry,
     policy: createPolicy({ permissions: { operator: ["tech.provider.status"] } }),
     audit,
     memory: createMemory(),
-    operationRouter: router
+    operationRouter: router,
+    idempotencyStore
   });
 
   const result = await jarvis.run({
@@ -259,7 +261,7 @@ test("approval records are bound, expiring, and single-use", () => {
     actorId: "operator",
     capability: "ops.settings.update",
     environment: "production",
-    expiresAt: "2026-10-02T21:00:00.000Z"
+    expiresAt: "2026-10-09T21:00:00.000Z"
   });
 
   const verified = approvals.verifyAndConsume("approval-1", {
@@ -361,7 +363,7 @@ test("Jarvis blocks a duplicate idempotency key before tool execution", async ()
   assert.equal(second.ok, false, JSON.stringify(second));
   assert.equal(second.error, "idempotency_replay");
   assert.equal(executions, 1);
-  assert.equal(second.operation.status, operationStatuses.BLOCKED);
+  assert.equal(audit.list().some(event => event.type === "idempotency_block"), true);
 });
 
 
