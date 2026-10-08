@@ -134,7 +134,7 @@ test("Jarvis attaches an explicitly routed operation task without widening tool 
     }
   });
 
-  assert.equal(result.ok, true);
+  assert.equal(result.ok, true, JSON.stringify(result));
   assert.equal(result.operation.route, operationRoutes.TECH);
   assert.equal(result.operation.dryRun, true);
   assert.equal(result.operation.idempotencyKey, "op-123");
@@ -357,8 +357,8 @@ test("Jarvis blocks a duplicate idempotency key before tool execution", async ()
   const first = await jarvis.run(request);
   const second = await jarvis.run(request);
 
-  assert.equal(first.ok, true);
-  assert.equal(second.ok, false);
+  assert.equal(first.ok, true, JSON.stringify(first));
+  assert.equal(second.ok, false, JSON.stringify(second));
   assert.equal(second.error, "idempotency_replay");
   assert.equal(executions, 1);
   assert.equal(second.operation.status, operationStatuses.BLOCKED);
@@ -411,7 +411,7 @@ test("Jarvis accepts a real, single-use approval record and preserves its proven
     metadata: { environment: "test", approvalId: "approval-real-1" }
   });
 
-  assert.equal(result.ok, true);
+  assert.equal(result.ok, true, JSON.stringify(result));
   assert.equal(result.operation.approval.approvalId, "approval-real-1");
   assert.equal(result.operation.approval.approvedBy, "supervisor");
   assert.equal(result.operation.approval.status, "approved");
