@@ -28,4 +28,4 @@ jobs:
         run: npm ci
 
       - name: Run Jarvis test suite
-        run: node --test test/jarvis.test.js test/jarvis.integration.test.js test/jarvis-commerce.test.js
+        run: node --test test/jarvis.test.js test/jarvis.integration.test.js test/jarvis-commerce.test.js test/jarvis-operations.test.js
