@@ -1,0 +1,34 @@
+# JARVIS AI private settings
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+secrets/
+private/
+local-data/
+*.sqlite
+*.sqlite3
+
+# Node.js and generated output
+node_modules/
+dist/
+build/
+coverage/
+.next/
+.vercel/
+*.log
+*.cache
+
+# Temporary media and exports
+tmp/
+temp/
+exports/
+renders/
+
+# Local editor / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
