@@ -84,3 +84,12 @@ Ahead/behind counts reflect Git ancestry; squash-merged branches can still appea
 
 This is a Streetwise/JARVIS repository audit, not a claim that the other five account repositories were repaired. The HP launcher must be exercised on Windows. Mock-provider tests do not validate a real OpenAI API key or billing. Production cellular launch gates remain unchanged.
 
+## Required Vercel check migration
+
+The live Protect main ruleset (23781049) still requires `Vercel` from integration 8329. The Vercel GitHub App now emits `Vercel – streetwise-connection` for the canonical project, plus separate statuses for two other projects. GitHub rejected the merge because the old exact check name is never reported.
+
+Change only the required status-check context from `Vercel` to `Vercel – streetwise-connection`, preserving integration 8329, strict branch freshness, and all other live rules. Do not disable enforcement, remove the deployment requirement, or manufacture a passing status. The checked-in ruleset and integrity validator now expect the actual canonical project's check.
+
+GitHub UI: repository Settings → Rules → Rulesets → Protect main → Require status checks to pass → replace the obsolete Vercel entry with Vercel – streetwise-connection (Vercel app) → Save changes. The connected GitHub tools can inspect but cannot update this ruleset.
+
+All GitHub Actions jobs and the canonical Vercel preview passed for the initial consolidation commit. Two auxiliary Vercel projects remain outside available deployment access; do not treat their status as evidence of JARVIS running on the HP.
