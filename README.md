@@ -200,6 +200,9 @@ Do not promise unlimited data, unlimited hotspot, guaranteed network switching, 
 
 ## Repository map
 
+**JARVIS on an HP:** [Windows setup and capabilities](jarvis/local/README.md).
+**Branch audit:** [October 10 branch inventory and disposition](docs/operations/BRANCH_AUDIT_2026-10-10.md).
+
 ```text
 api/                Vercel API entry points
 src/                application/server code

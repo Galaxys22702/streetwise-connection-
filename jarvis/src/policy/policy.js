@@ -28,6 +28,7 @@ export function createPolicy({
           typeof verified.approvalId !== "string" ||
           typeof verified.approvedBy !== "string" ||
           typeof verified.expiresAt !== "string" ||
+          !Number.isFinite(Date.parse(verified.expiresAt)) ||
           Date.parse(verified.expiresAt) <= Date.now()
         ) {
           return deny("approval_invalid");

@@ -1,5 +1,11 @@
 # Jarvis
 
+## Personal HP workspace
+
+For local AI chat, Money Mode, and Investigator, open [`local/README.md`](local/README.md).
+On Windows, extract the repository ZIP and double-click `jarvis/local/Start-JARVIS.bat`.
+This local app is separate from the Streetwise production runtime. It does not execute external connector actions.
+
 Jarvis is the assistant and agent layer being developed inside Streetwise Connection.
 
 ## Purpose

@@ -367,7 +367,8 @@ test("Jarvis blocks a duplicate idempotency key before tool execution", async ()
 });
 
 
-test("Jarvis accepts a real, single-use approval record and preserves its provenance", async () => {
+test("Jarvis accepts a real, single-use approval record and preserves its provenance", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-10-02T20:00:00.000Z") });
   const approvals = createApprovalStore({
     now: () => new Date("2026-10-02T20:00:00.000Z")
   });
@@ -467,4 +468,21 @@ test("retry controller is bounded and fail-closed for elevated risk", () => {
   }), false);
   assert.equal(retry.nextAttempt(1), 2);
   assert.equal(retry.nextAttempt(3), null);
+});
+
+test("policy rejects malformed and expired approval timestamps", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date("2031-01-01T00:00:00Z") });
+  for (const expiresAt of ["not-a-date", "2030-12-31T23:59:59Z", "2031-01-01T00:00:00Z"]) {
+    const policy = createPolicy({
+      permissions: { operator: ["ops.approved"] },
+      approvalVerifier: async () => ({ approvalId: "test-approval", approvedBy: "supervisor", expiresAt })
+    });
+    const decision = await policy.evaluate({
+      request: { actorId: "operator" },
+      tool: { id: "ops.approved", riskTier: riskTiers.OPERATIONAL },
+      environment: "test"
+    });
+    assert.equal(decision.allowed, false, expiresAt);
+    assert.equal(decision.reason, "approval_invalid");
+  }
 });
