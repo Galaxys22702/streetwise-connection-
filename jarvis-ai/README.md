@@ -1,20 +1,23 @@
 # JARVIS AI — Streetwise Connection
-First-stage, approval-first AI dashboard. This is a prototype, not a deployed private service.
 
-## Run locally
-1. Install Node.js 20+.
-2. In this directory, set OPENAI_API_KEY as a server-side environment variable (never paste it into frontend code or commit it).
-3. Run `npm start`.
-4. Visit http://127.0.0.1:3000.
+A localhost-only private chat prototype; no Vercel deployment is needed.
 
-The app binds to localhost by default and does not include authentication, so **do not expose it to the public internet**. Do not deploy it publicly until proper login, authorization, abuse protection, rate limiting, and secure secret storage are added.
+## Run privately on an HP Windows 10 laptop
+1. Install Node.js 20+ from https://nodejs.org/en/download (choose the Windows LTS installer).
+2. On GitHub, select branch `jarvis-ai-mvp-20261010` in `Galaxys22702/streetwise-connection-`, then choose **Code > Download ZIP**.
+3. Unzip the folder. Open the `jarvis-ai` folder.
+4. Click the File Explorer address bar, type `powershell`, and press Enter to open a terminal in that folder.
+5. Run `powershell -NoProfile -ExecutionPolicy Bypass -File .\start-jarvis.ps1`.
+6. Paste your OpenAI API key into the hidden prompt; press Enter. Do **not** paste the key into chat or GitHub.
+7. Visit http://127.0.0.1:3000 (the launcher also opens a browser). Keep the terminal window open while using JARVIS.
 
-## Current scope
-- Text-only chat through the OpenAI Responses API
-- Server-side API key handling
-- Session-only request history in the browser
-- No external side effects or automatic posting
-- No real video background replacement yet
+To stop: press Ctrl+C in the terminal, then close the window. API key stays only in the launcher process memory and is not saved to a file.
 
-## Planned
-Authentication, persistent private history, approval queue, voice interface, and a licensed video-editing pipeline with subject masking and Fremont Street background assets.
+## Other operating systems
+Set `OPENAI_API_KEY` securely in your shell/session, then run `npm start`. See `package.json`.
+
+## Security and capabilities
+- The server binds only to `127.0.0.1`; **do not port-forward it or expose it to the public internet.**
+- Server-side OpenAI Responses API; requires a valid key with available API credit.
+- Text-only conversation and browser-session request history; no actual connector execution.
+- Not yet an authenticated web service, automation agent, phone-accessible shared service, or video editor.
