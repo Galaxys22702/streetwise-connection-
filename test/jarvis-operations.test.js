@@ -261,7 +261,7 @@ test("approval records are bound, expiring, and single-use", () => {
     actorId: "operator",
     capability: "ops.settings.update",
     environment: "production",
-    expiresAt: "2026-10-09T21:00:00.000Z"
+    expiresAt: "2099-10-09T21:00:00.000Z"
   });
 
   const verified = approvals.verifyAndConsume("approval-1", {
@@ -377,7 +377,7 @@ test("Jarvis accepts a real, single-use approval record and preserves its proven
     actorId: "operator",
     capability: "ops.approved",
     environment: "test",
-    expiresAt: "2026-10-09T21:00:00.000Z"
+    expiresAt: "2099-10-09T21:00:00.000Z"
   });
 
   const registry = createToolRegistry();
