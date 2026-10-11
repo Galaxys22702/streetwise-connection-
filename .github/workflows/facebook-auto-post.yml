@@ -1,0 +1,36 @@
+name: Facebook auto post
+
+on:
+  schedule:
+    - cron: "7,37 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: facebook-auto-post
+  cancel-in-progress: true
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - name: Publish Streetwise Facebook image post
+        env:
+          FACEBOOK_OPS_BASE_URL: https://streetwise-connection.vercel.app
+          FACEBOOK_OPS_ADMIN_KEY: ${{ secrets.META_ADMIN_API_KEY }}
+          FACEBOOK_AUTO_POST_ENABLED: ${{ vars.FACEBOOK_AUTO_POST_ENABLED || 'false' }}
+          FACEBOOK_AUTO_POST_IMAGE_URL: https://streetwise-connection.vercel.app/streetwise-mark.png
+        run: node scripts/facebook-auto-post.js

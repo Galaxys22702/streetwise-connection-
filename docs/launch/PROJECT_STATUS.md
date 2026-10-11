@@ -1,9 +1,9 @@
 # Project Status
 
-Last reviewed: **2026-09-20**  
+Last reviewed: **2026-09-25**  
 Target launch-readiness date: **2026-11-30**  
 Planned public opening target: **2027-01-01**  
-Execution plan: `docs/90_DAY_LAUNCH_PLAN.md`
+Execution plan: `docs/launch/90_DAY_LAUNCH_PLAN.md`
 
 ## Executive status
 
@@ -47,7 +47,7 @@ Current production posture:
 
 ## Engineering health
 
-Verified on **2026-09-20**:
+Verified through **2026-09-25**:
 
 - Current `main` is the engineering source of truth; avoid hard-coding a commit SHA here because updating this status document changes the branch head.
 - `Build targets` and `Vercel compatibility` both pass on the current engineering head.
@@ -67,11 +67,29 @@ Verified on **2026-09-20**:
 ### Repository administration cleanup still needed
 
 - Numerous non-`main` branches remain. They should be pruned only after each branch is proven merged or obsolete; they must not be bulk-deleted because some sampled branches contain unique/diverged commits. The merged September 20 audit/strategy branches also remain because the connected GitHub integration cannot delete refs.
-- `main` is currently unprotected. Branch protection/ruleset administration is not available through the connected GitHub integration, so this remains a repository-owner administration task.
-- Recommended protection: require successful `Build targets` and `Vercel compatibility` checks before merge, block force-pushes and branch deletion, and prefer pull requests for future code changes.
+- `main` is protected by repository rules. Direct documentation writes were rejected on September 25, confirming pull-request-only changes are enforced and four required status checks are expected.
+- Keep the protection in place. Future changes should continue through pull requests; do not bypass required checks.
 - Repository description metadata remains empty and should be set in GitHub repository settings when repository-metadata editing is available.
 
 These repository-administration items are engineering hygiene concerns, not permission to bypass any launch gate.
+
+## Financial readiness
+
+Financial documentation is now consolidated under `docs/finance/`.
+
+Current state:
+
+- target retail prices: documented;
+- account-specific wholesale pricing: not verified;
+- provider deposits/minimum commitments: not verified;
+- telecom tax/surcharge allocation: unresolved;
+- fixed operating-cost baseline: not consolidated;
+- support/fraud/refund reserves: not approved;
+- launch working-capital requirement: not quantified;
+- final contribution margin by plan: not validated;
+- live billing and provider-funded orders: disabled.
+
+Financial readiness must remain blocked until the cost stack is evidenced and launch cash is quantified. See `docs/finance/README.md` and `docs/finance/FINANCIAL_READINESS.md`.
 
 ## Product direction
 

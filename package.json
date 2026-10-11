@@ -16,8 +16,8 @@
     "check:provider-commercial": "node scripts/check-provider-commercial-readiness.js"
   },
   "dependencies": {
-    "pg": "^8.23.0",
-    "stripe": "^22.6.2"
+    "pg": "^8.23.1",
+    "stripe": "^23.0.0"
   },
   "engines": {
     "node": "24.x"

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://streetwise-connection.vercel.app/sitemap.xml

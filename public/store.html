@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#040816" />
+  <meta name="description" content="Shop Streetwise Connection cellular plans." />
+  <link rel="canonical" href="https://streetwise-connection.vercel.app/store.html" />
+  <link rel="stylesheet" href="/styles.css" />
+  <title>Streetwise Connection | Store</title>
+</head>
+<body>
+  <header class="hero" style="min-height:auto">
+    <nav class="site-nav" aria-label="Store navigation">
+      <a class="brand" href="/" aria-label="Streetwise Connection home">
+        <span class="brand-icon"><img src="/streetwise-mark.png" alt="" /></span>
+        <span class="brand-name"><strong>Streetwise</strong><small>Connection℠</small></span>
+      </a>
+      <div class="site-nav-actions"><a class="text-link" href="/account.html">Account</a><a class="text-link" href="/">Back home</a></div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="services-section" aria-labelledby="store-heading">
+      <div class="services-intro">
+        <p class="eyebrow">Streetwise storefront</p>
+        <h1 id="store-heading">Choose your connection.</h1>
+        <p class="statement">Plans shown here come from the Streetwise commercial catalogue. A plan cannot be purchased until it is marked sellable and the public launch gates are open.</p>
+        <div id="store-status" class="result" aria-live="polite">Checking store status…</div>
+      </div>
+
+      <div id="store-plans" class="service-grid" aria-live="polite">
+        <article class="service-card"><h3>Loading plans…</h3><p>Checking the current Streetwise catalogue.</p></article>
+      </div>
+
+      <section id="cart-panel" class="waitlist-panel" hidden aria-labelledby="cart-heading">
+        <div class="waitlist-copy">
+          <p class="eyebrow">Your order</p>
+          <h2 id="cart-heading">Cart</h2>
+          <div id="cart-items"></div>
+        </div>
+        <div class="waitlist-form">
+          <div class="form-heading">
+            <span>Total</span>
+            <strong id="cart-total">$0.00/mo</strong>
+          </div>
+          <button id="checkout-button" class="button" type="button">Continue to secure checkout ↗</button>
+          <p id="checkout-result" class="result" aria-live="polite"></p>
+          <p class="fine-print">Payment credentials are handled by the approved payment provider. Streetwise does not ask for card numbers, passwords or verification codes in this page.</p>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <footer>
+    <a class="brand footer-brand" href="/">
+      <span class="brand-icon"><img src="/streetwise-mark.png" alt="" /></span>
+      <span class="brand-name"><strong>Streetwise</strong><small>Connection℠</small></span>
+    </a>
+    <p>Stay Connected. Stay Streetwise.℠</p>
+    <a href="/waitlist-privacy.html">Waitlist privacy notice</a>
+  </footer>
+
+  <script type="module" src="/store.js"></script>
+</body>
+</html>

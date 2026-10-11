@@ -1,6 +1,6 @@
 # Streetwise Connection — Business & Compliance
 
-Last reviewed: **2026-09-15**
+Last reviewed: **2026-09-25**
 
 This directory contains Streetwise Connection's pre-launch business, legal, provider, and regulatory planning documents. These files are preparation materials only; they do not prove that any entity, licence, provider approval, tax registration, or regulatory authorisation has been issued.
 
@@ -32,6 +32,6 @@ Do **not** commit Social Security numbers, EIN confirmation letters, bank inform
 
 ## Current launch posture
 
-Streetwise's current primary domestic commercial path is AT&T qualification through the appropriate Partner Exchange/Wholesale route, with 1GLOBAL retained as fallback and eSIM Go retained for travel/data. The technical architecture remains provider-agnostic and uses licensed wholesale network partners.
+Streetwise currently evaluates AT&T and 1GLOBAL in parallel as equal-priority domestic commercial candidates. eSIM Go remains the travel/data evaluation path. No provider is approved for public domestic service until written commercial rights, account-specific pricing, regulatory allocation, and controlled technical validation are complete. The technical architecture remains provider-agnostic.
 
 Public commercial service must remain disabled until the applicable formation, licensing, provider, regulatory, economics, security, customer-policy, support, and controlled-staging gates are complete. Voice, SMS, phone numbers, number porting, 5G/VoLTE/Wi-Fi calling, network resilience, and security features remain launch-gated until contractually supported and technically verified.

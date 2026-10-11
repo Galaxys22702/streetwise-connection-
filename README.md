@@ -33,7 +33,16 @@ The production deployment remains intentionally constrained. Visitors can join t
 
 Current launch blockers are external/project-gate items rather than the latest main-branch build: provider onboarding remains unapproved, Nevada formation is not complete, and the official Nevada name check still needs a successful result before filing.
 
-See `docs/PROJECT_STATUS.md` for the current readiness snapshot, `docs/90_DAY_LAUNCH_PLAN.md` for the August 31-November 30 launch-readiness schedule, and `docs/OWNER_ACTIONS.md` for owner/provider/regulator actions that cannot be completed safely in code.
+See `docs/launch/PROJECT_STATUS.md` for the current readiness snapshot, `docs/launch/90_DAY_LAUNCH_PLAN.md` for the August 31-November 30 launch-readiness schedule, and `docs/launch/OWNER_ACTIONS.md` for owner/provider/regulator actions that cannot be completed safely in code.
+
+## Streetwise ecosystem
+
+**Streetwise Connection℠** is the umbrella brand for the broader Streetwise ecosystem. **Bread + Master Ventures** is a joint venture project operated under that umbrella, covering practical entrepreneurship, business development, community-focused initiatives, and related ventures developed by Bread and Master.
+
+Master & Bread is therefore treated as a **Streetwise-affiliated venture project**, while individual ventures remain operationally and legally distinct where required. The Bread + Master repository is the planning workspace for those ventures and should not be treated as the cellular service backend or as evidence that any venture is already operating commercially.
+
+Repository: https://github.com/Galaxys22702/bread-master-ventures-repository-
+
 
 ## Product direction
 
@@ -94,7 +103,7 @@ The repository therefore treats AT&T as **commercially targeted but technically 
 
 Streetwise must not advertise itself as an AT&T reseller, AT&T MVNO, AT&T partner, or AT&T-powered service until the applicable rights are granted in writing.
 
-See `docs/ATT_PROVIDER_APPLICATION_PACKET.md` for the prepared qualification transfer sheet.
+See `docs/providers/ATT_PROVIDER_APPLICATION_PACKET.md` for the prepared qualification transfer sheet.
 
 ### Equal domestic evaluation path: 1GLOBAL
 
@@ -153,7 +162,7 @@ The future provider capability boundary should be able to represent:
 - SIM swaps
 - provider events/webhooks
 
-See `docs/ARCHITECTURE.md`.
+See `docs/operations/ARCHITECTURE.md`.
 
 ## Safety model
 
@@ -191,6 +200,9 @@ Do not promise unlimited data, unlimited hotspot, guaranteed network switching, 
 
 ## Repository map
 
+**JARVIS on an HP:** [Windows setup and capabilities](jarvis/local/README.md).
+**Branch audit:** [October 10 branch inventory and disposition](docs/operations/BRANCH_AUDIT_2026-10-10.md).
+
 ```text
 api/                Vercel API entry points
 src/                application/server code
@@ -199,7 +211,12 @@ src/providers/      wholesale provider adapters
 db/migrations/      PostgreSQL migrations
 scripts/            verification, migration, economics, and smoke checks
 public/             public waitlist experience
-docs/               architecture, cellular strategy, provider, and technical documentation
+docs/               documentation index
+docs/launch/        launch status, readiness, and owner actions
+docs/finance/       payments, financial readiness, and provider economics
+docs/providers/     provider evaluation, outreach, and onboarding
+docs/product/       roadmap, positioning, and customer product plans
+docs/operations/    architecture, security, provisioning, and repository operations
 docs/business/      formation, licensing, policy, and regulatory working documents
 lab/                isolated non-production Open5GS research/validation
 .github/workflows/  CI and provider/payment/lab validation
@@ -225,7 +242,7 @@ The default payment and connectivity providers remain mocks during local develop
 
 Target launch-readiness date: **November 30, 2026**. Planned public opening target: **January 1, 2027**. December is reserved for final acceptance, controlled production verification, policy/support readiness and launch authorisation. Neither date overrides mandatory provider, legal, regulatory, security, economics, customer-policy or staging gates.
 
-See `docs/90_DAY_LAUNCH_PLAN.md`.
+See `docs/launch/90_DAY_LAUNCH_PLAN.md`.
 
 ## Next concrete milestones
 

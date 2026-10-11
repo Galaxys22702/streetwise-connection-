@@ -1,0 +1,55 @@
+name: Validate Main Ruleset Policy
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/main-ruleset.json
+      - .github/workflows/sync-main-ruleset.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-main-ruleset-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate Protect main policy
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Validate desired ruleset JSON
+        shell: bash
+        run: |
+          set -euo pipefail
+          jq -e '
+            .name == "Protect main" and
+            .target == "branch" and
+            .enforcement == "active" and
+            .bypass_actors == [] and
+            (.conditions.ref_name.include == ["refs/heads/main"]) and
+            (.conditions.ref_name.exclude == []) and
+            ([.rules[] | select(.type == "pull_request")][0].parameters.required_approving_review_count == 0) and
+            ([.rules[] | select(.type == "pull_request")][0].parameters.required_review_thread_resolution == true) and
+            ([.rules[] | select(.type == "pull_request")][0].parameters.allowed_merge_methods | sort == ["rebase", "squash"]) and
+            ([.rules[] | select(.type == "required_status_checks")][0].parameters.strict_required_status_checks_policy == true)
+          ' .github/main-ruleset.json >/dev/null
+
+      - name: Safety summary
+        shell: bash
+        run: |
+          {
+            echo "## Main ruleset policy validation"
+            echo
+            echo "Repository policy is valid."
+            echo "This workflow is read-only and does not modify the live GitHub ruleset."
+          } >> "${GITHUB_STEP_SUMMARY}"

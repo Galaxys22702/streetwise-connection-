@@ -3,12 +3,40 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="google-site-verification" content="a2IapY-HMCDSMkcJsZmnyqJvzC3s4i4luE792JXRO5g" />
   <meta name="theme-color" content="#040816" />
-  <meta name="description" content="Join the Streetwise Connection launch waitlist for affordable, security-focused cellular service for households and small businesses." />
-  <title>Streetwise Connection℠ — Stay Connected. Stay Streetwise.℠</title>
+  <meta name="description" content="Streetwise Connection is a Las Vegas mobile technology business offering phone setup help now and building affordable, security-focused cellular service for households and small businesses." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <link rel="canonical" href="https://streetwise-connection.vercel.app/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Streetwise Connection" />
+  <meta property="og:title" content="Streetwise Connection | Las Vegas Mobile Setup & Cellular Launch" />
+  <meta property="og:description" content="Las Vegas mobile setup help available now. Join the Streetwise Connection waitlist for planned affordable, security-focused cellular service." />
+  <meta property="og:url" content="https://streetwise-connection.vercel.app/" />
+  <meta property="og:image" content="https://streetwise-connection.vercel.app/streetwise-mark.png" />
+  <meta name="twitter:card" content="summary" />
+  <title>Streetwise Connection | Las Vegas Mobile Setup & Cellular Launch</title>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Streetwise Connection",
+    "url": "https://streetwise-connection.vercel.app/",
+    "logo": "https://streetwise-connection.vercel.app/streetwise-mark.png",
+    "description": "Las Vegas mobile technology business offering phone setup help and building affordable, security-focused cellular service.",
+    "areaServed": {
+      "@type": "City",
+      "name": "Las Vegas"
+    },
+    "sameAs": [
+      "https://www.instagram.com/streetwise7024/"
+    ]
+  }
+  </script>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
   <div class="page-ambient" aria-hidden="true"></div>
 
   <header class="hero">
@@ -17,7 +45,7 @@
         <span class="brand-icon"><img src="/streetwise-mark.png" alt="" /></span>
         <span class="brand-name"><strong>Streetwise</strong><small>Connection℠</small></span>
       </a>
-      <span class="badge"><span aria-hidden="true"></span> Target opening · Jan 1, 2027</span>
+      <div class="site-nav-actions"><a class="text-link" href="#mobile-help">Mobile help</a><a class="text-link" href="/store.html">Store</a><span class="badge"><span aria-hidden="true"></span> Target opening · Jan 1, 2027</span></div>
     </nav>
 
     <div class="hero-grid">
@@ -44,14 +72,14 @@
           </div>
           <strong>Building it right</strong>
           <div class="status-row"><span>Opening target</span><b>Jan 1, 2027</b></div>
-          <div class="status-row"><span>Waitlist</span><b>Status checked live</b></div>
+          <div class="status-row"><span>Waitlist</span><b id="waitlist-status">Checking…</b></div>
           <div class="status-row"><span>Public sales</span><b class="locked">Locked</b></div>
         </div>
       </div>
     </div>
   </header>
 
-  <main>
+  <main id="main-content">
     <section class="section intro-section">
       <div class="section-heading">
         <p class="eyebrow">Why Streetwise</p>
@@ -199,13 +227,13 @@
         <p class="fine-print">Planned public opening: January 1, 2027, subject to provider, legal, regulatory, security and launch-readiness gates. No checkout, payment, line activation, phone-number transfer or live eSIM order is available today.</p>
         <p id="waitlist-contact" class="result" hidden></p>
       </div>
-      <form id="waitlist-form" class="waitlist-form">
+      <form id="waitlist-form" class="waitlist-form" aria-describedby="waitlist-result">
         <div class="form-heading">
           <span>Streetwise access</span>
           <strong>Join the waitlist</strong>
         </div>
         <label for="waitlist-email">Email address</label>
-        <input id="waitlist-email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" required />
+        <input id="waitlist-email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" maxlength="254" required />
         <label class="consent">
           <input name="consent" type="checkbox" required />
           <span>I agree to receive Streetwise Connection launch updates and have read the <a href="/waitlist-privacy.html">waitlist privacy notice</a>.</span>
