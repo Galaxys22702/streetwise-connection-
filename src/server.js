@@ -63,7 +63,7 @@ function applySecurityHeaders(res) {
   res.setHeader("cross-origin-resource-policy", "same-origin");
   res.setHeader(
     "content-security-policy",
-    "default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:"
+    "default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://vitals.vercel-insights.com; img-src 'self' data:"
   );
   if (IS_PRODUCTION) {
     res.setHeader("strict-transport-security", "max-age=63072000; includeSubDomains; preload");

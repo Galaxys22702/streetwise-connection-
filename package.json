@@ -16,6 +16,7 @@
     "check:provider-commercial": "node scripts/check-provider-commercial-readiness.js"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "pg": "^8.23.1",
     "stripe": "^23.0.0"
   },
