@@ -233,7 +233,7 @@ for (const [context, integrationId] of [
   ["test", 15368],
   ["docker-build", 15368],
   ["verify", 15368],
-  ["Vercel", 8329]
+  ["Vercel – streetwise-connection", 8329]
 ]) {
   if (requiredChecks.get(context) !== integrationId) {
     fail(`main ruleset is missing required status check ${context}`);
