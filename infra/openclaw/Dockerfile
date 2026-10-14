@@ -14,7 +14,9 @@ RUN curl -fsSL https://codeload.github.com/arjunkomath/openclaw-railway-template
 RUN npm install -g pnpm@11.24.0 \
  && pnpm install --frozen-lockfile --prod
 COPY patch-startup.cjs ./patch-startup.cjs
-RUN node patch-startup.cjs && rm patch-startup.cjs
+RUN node patch-startup.cjs && node --check /app/src/server.js && rm patch-startup.cjs
+COPY optimize-plugins.cjs ./optimize-plugins.cjs
+COPY --chmod=755 entrypoint-lite.sh ./entrypoint-lite.sh
 RUN useradd -m -s /bin/bash openclaw \
  && chown -R openclaw:openclaw /app \
  && mkdir -p /data && chown openclaw:openclaw /data \
@@ -32,4 +34,4 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
  CMD curl -f http://localhost:8080/setup/healthz || exit 1
 USER root
-ENTRYPOINT ["tini", "--", "./entrypoint.sh"]
+ENTRYPOINT ["tini", "--", "./entrypoint-lite.sh"]
