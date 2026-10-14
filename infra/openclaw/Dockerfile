@@ -4,8 +4,8 @@ RUN apt-get update \
  ca-certificates curl git gosu procps python3 tini build-essential zip unzip \
  && rm -rf /var/lib/apt/lists/*
 RUN npm install -g --allow-scripts=openclaw openclaw@2026.9.9 \
- && node --version | grep -Eq '^v26\\.' \
- && openclaw --version | grep -Eq '^OpenClaw 2026\\.9\\.9( |$)'
+ && node --version | grep -Eq '^v26[.]' \
+ && openclaw --version | grep -Eq '^OpenClaw 2026[.]9[.]9( |$)'
 RUN npm install -g clawhub@latest
 WORKDIR /app
 # Immutable upstream source. All credentials and conversation state remain on the Railway volume.
