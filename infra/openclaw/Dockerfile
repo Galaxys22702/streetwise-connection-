@@ -17,6 +17,7 @@ COPY patch-startup.cjs ./patch-startup.cjs
 RUN node patch-startup.cjs && node --check /app/src/server.js && rm patch-startup.cjs
 COPY optimize-plugins.cjs ./optimize-plugins.cjs
 COPY --chmod=755 entrypoint-lite.sh ./entrypoint-lite.sh
+RUN node --check /app/optimize-plugins.cjs && bash -n /app/entrypoint-lite.sh
 RUN useradd -m -s /bin/bash openclaw \
  && chown -R openclaw:openclaw /app \
  && mkdir -p /data && chown openclaw:openclaw /data \
