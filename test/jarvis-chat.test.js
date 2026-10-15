@@ -87,3 +87,33 @@ test("Vercel serves private Jarvis status and chat with the same access gate", a
     }
   }
 });
+
+test("Serverless Jarvis never offers or executes commands even with development opt-in", async () => {
+  const values = { ...env, NODE_ENV: "development", JARVIS_COMMANDS_ENABLED: "true" };
+  const saved = Object.fromEntries(Object.keys(values).map(key => [key, process.env[key]]));
+  Object.assign(process.env, values);
+  async function request(path, body, authorized = true) {
+    const req = Readable.from(body ? [Buffer.from(JSON.stringify(body))] : []);
+    req.url = path; req.method = body ? "POST" : "GET";
+    req.headers = authorized ? { authorization: `Bearer ${token}` } : {};
+    req.socket = { remoteAddress: "jarvis-serverless-commands-test" };
+    let data;
+    const res = { statusCode: 0, setHeader() {}, end(value) { data = JSON.parse(value); } };
+    await vercelHandler(req, res);
+    return { status: res.statusCode, data };
+  }
+  try {
+    const status = await request("/api/jarvis/status");
+    assert.equal(status.data.commandsAvailable, false);
+    assert.equal(status.data.capabilities.includes("workspace.command"), false);
+    assert.equal((await request("/api/jarvis/commands/prepare", { command: "pwd" }, false)).status, 401);
+    const prepare = await request("/api/jarvis/commands/prepare", { command: "pwd" });
+    assert.equal(prepare.status, 503);
+    assert.equal(prepare.data.error, "jarvis_commands_unavailable");
+    assert.equal((await request("/api/jarvis/commands/run", { id: "not-an-approval" })).status, 503);
+  } finally {
+    for (const [key, value] of Object.entries(saved)) {
+      if (value === undefined) delete process.env[key]; else process.env[key] = value;
+    }
+  }
+});

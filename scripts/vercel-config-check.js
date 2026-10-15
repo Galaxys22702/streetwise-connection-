@@ -49,5 +49,16 @@ if (headerMap.get('referrer-policy') !== 'no-referrer') {
 if (headerMap.get('strict-transport-security') !== 'max-age=63072000; includeSubDomains; preload') {
   throw new Error('vercel_hsts_required');
 }
+if (headerMap.get('permissions-policy') !== 'camera=(), microphone=(), geolocation=(), payment=()') {
+  throw new Error('vercel_default_device_permissions_must_remain_disabled');
+}
+const voiceHeaders = config.headers.filter(rule => rule.source !== '/(.*)')
+  .flatMap(rule => (rule.headers || [])
+    .filter(header => String(header.key).toLowerCase() === 'permissions-policy')
+    .map(header => ({ source: rule.source, value: header.value })));
+if (voiceHeaders.length !== 1 || voiceHeaders[0].source !== '/jarvis.html' ||
+    voiceHeaders[0].value !== 'camera=(), microphone=(self), geolocation=(), payment=()') {
+  throw new Error('vercel_microphone_must_be_scoped_to_jarvis_page');
+}
 
 console.log('Vercel config is static/API-only, side-effect free during build, routes nested API paths, and includes required public security headers.');

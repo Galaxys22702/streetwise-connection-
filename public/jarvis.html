@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Jarvis · Streetwise</title>
   <link rel="stylesheet" href="/jarvis.css">
-  <script src="/jarvis.js" defer></script>
+  <script src="/jarvis.js" type="module"></script>
 </head>
 <body>
   <main>
     <header><a href="/">Streetwise</a><span>YOUR PERSONAL ASSISTANT</span></header>
     <h1>Meet Jarvis.</h1>
-    <p class="intro">A little help with your next step. Plan a room, work through a question, or check Streetwise.</p>
+    <p class="intro">Talk through your next step, check your projects, and run commands from one workspace.</p>
     <section id="connection" aria-label="Connect to Jarvis">
       <form id="connect-form">
         <label for="access-token">Your private access token</label>
@@ -31,8 +31,43 @@
       <form id="chat-form">
         <label for="message">Message Jarvis</label>
         <textarea id="message" maxlength="4000" rows="3" placeholder="What can I help you with?" required></textarea>
-        <div class="row"><small>Answers and guidance. Computer control isn’t connected.</small><button id="send">Send message</button></div>
+        <div class="voice-controls" aria-label="Voice options">
+          <button id="voice-input" type="button" aria-pressed="false" aria-describedby="voice-note">Speak a message</button>
+          <label class="voice-choice"><input id="speak-replies" type="checkbox"> Read replies aloud</label>
+          <button id="stop-speaking" type="button" hidden>Stop playback</button>
+        </div>
+        <p id="voice-note" class="voice-note">Voice is optional. Your browser may send audio or spoken reply text to its speech services. Review recognized text before sending.</p>
+        <div class="row"><small>Chat gives answers. The command workspace runs approved actions.</small><button id="send">Send message</button></div>
       </form>
+      <section id="command-workspace" aria-labelledby="command-heading">
+        <h2 id="command-heading">Command workspace</h2>
+        <p id="command-availability">Connect a development runner to execute commands.</p>
+        <div id="command-tools" hidden>
+          <p class="command-warning">Commands run with the runner account’s access. They can change files and GitHub projects. Review every command before running it. Limit: 20 seconds and 32 KB of output.</p>
+          <div class="suggestions">
+            <button type="button" data-command="git status --short">Repository status</button>
+            <button type="button" data-command="git diff --stat">Changed files</button>
+            <button type="button" data-command="gh pr list --state open --limit 10">Open pull requests</button>
+          </div>
+          <form id="command-form">
+            <label for="command">Command to run</label>
+            <textarea id="command" maxlength="4000" rows="3" placeholder="git status --short" required></textarea>
+            <label for="command-cwd">Starting directory, relative to the connected workspace</label>
+            <input id="command-cwd" value="." maxlength="1000" required>
+            <button id="prepare-command">Review command</button>
+          </form>
+          <div id="command-review" hidden>
+            <h3>Review before running</h3>
+            <p id="review-cwd"></p>
+            <pre id="review-command"></pre>
+            <button id="run-command" type="button">Run this command</button>
+            <button id="cancel-command" type="button">Cancel</button>
+          </div>
+          <p id="command-notice" role="status" aria-live="polite"></p>
+          <p id="command-last-result"></p>
+          <pre id="command-output" aria-label="Command output" tabindex="0"></pre>
+        </div>
+      </section>
     </section>
   </main>
 </body>
