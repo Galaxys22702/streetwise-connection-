@@ -1,3 +1,4 @@
+import { handleJarvisApi } from "../src/services/jarvisApi.js";
 import { booleanEnv } from "../src/config/env.js";
 import { plans } from "../src/config/plans.js";
 import { cellularCapabilities } from "../src/config/cellularCapabilities.js";
@@ -129,6 +130,10 @@ export default async function handler(req, res) {
   if (req.method === "GET" && url.pathname === "/api/health") {
     const health = await buildHealthStatus({ runtime: "vercel" });
     return sendJson(res, health.statusCode, health.body);
+  }
+
+  if (url.pathname.startsWith("/api/jarvis/")) {
+    return handleJarvisApi({ req, res, url, readJsonBody, sendJson, sendError });
   }
 
   if (url.pathname.startsWith("/api/admin/facebook")) {

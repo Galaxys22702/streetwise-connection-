@@ -368,16 +368,15 @@ test("Jarvis blocks a duplicate idempotency key before tool execution", async ()
 
 
 test("Jarvis accepts a real, single-use approval record and preserves its provenance", async () => {
-  const approvals = createApprovalStore({
-    now: () => new Date("2026-10-02T20:00:00.000Z")
-  });
+  const now = Date.now();
+  const approvals = createApprovalStore({ now: () => new Date(now) });
   approvals.issue({
     approvalId: "approval-real-1",
     approvedBy: "supervisor",
     actorId: "operator",
     capability: "ops.approved",
     environment: "test",
-    expiresAt: "2099-01-01T00:00:00.000Z"
+    expiresAt: new Date(now + 60_000).toISOString()
   });
 
   const registry = createToolRegistry();

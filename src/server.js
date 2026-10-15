@@ -2,6 +2,7 @@ import http from "node:http";
 import { readFile } from "node:fs/promises";
 import { extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { handleJarvisApi } from "./services/jarvisApi.js";
 import { booleanEnv } from "./config/env.js";
 import { plans } from "./config/plans.js";
 import { cellularCapabilities } from "./config/cellularCapabilities.js";
@@ -54,11 +55,11 @@ const mimeTypes = {
   ".png": "image/png"
 };
 
-function applySecurityHeaders(res) {
+function applySecurityHeaders(res, pathname) {
   res.setHeader("x-content-type-options", "nosniff");
   res.setHeader("x-frame-options", "DENY");
   res.setHeader("referrer-policy", "no-referrer");
-  res.setHeader("permissions-policy", "camera=(), microphone=(), geolocation=(), payment=()");
+  res.setHeader("permissions-policy", `camera=(), microphone=${pathname === "/jarvis.html" ? "(self)" : "()"}, geolocation=(), payment=()`);
   res.setHeader("cross-origin-opener-policy", "same-origin");
   res.setHeader("cross-origin-resource-policy", "same-origin");
   res.setHeader(
@@ -140,12 +141,16 @@ async function serveStatic(pathname, res) {
 }
 
 const server = http.createServer(async (req, res) => {
-  applySecurityHeaders(res);
   const url = new URL(req.url || "/", "http://localhost");
+  applySecurityHeaders(res, url.pathname);
 
   if (req.method === "GET" && url.pathname === "/health") {
     const health = await buildHealthStatus({ runtime: "node" });
     return sendJson(res, health.statusCode, health.body);
+  }
+
+  if (url.pathname.startsWith("/api/jarvis/")) {
+    return handleJarvisApi({ req, res, url, readJsonBody, sendJson, sendError, runtime: "node" });
   }
 
   if (url.pathname.startsWith("/api/admin/facebook")) {

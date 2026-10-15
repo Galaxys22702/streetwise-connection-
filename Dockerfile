@@ -29,6 +29,7 @@ ENV PORT=3000
 COPY --from=builder /app/package.json /app/package-lock.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/src ./src
+COPY --from=builder /app/jarvis ./jarvis
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/db ./db
 COPY --from=builder /app/scripts ./scripts
