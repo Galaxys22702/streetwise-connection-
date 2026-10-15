@@ -1,7 +1,12 @@
 #!/bin/bash
 set -e
 
-chown -R openclaw:openclaw /data
+# Perform the legacy volume ownership migration once, not on every restart.
+if [ ! -f /data/.jarvis-ownership-v1 ]; then
+  chown -R openclaw:openclaw /data
+  touch /data/.jarvis-ownership-v1
+fi
+chown openclaw:openclaw /data
 chmod 700 /data
 
 if [ ! -d /data/.linuxbrew ]; then
