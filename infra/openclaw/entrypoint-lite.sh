@@ -11,6 +11,16 @@ fi
 rm -rf /home/linuxbrew/.linuxbrew
 ln -sfn /data/.linuxbrew /home/linuxbrew/.linuxbrew
 
+# Report authentication configuration presence without printing credentials.
+if [ -n "${GEMINI_API_KEY:-}" ]; then
+  echo "[JARVIS] Railway GEMINI_API_KEY is present in the container environment."
+else
+  echo "[JARVIS] Railway GEMINI_API_KEY is missing from the container environment."
+fi
+if [ -d "${OPENCLAW_STATE_DIR:-/data/.openclaw}/agents" ]; then
+  echo "[JARVIS] Persistent agent settings exist; saved authentication may take precedence."
+fi
+
 gosu openclaw node /app/optimize-plugins.cjs
 
 exec gosu openclaw node src/server.js
