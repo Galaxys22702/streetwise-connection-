@@ -28,7 +28,7 @@ The first version is deliberately small. It establishes the architecture, securi
 6. Health/status checks
 7. Tests and documentation
 
-Voice, autonomous workflows, browser control, production provisioning, live billing, and other high-impact capabilities are intentionally deferred until their security and authorisation models are defined. A controlled storefront commerce foundation now exists for catalogue, pricing, cart, checkout, and payment-verified order boundaries; it is not a production billing integration.
+The private chat page now connects natural-language questions to a server-side AI provider. `/status` executes the registered Streetwise status tool through Jarvis's policy and audit path. Chat does not select or execute arbitrary tools. Voice, autonomous workflows, browser control, production provisioning, live billing, and other high-impact capabilities remain deferred. A controlled storefront commerce foundation exists for catalogue, pricing, cart, checkout, and payment-verified order boundaries; it is not a production billing integration.
 
 ## Relationship to Streetwise
 
@@ -38,7 +38,7 @@ The existing cellular platform remains the system of record. Jarvis is an orches
 
 ## Status
 
-**Foundation phase.**
+**Private chat and read-only status interface.** See [Chat setup](docs/CHAT.md) for configuration and limitations.
 
 See:
 

@@ -2,6 +2,7 @@ import http from "node:http";
 import { readFile } from "node:fs/promises";
 import { extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { handleJarvisApi } from "./services/jarvisApi.js";
 import { booleanEnv } from "./config/env.js";
 import { plans } from "./config/plans.js";
 import { cellularCapabilities } from "./config/cellularCapabilities.js";
@@ -146,6 +147,10 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && url.pathname === "/health") {
     const health = await buildHealthStatus({ runtime: "node" });
     return sendJson(res, health.statusCode, health.body);
+  }
+
+  if (url.pathname.startsWith("/api/jarvis/")) {
+    return handleJarvisApi({ req, res, url, readJsonBody, sendJson, sendError });
   }
 
   if (url.pathname.startsWith("/api/admin/facebook")) {

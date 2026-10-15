@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Jarvis · Streetwise</title>
+  <link rel="stylesheet" href="/jarvis.css">
+  <script src="/jarvis.js" defer></script>
+</head>
+<body>
+  <main>
+    <header><a href="/">Streetwise</a><span>YOUR PERSONAL ASSISTANT</span></header>
+    <h1>Meet Jarvis.</h1>
+    <p class="intro">A little help with your next step. Plan a room, work through a question, or check Streetwise.</p>
+    <section id="connection" aria-label="Connect to Jarvis">
+      <form id="connect-form">
+        <label for="access-token">Your private access token</label>
+        <div class="row"><input id="access-token" type="password" autocomplete="off" required aria-describedby="token-note"><button>Connect</button></div>
+        <p id="token-note">Use the Jarvis access token from your server configuration. It stays in this page’s memory and is cleared when you disconnect or reload.</p>
+      </form>
+    </section>
+    <p id="notice" role="status" aria-live="polite">Connect to begin.</p>
+    <section id="workspace" hidden>
+      <div class="toolbar"><span id="availability"></span><button id="disconnect" type="button">Disconnect</button></div>
+      <div class="suggestions">
+        <button type="button" data-prompt="Help me choose furniture for my room. What measurements and details do you need?">Plan my room</button>
+        <button type="button" data-prompt="Help me assemble furniture. What product details and instructions should I share?">Assembly help</button>
+        <button type="button" data-prompt="/status">Check Streetwise</button>
+      </div>
+      <div id="messages" role="log" aria-label="Conversation" aria-live="polite"></div>
+      <form id="chat-form">
+        <label for="message">Message Jarvis</label>
+        <textarea id="message" maxlength="4000" rows="3" placeholder="What can I help you with?" required></textarea>
+        <div class="row"><small>Answers and guidance. Computer control isn’t connected.</small><button id="send">Send message</button></div>
+      </form>
+    </section>
+  </main>
+</body>
+</html>
