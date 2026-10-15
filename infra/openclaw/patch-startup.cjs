@@ -35,3 +35,29 @@ if (setup.split(oldModel).length !== 2) {
 }
 fs.writeFileSync(setupFile, setup.replace(oldDefault, newDefault).replace(oldModel, newModel));
 console.log("Set Google Gemini wizard defaults; preserved persistent configuration and credentials.");
+
+
+// The upstream setup UI always resets provider to the first entry (Anthropic).
+// Prefer Google when available and reject mismatched provider/model selections.
+const setupFile = "/app/src/public/setup.html";
+let setup = fs.readFileSync(setupFile, "utf8");
+const oldSelection = "this.selectedGroup = this.authGroups[0].value;";
+const newSelection = "this.selectedGroup = this.authGroups.find(g => g.value === 'google')?.value || this.authGroups[0].value;";
+if (setup.split(oldSelection).length !== 2) throw new Error("Expected one setup default provider selector.");
+setup = setup.replace(oldSelection, newSelection);
+const oldSubmit = "        this.setupError = '';\n        this.setupStreamTail = '';\n        const payload = {";
+const newSubmit = `        if (this.selectedGroup === 'google' && this.model && !this.model.startsWith('google/')) {
+          this.setupError = 'For Google select a model like google/gemini-3-flash-preview.';
+          return;
+        }
+        if (this.model && this.model.includes('/') && this.selectedGroup !== this.model.split('/')[0]) {
+          this.setupError = 'Selected provider and model do not match. Check Model & Authentication.';
+          return;
+        }
+        this.setupError = '';
+        this.setupStreamTail = '';
+        const payload = {`;
+if (setup.split(oldSubmit).length !== 2) throw new Error("Expected one setup submission handler.");
+setup = setup.replace(oldSubmit, newSubmit);
+fs.writeFileSync(setupFile, setup);
+console.log("Setup now defaults to Google and blocks mismatched provider/model submissions.");
