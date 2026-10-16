@@ -26,6 +26,13 @@ if [ -d "${OPENCLAW_STATE_DIR:-/data/.openclaw}/agents" ]; then
   echo "[JARVIS] Persistent agent settings exist; saved authentication may take precedence."
 fi
 
+# Prefer the Railway-managed Google credential as the live provider key.
+# Never print its value or modify persisted auth profiles.
+if [ -n "${GEMINI_API_KEY:-}" ] && [ -z "${OPENCLAW_LIVE_GOOGLE_KEY:-}" ]; then
+  export OPENCLAW_LIVE_GOOGLE_KEY="$GEMINI_API_KEY"
+  echo "[JARVIS] Google live-key override sourced from Railway."
+fi
+
 # Repair only the known invalid model from the live logs. Leave other models,
 # credentials, agent data, and conversations unchanged.
 if [ -n "${GEMINI_API_KEY:-}" ] && [ -f "${OPENCLAW_STATE_DIR:-/data/.openclaw}/openclaw.json" ]; then
