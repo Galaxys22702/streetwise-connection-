@@ -1,5 +1,10 @@
 // Reversible OpenClaw low-memory plugin policy.
 // Preserve user credentials, conversations, plugin settings, and any existing deny rules.
+// Opt in explicitly; normal restarts must respect changes made in the UI.
+if (process.env.JARVIS_APPLY_LOW_MEMORY_POLICY !== "1") {
+  console.log("[JARVIS] Preserving current plugin settings.");
+  process.exit(0);
+}
 const fs = require("node:fs");
 const path = require("node:path");
 const stateDir = process.env.OPENCLAW_STATE_DIR || "/data/.openclaw";
