@@ -22,7 +22,7 @@ console.log("Removed automatic doctor repair only; preserved all other startup l
 // existing Google Gemini deployment. This changes UI defaults only; it never
 // reads, replaces, or activates any saved authentication profile.
 const setupFile = "/app/src/public/setup.html";
-const setup = fs.readFileSync(setupFile, "utf8");
+let setup = fs.readFileSync(setupFile, "utf8");
 const oldDefault = "this.selectedGroup = this.authGroups[0].value;";
 const newDefault = "this.selectedGroup = this.authGroups.some(g => g.value === 'google') ? 'google' : this.authGroups[0].value;";
 if (setup.split(oldDefault).length !== 2) {
@@ -33,18 +33,12 @@ const newModel = "      model: 'google/gemini-3-flash-preview',";
 if (setup.split(oldModel).length !== 2) {
   throw new Error("Pinned template setup model default was not found exactly once.");
 }
-fs.writeFileSync(setupFile, setup.replace(oldDefault, newDefault).replace(oldModel, newModel));
+setup = setup.replace(oldDefault, newDefault).replace(oldModel, newModel);
 console.log("Set Google Gemini wizard defaults; preserved persistent configuration and credentials.");
 
 
 // The upstream setup UI always resets provider to the first entry (Anthropic).
 // Prefer Google when available and reject mismatched provider/model selections.
-const setupFile = "/app/src/public/setup.html";
-let setup = fs.readFileSync(setupFile, "utf8");
-const oldSelection = "this.selectedGroup = this.authGroups[0].value;";
-const newSelection = "this.selectedGroup = this.authGroups.find(g => g.value === 'google')?.value || this.authGroups[0].value;";
-if (setup.split(oldSelection).length !== 2) throw new Error("Expected one setup default provider selector.");
-setup = setup.replace(oldSelection, newSelection);
 const oldSubmit = "        this.setupError = '';\n        this.setupStreamTail = '';\n        const payload = {";
 const newSubmit = `        if (this.selectedGroup === 'google' && this.model && !this.model.startsWith('google/')) {
           this.setupError = 'For Google select a model like google/gemini-3-flash-preview.';
