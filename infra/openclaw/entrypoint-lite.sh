@@ -26,6 +26,16 @@ if [ -d "${OPENCLAW_STATE_DIR:-/data/.openclaw}/agents" ]; then
   echo "[JARVIS] Persistent agent settings exist; saved authentication may take precedence."
 fi
 
+# Repair only the known invalid model from the live logs. Leave other models,
+# credentials, agent data, and conversations unchanged.
+if [ -n "${GEMINI_API_KEY:-}" ] && [ -f "${OPENCLAW_STATE_DIR:-/data/.openclaw}/openclaw.json" ]; then
+  CURRENT_MODEL="$(gosu openclaw node "${OPENCLAW_ENTRY:-/usr/local/lib/node_modules/openclaw/dist/entry.js}" config get agents.defaults.model.primary 2>/dev/null || true)"
+  if [[ "$CURRENT_MODEL" == *"openai/Gemini"* ]]; then
+    echo "[JARVIS] Replacing invalid openai/Gemini primary model with Google Gemini."
+    gosu openclaw node "${OPENCLAW_ENTRY:-/usr/local/lib/node_modules/openclaw/dist/entry.js}" config set agents.defaults.model.primary google/gemini-2.5-flash || echo "[JARVIS] Model correction failed; saved config left intact."
+  fi
+fi
+
 gosu openclaw node /app/optimize-plugins.cjs
 
 exec gosu openclaw node src/server.js
