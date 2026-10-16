@@ -33,6 +33,6 @@ ENV OPENCLAW_ENTRY=/usr/local/lib/node_modules/openclaw/dist/entry.js
 ENV OPENCLAW_SUPERVISOR_MODE=external
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
- CMD curl -f http://localhost:8080/setup/healthz || exit 1
+ CMD curl -f http://localhost:8080/healthz || exit 1
 USER root
 ENTRYPOINT ["tini", "--", "./entrypoint-lite.sh"]
