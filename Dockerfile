@@ -13,6 +13,7 @@ COPY scripts ./scripts
 COPY docs ./docs
 COPY test ./test
 COPY jarvis ./jarvis
+COPY infra/openclaw ./infra/openclaw
 RUN node --check src/server.js \
  && node --check src/services/authService.js \
  && node --check src/services/paymentService.js \
