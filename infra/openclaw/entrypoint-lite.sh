@@ -23,15 +23,11 @@ else
   echo "[JARVIS] Railway GEMINI_API_KEY is missing from the container environment."
 fi
 if [ -d "${OPENCLAW_STATE_DIR:-/data/.openclaw}/agents" ]; then
-  echo "[JARVIS] Persistent agent settings exist; saved authentication may take precedence."
+  echo "[JARVIS] Persistent agent settings exist; preserving saved authentication and conversations."
 fi
 
-# Prefer the Railway-managed Google credential as the live provider key.
-# Never print its value or modify persisted auth profiles.
-if [ -n "${GEMINI_API_KEY:-}" ] && [ -z "${OPENCLAW_LIVE_GOOGLE_KEY:-}" ]; then
-  export OPENCLAW_LIVE_GOOGLE_KEY="$GEMINI_API_KEY"
-  echo "[JARVIS] Google live-key override sourced from Railway."
-fi
+# Use the supported native environment SecretRef instead of a live-test variable.
+gosu openclaw node /app/configure-gemini-auth.cjs
 
 # Repair only the known invalid model from the live logs. Leave other models,
 # credentials, agent data, and conversations unchanged.
