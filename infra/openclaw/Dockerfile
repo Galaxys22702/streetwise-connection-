@@ -13,8 +13,8 @@ RUN curl -fsSL https://codeload.github.com/arjunkomath/openclaw-railway-template
  | tar -xz --strip-components=1 -C /app
 RUN npm install -g pnpm@11.24.0 \
  && pnpm install --frozen-lockfile --prod
-COPY patch-startup.cjs ./patch-startup.cjs
-RUN node patch-startup.cjs && node --check /app/src/server.js && rm patch-startup.cjs
+COPY patch-startup.cjs setup-models.cjs ./
+RUN node patch-startup.cjs && node --check /app/src/server.js && rm patch-startup.cjs setup-models.cjs
 COPY optimize-plugins.cjs ./optimize-plugins.cjs
 COPY --chmod=755 entrypoint-lite.sh ./entrypoint-lite.sh
 RUN node --check /app/optimize-plugins.cjs && bash -n /app/entrypoint-lite.sh
