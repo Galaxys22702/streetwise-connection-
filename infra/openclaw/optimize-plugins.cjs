@@ -1,72 +1,71 @@
-// Reversible OpenClaw low-memory plugin policy.
-// Preserve user credentials, conversations, plugin settings, and any existing deny rules.
-// Opt in explicitly; normal restarts must respect changes made in the UI.
-if (process.env.JARVIS_APPLY_LOW_MEMORY_POLICY !== "1") {
+// Opt-in, reversible memory policy. Never disable model providers.
+const fs = require("node:fs");
+const path = require("node:path");
+const applyMemoryPolicy = process.env.JARVIS_APPLY_LOW_MEMORY_POLICY === "1";
+const restoreProviders = process.env.JARVIS_RESTORE_MODEL_PROVIDERS === "1";
+if (!applyMemoryPolicy && !restoreProviders) {
   console.log("[JARVIS] Preserving current plugin settings.");
   process.exit(0);
 }
-const fs = require("node:fs");
-const path = require("node:path");
+
 const stateDir = process.env.OPENCLAW_STATE_DIR || "/data/.openclaw";
 const target = process.env.OPENCLAW_CONFIG_PATH || path.join(stateDir, "openclaw.json");
 const backup = target + ".jarvis-before-plugin-optimization.bak";
-const disabled = ["anthropic", "canvas", "cua-computer", "geolocation", "ollama", "talk-voice", "xai"];
+const disabled = ["canvas", "cua-computer", "geolocation", "talk-voice"];
+const legacyProviders = new Set(["anthropic", "ollama", "xai"]);
+
+function readConfig(file) {
+  const original = fs.readFileSync(file, "utf8");
+  const cfg = JSON.parse(original);
+  if (!cfg || typeof cfg !== "object" || Array.isArray(cfg) ||
+      (cfg.plugins != null && (typeof cfg.plugins !== "object" || Array.isArray(cfg.plugins))) ||
+      (cfg.plugins?.deny != null && (!Array.isArray(cfg.plugins.deny) ||
+        cfg.plugins.deny.some(value => typeof value !== "string")))) {
+    throw new Error("Invalid config shape");
+  }
+  return { original, cfg };
+}
+
+function saveBackup(file, content) {
+  try {
+    fs.writeFileSync(file, content, { flag: "wx", mode: 0o600 });
+  } catch (error) {
+    if (error.code !== "EEXIST") throw error;
+  }
+}
+
+let temporary;
+let createdTemporary = false;
 try {
   if (!fs.existsSync(target)) {
     console.log("[JARVIS] Config not present; leaving plugin policy unchanged.");
     process.exit(0);
   }
-  const original = fs.readFileSync(target, "utf8");
-  let cfg;
-  try {
-    cfg = JSON.parse(original);
-  } catch {
-    console.warn("[JARVIS] Config is not strict JSON; preserving it unchanged.");
+  const { original, cfg } = readConfig(target);
+  const existing = cfg.plugins?.deny || [];
+  let next = [...existing];
+  if (restoreProviders) {
+    // Explicit owner opt-in is required. Restore only provider denials that
+    // were absent from the optimizer's original backup; preserve user denials.
+    const previous = readConfig(backup).cfg.plugins?.deny || [];
+    next = next.filter(value => !legacyProviders.has(value) || previous.includes(value));
+  }
+  if (applyMemoryPolicy) next = [...new Set([...next, ...disabled])];
+  if (JSON.stringify(next) === JSON.stringify(existing)) {
+    console.log("[JARVIS] Requested plugin policy already present.");
     process.exit(0);
   }
-  if (!cfg || typeof cfg !== "object" || Array.isArray(cfg)) {
-    console.warn("[JARVIS] Unexpected config format; preserving it unchanged.");
-    process.exit(0);
-  }
-  if (cfg.plugins != null && (typeof cfg.plugins !== "object" || Array.isArray(cfg.plugins))) {
-    console.warn("[JARVIS] Unexpected plugins config; preserving it unchanged.");
-    process.exit(0);
-  }
-  const plugins = cfg.plugins || {};
-  if (plugins.deny != null && (!Array.isArray(plugins.deny) || plugins.deny.some(x => typeof x !== "string"))) {
-    console.warn("[JARVIS] Unexpected plugins.deny; preserving it unchanged.");
-    process.exit(0);
-  }
-  const existing = plugins.deny || [];
-  const merged = [...new Set([...existing, ...disabled])];
-  if (merged.length === existing.length) {
-    console.log("[JARVIS] Low-memory plugin denylist already present.");
-    process.exit(0);
-  }
-  fs.writeFileSync(backup, original, { flag: "wx", mode: 0o600 });
-  cfg.plugins = { ...plugins, deny: merged };
-  const temporary = target + ".jarvis-opt-" + process.pid + ".tmp";
+  if (restoreProviders) saveBackup(target + ".jarvis-before-provider-restore.bak", original);
+  if (applyMemoryPolicy) saveBackup(backup, original);
+  cfg.plugins = { ...cfg.plugins, deny: next };
+  temporary = target + ".jarvis-opt-" + process.pid + ".tmp";
   fs.writeFileSync(temporary, JSON.stringify(cfg, null, 2) + "\n", { flag: "wx", mode: 0o600 });
+  createdTemporary = true;
   fs.renameSync(temporary, target);
-  console.log("[JARVIS] Disabled 7 optional plugins; original configuration backed up.");
-} catch (err) {
-  if (err.code === "EEXIST" && fs.existsSync(backup)) {
-    // Keep the first untouched backup and retry only the atomic config write.
-    try {
-      const original = fs.readFileSync(target, "utf8");
-      const cfg = JSON.parse(original);
-      const plugins = cfg.plugins || {};
-      const existing = plugins.deny || [];
-      if (!Array.isArray(existing)) throw new Error("Invalid existing plugin denylist");
-      cfg.plugins = { ...plugins, deny: [...new Set([...existing, ...disabled])] };
-      const temporary = target + ".jarvis-opt-" + process.pid + ".tmp";
-      fs.writeFileSync(temporary, JSON.stringify(cfg, null, 2) + "\n", { flag: "wx", mode: 0o600 });
-      fs.renameSync(temporary, target);
-      console.log("[JARVIS] Low-memory plugin policy applied; original backup preserved.");
-    } catch (secondErr) {
-      console.warn("[JARVIS] Optimization skipped; saved data not intentionally modified: " + secondErr.code);
-    }
-  } else {
-    console.warn("[JARVIS] Optimization skipped; saved data not intentionally modified: " + err.code);
-  }
+  createdTemporary = false;
+  console.log("[JARVIS] Requested plugin policy applied; original configuration backed up.");
+} catch (error) {
+  console.warn("[JARVIS] Plugin policy skipped; saved settings preserved. Check config and original backup.");
+} finally {
+  if (createdTemporary) fs.rmSync(temporary, { force: true });
 }
