@@ -132,6 +132,10 @@ loadStore().catch(() => {
   plansEl.replaceChildren();
   const card = document.createElement("article");
   card.className = "service-card";
-  card.innerHTML = "<h2>Store unavailable</h2><p>Please check back later.</p>";
+  const title = document.createElement("h2");
+  title.textContent = "Store unavailable";
+  const message = document.createElement("p");
+  message.textContent = "Please check back later.";
+  card.append(title, message);
   plansEl.append(card);
 });
