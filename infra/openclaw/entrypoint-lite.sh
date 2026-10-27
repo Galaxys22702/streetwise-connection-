@@ -43,14 +43,16 @@ fi
 # Never replace a working model or select a potentially paid model automatically.
 # Set JARVIS_RECOVERY_MODEL to an independently verified OpenRouter :free model.
 if [ -n "${JARVIS_RECOVERY_MODEL:-}" ]; then
-  if [[ "${JARVIS_RECOVERY_MODEL}" != openrouter/*:free ]]; then
+  if [[ "${JARVIS_RECOVERY_MODEL}" != openrouter/*:free || "${JARVIS_RECOVERY_MODEL}" == *[[:space:]]* ]]; then
     echo "[JARVIS] Recovery model rejected: must be an OpenRouter :free model."
   else
     CURRENT_MODEL="$(gosu openclaw node "${OPENCLAW_ENTRY:-/usr/local/lib/node_modules/openclaw/dist/entry.js}" config get agents.defaults.model.primary 2>/dev/null || true)"
     if [[ "$CURRENT_MODEL" == *"thinkingmachines/inkling:free"* ]]; then
       STATE_FILE="${OPENCLAW_STATE_DIR:-/data/.openclaw}/openclaw.json"
       if [ -f "$STATE_FILE" ]; then
-        cp -p "$STATE_FILE" "$STATE_FILE.pre-jarvis-recovery" || true
+        if [ ! -e "$STATE_FILE.pre-jarvis-recovery" ]; then
+          cp -p "$STATE_FILE" "$STATE_FILE.pre-jarvis-recovery" || true
+        fi
       fi
       if gosu openclaw node "${OPENCLAW_ENTRY:-/usr/local/lib/node_modules/openclaw/dist/entry.js}" config set agents.defaults.model.primary "$JARVIS_RECOVERY_MODEL"; then
         echo "[JARVIS] Replaced the timed-out Inkling default model; original config backed up."
