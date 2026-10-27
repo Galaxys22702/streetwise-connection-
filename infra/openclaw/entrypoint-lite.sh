@@ -41,10 +41,10 @@ fi
 
 # Opt-in recovery from the observed Inkling free-model timeout loop.
 # Never replace a working model or select a potentially paid model automatically.
-# Set JARVIS_RECOVERY_MODEL to an independently verified OpenRouter :free model.
+# Set JARVIS_RECOVERY_MODEL to an independently verified OpenRouter :free model.\n# The official free-model router is also allowed as openrouter/openrouter/free.
 if [ -n "${JARVIS_RECOVERY_MODEL:-}" ]; then
-  if [[ "${JARVIS_RECOVERY_MODEL}" != openrouter/*:free || "${JARVIS_RECOVERY_MODEL}" == *[[:space:]]* ]]; then
-    echo "[JARVIS] Recovery model rejected: must be an OpenRouter :free model."
+  if [[ ( "${JARVIS_RECOVERY_MODEL}" != openrouter/*:free && "${JARVIS_RECOVERY_MODEL}" != "openrouter/openrouter/free" ) || "${JARVIS_RECOVERY_MODEL}" == *[[:space:]]* ]]; then
+    echo "[JARVIS] Recovery model rejected: must be an OpenRouter :free model or openrouter/openrouter/free."
   else
     CURRENT_MODEL="$(gosu openclaw node "${OPENCLAW_ENTRY:-/usr/local/lib/node_modules/openclaw/dist/entry.js}" config get agents.defaults.model.primary 2>/dev/null || true)"
     if [[ "$CURRENT_MODEL" == *"thinkingmachines/inkling:free"* ]]; then
