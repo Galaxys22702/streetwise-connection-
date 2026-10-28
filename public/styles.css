@@ -630,3 +630,28 @@ code { display: block; margin-top: 12px; border-radius: 10px; padding: 12px; ove
   .site-nav-actions { gap: 10px; }
   .site-nav-actions .text-link:first-child { display: none; }
 }
+
+/* Streetwise's local-service homepage: restrained ink, warm gold, clear actions. */
+.streetwise-home { background: #0b1017; --bg: #0b1017; --gold-bright: #f3ca80; }
+.streetwise-home::before, .streetwise-home .page-ambient { display: none; }
+.streetwise-home .hero-grid { min-height: 620px; padding-block: 64px 80px; }
+.streetwise-home h1 { font-size: clamp(3.5rem, 7.5vw, 6.6rem); line-height: .98; letter-spacing: -.055em; text-transform: none; }
+.streetwise-home h1 span { color: #f3ca80; background: none; filter: none; }
+.streetwise-home .hero-actions { flex-wrap: wrap; gap: 20px; }
+.streetwise-home .hero-actions p { flex-basis: 100%; }
+.streetwise-home .button { background: #f3ca80; color: #10151d; border-color: #f3ca80; box-shadow: none; border-radius: 8px; }
+.streetwise-home .button:hover { box-shadow: 0 8px 24px #0004; }
+.streetwise-home .button:disabled { cursor: not-allowed; }
+.streetwise-home .signal-stage { background: linear-gradient(145deg, #17232f, #0f1722); border-color: #f3ca8033; box-shadow: none; }
+.streetwise-home .mark-shell { transform: none; }
+.streetwise-home .mark-shell img { transform: none; }
+.streetwise-home .network-card { border-color: #f3ca8044; background: #101923; }
+.streetwise-home #mobile-help { padding-top: 60px; border-top: 1px solid #f3ca8033; }
+.streetwise-home .featured-service { border-color: #f3ca8088; }
+@media (max-width: 700px) {
+  .streetwise-home .hero-grid { min-height: 0; padding-block: 44px 80px; }
+  .streetwise-home .hero-actions { align-items: stretch; }
+  .streetwise-home .hero-actions p { flex-basis: auto; }
+  .streetwise-home .signal-stage { max-width: 420px; }
+  .streetwise-home .network-card { bottom: -30px; }
+}
