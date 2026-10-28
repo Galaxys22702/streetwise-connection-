@@ -17,6 +17,7 @@ COPY patch-startup.cjs setup-models.cjs ./
 RUN node patch-startup.cjs && node --check /app/src/server.js && rm patch-startup.cjs setup-models.cjs
 COPY optimize-plugins.cjs ./optimize-plugins.cjs
 COPY configure-gemini-auth.cjs ./configure-gemini-auth.cjs
+COPY recover-model.cjs ./recover-model.cjs
 COPY --chmod=755 entrypoint-lite.sh ./entrypoint-lite.sh
 RUN node --check /app/optimize-plugins.cjs && node --check /app/configure-gemini-auth.cjs && bash -n /app/entrypoint-lite.sh
 RUN useradd -m -s /bin/bash openclaw \
@@ -34,6 +35,6 @@ ENV OPENCLAW_ENTRY=/usr/local/lib/node_modules/openclaw/dist/entry.js
 ENV OPENCLAW_SUPERVISOR_MODE=external
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
- CMD curl -f http://localhost:8080/setup/healthz || exit 1
+ CMD curl -fsS --max-time 4 "http://localhost:${PORT:-8080}/setup/healthz" || exit 1
 USER root
 ENTRYPOINT ["tini", "--", "./entrypoint-lite.sh"]

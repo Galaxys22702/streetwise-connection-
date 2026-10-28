@@ -13,7 +13,7 @@ function setWaitlistOpen(open, message, updateMessage = true) {
 }
 
 async function loadPublicStatus({ updateMessage = true } = {}) {
-  const response = await fetch("/api/public-status", { headers: { accept: "application/json" } });
+  const response = await fetch("/api/public-status", { headers: { accept: "application/json" }, signal: AbortSignal.timeout(10000) });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error || "status_unavailable");
 
@@ -41,6 +41,7 @@ waitlistForm.addEventListener("submit", async (event) => {
     const email = new FormData(waitlistForm).get("email");
     const response = await fetch("/api/waitlist", {
       method: "POST",
+      signal: AbortSignal.timeout(10000),
       headers: { "content-type": "application/json", accept: "application/json" },
       body: JSON.stringify({ email, consentVersion })
     });
@@ -51,10 +52,13 @@ waitlistForm.addEventListener("submit", async (event) => {
   } catch (error) {
     waitlistResult.textContent = error.message === "waitlist_not_open"
       ? "The waitlist is not open yet. Please check back soon."
-      : error.message.replaceAll("_", " ");
+      : error.name === "TimeoutError"
+        ? "The request timed out. Your signup may have been received; you can safely try again."
+        : "We could not confirm your signup. Please try again shortly.";
   } finally {
     await loadPublicStatus({ updateMessage: false }).catch(() => {
-      waitlistSubmit.disabled = true;
+      if (waitlistStatus) waitlistStatus.textContent = "Unavailable";
+      setWaitlistOpen(false, "", false);
     });
   }
 });
