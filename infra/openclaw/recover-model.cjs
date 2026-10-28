@@ -2,6 +2,16 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+function readRegular(file, privateOnly = false) {
+  const fd = fs.openSync(file, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW);
+  try {
+    const info = fs.fstatSync(fd);
+    if (!info.isFile() || (privateOnly && (info.mode & 0o077) !== 0)) throw new Error('Unsafe configuration file');
+    return fs.readFileSync(fd, 'utf8');
+  } finally {
+    fs.closeSync(fd);
+  }
+}
 function recoverModel(env = process.env) {
   const model = env.JARVIS_RECOVERY_MODEL;
   if (!model) return 'disabled';
@@ -10,8 +20,7 @@ function recoverModel(env = process.env) {
   const target = env.OPENCLAW_CONFIG_PATH || path.join(env.OPENCLAW_STATE_DIR || '/data/.openclaw', 'openclaw.json');
   let temporary, createdTemporary = false;
   try {
-    if (!fs.lstatSync(target).isFile()) return 'non_file_config';
-    const original = fs.readFileSync(target, 'utf8');
+    const original = readRegular(target);
     const cfg = JSON.parse(original);
     // Includes need OpenClaw's resolver; do not rewrite them as plain JSON.
     const pending = [cfg];
@@ -36,15 +45,17 @@ function recoverModel(env = process.env) {
       fs.writeFileSync(backup, original, { flag: 'wx', mode: 0o600 });
     } catch (error) {
       // Reuse only an exact, private, regular-file backup of this configuration.
-      if (error.code !== 'EEXIST' || !fs.lstatSync(backup).isFile() ||
-          (fs.statSync(backup).mode & 0o077) !== 0 || fs.readFileSync(backup, 'utf8') !== original) return 'backup_unavailable';
+      if (error.code !== 'EEXIST') return 'backup_unavailable';
+      try {
+        if (readRegular(backup, true) !== original) return 'backup_unavailable';
+      } catch { return 'backup_unavailable'; }
     }
-    if (fs.readFileSync(target, 'utf8') !== original) return 'config_changed';
+    if (readRegular(target) !== original) return 'config_changed';
     cfg.agents.defaults.model = typeof current === 'string' ? model : { ...current, primary: model };
     temporary = target + '.recovery-' + process.pid + '.tmp';
     fs.writeFileSync(temporary, JSON.stringify(cfg, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
     createdTemporary = true;
-    if (fs.readFileSync(target, 'utf8') !== original) return 'config_changed';
+    if (readRegular(target) !== original) return 'config_changed';
     fs.renameSync(temporary, target);
     createdTemporary = false;
     temporary = undefined;
