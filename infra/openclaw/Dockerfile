@@ -33,6 +33,8 @@ ENV HOMEBREW_REPOSITORY="/home/linuxbrew/.linuxbrew/Homebrew"
 ENV PORT=8080
 ENV OPENCLAW_ENTRY=/usr/local/lib/node_modules/openclaw/dist/entry.js
 ENV OPENCLAW_SUPERVISOR_MODE=external
+# Exact openrouter/openrouter/auto routes move to the free router. Set to 0 to keep Auto.
+ENV JARVIS_RECOVER_PAID_AUTO=1
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
  CMD curl -fsS --max-time 4 "http://localhost:${PORT:-8080}/setup/healthz" || exit 1

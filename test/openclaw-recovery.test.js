@@ -62,12 +62,14 @@ test('conflicting backup, symlink, includes and restrictive catalogs remain unto
   assert.deepEqual(f.read(), f.cfg);
 });
 
-test('paid Auto is preserved unless its separate opt-in is exactly 1', t => {
+test('paid Auto stays only when its opt-out is set', t => {
   const f = fixture(t, { primary: 'openrouter/openrouter/auto', fallbacks: [] });
-  for (const flag of [undefined, '', '0', 'true']) {
-    assert.equal(recoverModel({ ...f.env, JARVIS_RECOVER_PAID_AUTO: flag }), 'preserved_model');
-    assert.deepEqual(f.read(), f.cfg);
+  for (const flag of ['', '0', 'true']) {
+    const copy = fixture(t, { primary: 'openrouter/openrouter/auto', fallbacks: [] });
+    assert.equal(recoverModel({ ...copy.env, JARVIS_RECOVER_PAID_AUTO: flag }), 'preserved_model');
+    assert.deepEqual(copy.read(), copy.cfg);
   }
+  assert.equal(recoverModel({ ...f.env, JARVIS_RECOVER_PAID_AUTO: undefined }), 'recovered');
 });
 test('paid Auto recovery backs up exactly and preserves other agent and utility settings', t => {
   const f = fixture(t, { primary: 'openrouter/openrouter/auto', fallbacks: [inkling] });
@@ -116,4 +118,69 @@ test('paid Auto recovery respects catalog, include and backup safeguards', t => 
   writeFileSync(f.target + '.pre-jarvis-recovery', '{}', { mode: 0o600 });
   assert.equal(recoverModel(env), 'backup_unavailable');
   assert.deepEqual(f.read(), f.cfg);
+});
+
+const auto = 'openrouter/openrouter/auto';
+test('startup migrates the OpenRouter Auto default, allowlist and fallbacks without a manual flag', t => {
+  const f = fixture(t, { primary: auto, fallbacks: [auto, inkling] });
+  delete f.env.JARVIS_RECOVERY_MODEL;
+  delete f.env.JARVIS_RECOVER_PAID_AUTO;
+  f.cfg.agents.defaults.models = { [auto]: { alias: 'Auto' } };
+  f.cfg.agents.defaults.utilityModel = auto;
+  f.cfg.agents.list = [{ id: 'main', model: auto }, { id: 'other', model: 'openrouter/vendor/paid' }];
+  f.cfg.secrets = { providers: { openrouter: { source: 'env', allowlist: ['OPENROUTER_API_KEY'] } } };
+  writeFileSync(f.target, JSON.stringify(f.cfg));
+  assert.equal(recoverModel(f.env), 'recovered');
+  const next = f.read();
+  assert.equal(next.agents.defaults.model.primary, free);
+  assert.deepEqual(next.agents.defaults.model.fallbacks, [free, inkling]);
+  assert.deepEqual(next.agents.defaults.models, { [free]: {} });
+  assert.equal(next.agents.defaults.utilityModel, free);
+  assert.equal(next.agents.list[0].model, free);
+  assert.equal(next.agents.list[1].model, 'openrouter/vendor/paid');
+  assert.deepEqual(next.secrets, f.cfg.secrets);
+  assert.equal(recoverModel(f.env), 'preserved_model');
+});
+
+test('session pins of paid Auto move to the free route and conversation text stays', t => {
+  const f = fixture(t, free);
+  delete f.env.JARVIS_RECOVERY_MODEL;
+  const state = join(f.target, '..');
+  const store = join(state, 'agents', 'main', 'sessions', 'sessions.json');
+  mkdirSync(join(state, 'agents', 'main', 'sessions'), { recursive: true });
+  const sessions = {
+    'agent:main:main': {
+      model: auto,
+      modelOverride: auto,
+      systemPromptReport: { model: auto, prompt: 'keep ' + auto },
+      messages: [{ content: auto }]
+    },
+    'agent:main:free': { modelOverride: inkling, transcript: auto }
+  };
+  writeFileSync(store, JSON.stringify(sessions));
+  const env = { ...f.env, OPENCLAW_STATE_DIR: state };
+  assert.equal(recoverModel(env), 'sessions_recovered');
+  const next = JSON.parse(readFileSync(store, 'utf8'));
+  assert.equal(next['agent:main:main'].model, free);
+  assert.equal(next['agent:main:main'].modelOverride, free);
+  assert.equal(next['agent:main:main'].systemPromptReport.model, free);
+  assert.equal(next['agent:main:main'].systemPromptReport.prompt, 'keep ' + auto);
+  assert.equal(next['agent:main:main'].messages[0].content, auto);
+  assert.equal(next['agent:main:free'].modelOverride, inkling);
+  assert.equal(next['agent:main:free'].transcript, auto);
+  assert.equal(readFileSync(store + '.pre-jarvis-recovery', 'utf8'), JSON.stringify(sessions));
+  assert.equal(statSync(store + '.pre-jarvis-recovery').mode & 0o777, 0o600);
+  assert.deepEqual(f.read(), f.cfg);
+  assert.equal(recoverModel(env), 'preserved_model');
+});
+
+test('opting out keeps paid Auto session pins', t => {
+  const f = fixture(t, auto);
+  const state = join(f.target, '..');
+  const store = join(state, 'agents', 'main', 'sessions', 'sessions.json');
+  mkdirSync(join(state, 'agents', 'main', 'sessions'), { recursive: true });
+  writeFileSync(store, JSON.stringify({ 'agent:main:main': { modelOverride: auto } }));
+  assert.equal(recoverModel({ ...f.env, JARVIS_RECOVER_PAID_AUTO: '0', OPENCLAW_STATE_DIR: state }), 'preserved_model');
+  assert.equal(f.read().agents.defaults.model, auto);
+  assert.equal(JSON.parse(readFileSync(store, 'utf8'))['agent:main:main'].modelOverride, auto);
 });
