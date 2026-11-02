@@ -1,15 +1,15 @@
 # Project Status
 
-Last reviewed: **2026-09-25**  
+Launch target updated: **2026-11-02**  
 Target launch-readiness date: **2026-11-30**  
-Planned public opening target: **2027-01-01**  
+Planned public opening target: **March 2027**  
 Execution plan: `docs/launch/90_DAY_LAUNCH_PLAN.md`
 
 ## Executive status
 
 Streetwise Connection℠ remains **RED / pre-launch** for commercial cellular service.
 
-The public waitlist is available. Streetwise is targeting **January 1, 2027** for public opening, but commercial service must remain disabled until provider, formation, regulatory, economics, security, customer-policy, support and controlled-staging gates are complete.
+The public waitlist is available. Streetwise is targeting **March 2027** for public opening, but commercial service must remain disabled until provider, formation, regulatory, economics, security, customer-policy, support and controlled-staging gates are complete.
 
 ### Production safety state
 
