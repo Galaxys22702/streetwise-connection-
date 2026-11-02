@@ -61,3 +61,59 @@ test('conflicting backup, symlink, includes and restrictive catalogs remain unto
   assert.equal(recoverModel(f.env), 'included_config');
   assert.deepEqual(f.read(), f.cfg);
 });
+
+test('paid Auto is preserved unless its separate opt-in is exactly 1', t => {
+  const f = fixture(t, { primary: 'openrouter/openrouter/auto', fallbacks: [] });
+  for (const flag of [undefined, '', '0', 'true']) {
+    assert.equal(recoverModel({ ...f.env, JARVIS_RECOVER_PAID_AUTO: flag }), 'preserved_model');
+    assert.deepEqual(f.read(), f.cfg);
+  }
+});
+test('paid Auto recovery backs up exactly and preserves other agent and utility settings', t => {
+  const f = fixture(t, { primary: 'openrouter/openrouter/auto', fallbacks: [inkling] });
+  f.cfg.agents.defaults.utilityModel = inkling;
+  f.cfg.agents.list = [{ id: 'other', model: 'openrouter/vendor/paid' }];
+  writeFileSync(f.target, JSON.stringify(f.cfg));
+  const original = readFileSync(f.target, 'utf8');
+  const env = { ...f.env, JARVIS_RECOVER_PAID_AUTO: '1' };
+  assert.equal(recoverModel(env), 'recovered');
+  const expected = structuredClone(f.cfg);
+  expected.agents.defaults.model.primary = free;
+  assert.deepEqual(f.read(), expected);
+  assert.equal(readFileSync(f.target + '.pre-jarvis-recovery', 'utf8'), original);
+  assert.equal(statSync(f.target + '.pre-jarvis-recovery').mode & 0o777, 0o600);
+  assert.equal(recoverModel(env), 'preserved_model');
+});
+test('paid Auto string defaults require a free destination', t => {
+  const f = fixture(t, 'openrouter/openrouter/auto');
+  const env = { ...f.env, JARVIS_RECOVER_PAID_AUTO: '1' };
+  assert.equal(recoverModel({ ...env, JARVIS_RECOVERY_MODEL: 'openrouter/vendor/paid' }), 'invalid_model');
+  assert.deepEqual(f.read(), f.cfg);
+  assert.equal(recoverModel(env), 'recovered');
+  assert.equal(f.read().agents.defaults.model, free);
+});
+test('paid Auto opt-in does not rewrite other defaults', t => {
+  const f = fixture(t, 'openrouter/vendor/paid');
+  assert.equal(recoverModel({ ...f.env, JARVIS_RECOVER_PAID_AUTO: '1' }), 'preserved_model');
+  assert.deepEqual(f.read(), f.cfg);
+});
+test('paid Auto recovery respects catalog, include and backup safeguards', t => {
+  const f = fixture(t, 'openrouter/openrouter/auto');
+  const env = { ...f.env, JARVIS_RECOVER_PAID_AUTO: '1' };
+  f.cfg.agents.defaults.models = { [inkling]: {} };
+  writeFileSync(f.target, JSON.stringify(f.cfg));
+  assert.equal(recoverModel(env), 'model_not_allowlisted');
+  delete f.cfg.agents.defaults.models;
+  f.cfg.models = { mode: 'replace' };
+  writeFileSync(f.target, JSON.stringify(f.cfg));
+  assert.equal(recoverModel(env), 'custom_catalog');
+  delete f.cfg.models;
+  f.cfg.agents.defaults.$include = 'defaults.json';
+  writeFileSync(f.target, JSON.stringify(f.cfg));
+  assert.equal(recoverModel(env), 'included_config');
+  delete f.cfg.agents.defaults.$include;
+  writeFileSync(f.target, JSON.stringify(f.cfg));
+  writeFileSync(f.target + '.pre-jarvis-recovery', '{}', { mode: 0o600 });
+  assert.equal(recoverModel(env), 'backup_unavailable');
+  assert.deepEqual(f.read(), f.cfg);
+});
