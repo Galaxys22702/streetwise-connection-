@@ -34,7 +34,9 @@ function recoverModel(env = process.env) {
     if (!record(cfg) || !record(cfg.agents) || !record(cfg.agents.defaults)) return 'unsupported_config';
     const current = cfg.agents.defaults.model;
     const primary = typeof current === 'string' ? current : current?.primary;
-    if (primary !== 'openrouter/thinkingmachines/inkling:free') return 'preserved_model';
+    const recoverPaidAuto = env.JARVIS_RECOVER_PAID_AUTO === '1'
+      && primary === 'openrouter/openrouter/auto';
+    if (primary !== 'openrouter/thinkingmachines/inkling:free' && !recoverPaidAuto) return 'preserved_model';
     if (primary === model) return 'unchanged';
     // A restrictive catalog needs an operator to add and verify the model first.
     const allowed = cfg.agents.defaults.models;
