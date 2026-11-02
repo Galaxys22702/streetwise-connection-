@@ -23,3 +23,11 @@ Explicit Google credential bindings, OAuth choices, credential headers/request a
 `JARVIS_RECOVERY_MODEL` is an explicit startup opt-in. It accepts only `openrouter/<provider>/<model>:free` or `openrouter/openrouter/free`, and changes only the exact `openrouter/thinkingmachines/inkling:free` default. It requires a private, successful, exact backup at `openclaw.json.pre-jarvis-recovery` before changing the file. Included configs, restrictive model allowlists, replacement catalogs, conflicting backups and other defaults are preserved. `OPENCLAW_CONFIG_PATH` is honored. Logs contain a reason code, never configuration contents.
 
 This is a default-model migration, not automatic timeout detection. Session overrides and existing fallbacks remain unchanged. Verify the replacement in the live model picker, remove the flag after recovery, and select the new default for an existing session if it has an override. Neither a passing health check nor HTTP 200 from the provider proves a completed answer. Free-model availability and limits vary.
+
+### Paid Auto default recovery
+
+A free model selected for one conversation does not replace the configured default used by setup probes. The November 2 runtime logs showed `openrouter/openrouter/auto` as the gateway default and billing failures from that route, while the free session route received HTTP 200 responses.
+
+After deploying this revision, setting both `JARVIS_RECOVER_PAID_AUTO=1` and `JARVIS_RECOVERY_MODEL=openrouter/openrouter/free` opts into replacing that exact default. The same backup and catalog safeguards apply. The separate flag alone does nothing, and other paid defaults are preserved. This repair does not alter per-agent model overrides, explicit utility models, fallbacks, authentication or session selections; inspect those separately if Auto requests continue. Remove both flags after a successful recovery and verify a completed live response. To roll back, stop the gateway and restore the private exact backup before restarting; never overwrite configuration changed since the recovery without reviewing the differences.
+
+A restart alone does not enable this repair. Check for `Model recovery: recovered.` in startup logs; `disabled` or a skip reason means no migration happened. Device pairing and command approval requirements remain in force.
