@@ -45,6 +45,12 @@ Current production posture:
 3. **Nevada name verification — RED.** The September 14 official search attempt redirected to ORION and did not produce an entity-search result. `Streetwise Connection LLC` remains unverified and must be checked successfully immediately before filing.
 4. **Regulatory allocation — RED.** Provider-of-record, Nevada PUCN, FCC/USAC, E911, taxes/surcharges, numbering/porting and related responsibilities must be resolved from the selected provider model before launch.
 
+## Priority as of 2026-11-02
+
+Decision record: `docs/launch/2026-11-02-PRIORITY-DECISION.md`.
+
+Formation evidence and written domestic provider terms are the critical path. AT&T and 1GLOBAL stay at equal priority. Those two evidence tracks unblock regulatory allocation, economics, integration and pilot acceptance. Security and recovery testing may proceed in parallel and are not launch acceptance. Pull requests #134 and #135 concern Jarvis model routing only. The engineering verification section below remains dated 2026-09-25; changing this file's launch-target line is not a re-verification. Issue #39 has not recorded a newer acceptance.
+
 ## Engineering health
 
 Verified through **2026-09-25**:
