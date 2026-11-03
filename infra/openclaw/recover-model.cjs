@@ -2,6 +2,9 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const PAID_AUTO = 'openrouter/openrouter/auto';
+// OpenClaw v2026.9.9 parseModelRef + built-in OpenRouter normalization.
+const AUTO_REFS = new Set([PAID_AUTO, 'openrouter/auto', 'openrouter:auto']);
+const isPaidAuto = value => typeof value === 'string' && AUTO_REFS.has(value.trim());
 const INKLING = 'openrouter/thinkingmachines/inkling:free';
 const FREE = 'openrouter/openrouter/free';
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -26,18 +29,18 @@ function primaryOf(model) {
   return typeof model === 'string' ? model : model?.primary;
 }
 function rewriteRef(value, model) {
-  if (value === PAID_AUTO) return model;
+  if (isPaidAuto(value)) return model;
   if (!record(value)) return value;
   const next = { ...value };
   let changed = false;
-  if (next.primary === PAID_AUTO) {
+  if (isPaidAuto(next.primary)) {
     next.primary = model;
     changed = true;
   }
   if (Array.isArray(next.fallbacks)) {
     const fallbacks = [];
     for (const item of next.fallbacks) {
-      const mapped = item === PAID_AUTO ? model : item;
+      const mapped = isPaidAuto(item) ? model : item;
       if (mapped !== item || fallbacks.includes(mapped)) changed = true;
       if (!fallbacks.includes(mapped)) fallbacks.push(mapped);
     }
@@ -57,32 +60,32 @@ function allowlistBlocks(defaults, model) {
   if (allowed == null) return false;
   if (!record(allowed)) return true;
   const keys = Object.keys(allowed);
-  return keys.length > 0 && !Object.hasOwn(allowed, model) && !Object.hasOwn(allowed, PAID_AUTO);
+  return keys.length > 0 && !Object.hasOwn(allowed, model) && !Object.keys(allowed).some(isPaidAuto);
 }
 function promoteAllowlist(defaults, model) {
   const allowed = defaults.models;
   if (allowed == null) return { ok: true, changed: false };
   if (!record(allowed)) return { ok: false, changed: false };
   const keys = Object.keys(allowed);
-  if (keys.length && !Object.hasOwn(allowed, model) && !Object.hasOwn(allowed, PAID_AUTO)) {
+  if (keys.length && !Object.hasOwn(allowed, model) && !Object.keys(allowed).some(isPaidAuto)) {
     return { ok: false, changed: false };
   }
-  if (!Object.hasOwn(allowed, PAID_AUTO)) return { ok: true, changed: false };
-  const next = { ...allowed, [model]: {} };
-  delete next[PAID_AUTO];
+  if (!Object.keys(allowed).some(isPaidAuto)) return { ok: true, changed: false };
+  const next = { ...allowed, [model]: allowed[model] ?? {} };
+  for (const key of Object.keys(next)) if (isPaidAuto(key)) delete next[key];
   defaults.models = next;
   return { ok: true, changed: true };
 }
 function refHasAuto(value) {
-  if (value === PAID_AUTO) return true;
+  if (isPaidAuto(value)) return true;
   if (!record(value)) return false;
-  if (value.primary === PAID_AUTO) return true;
-  return Array.isArray(value.fallbacks) && value.fallbacks.includes(PAID_AUTO);
+  if (isPaidAuto(value.primary)) return true;
+  return Array.isArray(value.fallbacks) && value.fallbacks.some(isPaidAuto);
 }
 function hasPaidAuto(cfg) {
   const defaults = cfg.agents.defaults;
   if (['model', 'utilityModel', 'imageModel'].some(key => refHasAuto(defaults[key]))) return true;
-  if (record(defaults.models) && Object.hasOwn(defaults.models, PAID_AUTO)) return true;
+  if (record(defaults.models) && Object.keys(defaults.models).some(isPaidAuto)) return true;
   if (record(defaults.mediaModels) && Object.values(defaults.mediaModels).some(refHasAuto)) return true;
   if (Array.isArray(cfg.agents.list) && cfg.agents.list.some(agent => record(agent) && refHasAuto(agent.model))) return true;
   if (record(cfg.agents.entries) && Object.values(cfg.agents.entries).some(agent => record(agent) && refHasAuto(agent.model))) return true;

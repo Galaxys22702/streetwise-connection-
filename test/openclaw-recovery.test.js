@@ -184,3 +184,36 @@ test('opting out keeps paid Auto session pins', t => {
   assert.equal(f.read().agents.defaults.model, auto);
   assert.equal(JSON.parse(readFileSync(store, 'utf8'))['agent:main:main'].modelOverride, auto);
 });
+
+test('canonical OpenRouter Auto aliases migrate across configured slots', t => {
+  for (const alias of ['openrouter/auto', 'openrouter:auto', ' openrouter/auto ']) {
+    const f = fixture(t, { primary: alias, fallbacks: [alias, free] });
+    f.cfg.agents.defaults.models = { [alias]: {}, [free]: { alias: 'Keep this', params: { temperature: 0.4 } } };
+    f.cfg.agents.defaults.utilityModel = alias;
+    f.cfg.agents.defaults.mediaModels = { image: alias };
+    f.cfg.agents.list = [{ id: 'main', model: alias }];
+    writeFileSync(f.target, JSON.stringify(f.cfg));
+    assert.equal(recoverModel(f.env), 'recovered');
+    const result = f.read().agents;
+    assert.equal(result.defaults.model.primary, free);
+    assert.deepEqual(result.defaults.model.fallbacks, [free]);
+    assert.equal(result.defaults.utilityModel, free);
+    assert.equal(result.defaults.mediaModels.image, free);
+    assert.equal(result.list[0].model, free);
+    assert.deepEqual(result.defaults.models, { [free]: { alias: 'Keep this', params: { temperature: 0.4 } } });
+    assert.equal(recoverModel(f.env), 'preserved_model');
+  }
+});
+test('Auto alias matching preserves other providers and respects safeguards', t => {
+  for (const other of ['auto', 'other/auto', 'openrouter/vendor/auto', 'openrouter/autonomous']) {
+    const f = fixture(t, other);
+    assert.equal(recoverModel(f.env), 'preserved_model');
+    assert.deepEqual(f.read(), f.cfg);
+  }
+  const disabled = fixture(t, 'openrouter/auto');
+  assert.equal(recoverModel({ ...disabled.env, JARVIS_RECOVER_PAID_AUTO: '0' }), 'preserved_model');
+  const blocked = fixture(t, 'openrouter:auto');
+  mkdirSync(blocked.target + '.pre-jarvis-recovery');
+  assert.equal(recoverModel(blocked.env), 'backup_unavailable');
+  assert.deepEqual(blocked.read(), blocked.cfg);
+});
