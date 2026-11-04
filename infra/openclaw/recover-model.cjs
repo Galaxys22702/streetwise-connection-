@@ -159,6 +159,8 @@ function sessionStores(stateDir) {
     if (!agent.isDirectory() || agent.isSymbolicLink()) continue;
     const file = path.join(agentsDir, agent.name, 'sessions', 'sessions.json');
     try {
+      const parent = fs.lstatSync(path.dirname(file));
+      if (!parent.isDirectory() || parent.isSymbolicLink()) continue;
       const info = fs.lstatSync(file);
       if (!info.isFile() || info.isSymbolicLink() || info.size > 5_000_000) continue;
       files.push(file);
@@ -190,8 +192,8 @@ function rewriteSessionStore(parsed, model) {
   }
   return changed ? next : null;
 }
-function savePrivateBackup(file, original) {
-  const backup = file + '.pre-jarvis-recovery';
+function savePrivateBackup(file, original, suffix = '.pre-jarvis-recovery') {
+  const backup = file + suffix;
   try {
     fs.writeFileSync(backup, original, { flag: 'wx', mode: 0o600 });
   } catch (error) {
@@ -302,5 +304,5 @@ function recoverModel(env = process.env) {
     return 'skipped';
   }
 }
-module.exports = { recoverModel };
+module.exports = { recoverModel, readRegular, savePrivateBackup, replaceJson, sessionStores, isValidFree };
 if (require.main === module) console.log('[JARVIS] Model recovery: ' + recoverModel() + '.');

@@ -40,6 +40,7 @@ if [ -n "${GEMINI_API_KEY:-}" ] && [ -f "${OPENCLAW_STATE_DIR:-/data/.openclaw}/
 fi
 
 gosu openclaw node /app/recover-model.cjs
+gosu openclaw node /app/configure-free-chat.cjs
 gosu openclaw node /app/optimize-plugins.cjs
 
 exec gosu openclaw node src/server.js

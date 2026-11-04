@@ -18,8 +18,9 @@ RUN node patch-startup.cjs && node --check /app/src/server.js && rm patch-startu
 COPY optimize-plugins.cjs ./optimize-plugins.cjs
 COPY configure-gemini-auth.cjs ./configure-gemini-auth.cjs
 COPY recover-model.cjs ./recover-model.cjs
+COPY configure-free-chat.cjs ./configure-free-chat.cjs
 COPY --chmod=755 entrypoint-lite.sh ./entrypoint-lite.sh
-RUN node --check /app/optimize-plugins.cjs && node --check /app/configure-gemini-auth.cjs && bash -n /app/entrypoint-lite.sh
+RUN node --check /app/optimize-plugins.cjs && node --check /app/configure-gemini-auth.cjs && node --check /app/recover-model.cjs && node --check /app/configure-free-chat.cjs && bash -n /app/entrypoint-lite.sh
 RUN useradd -m -s /bin/bash openclaw \
  && chown -R openclaw:openclaw /app \
  && mkdir -p /data && chown openclaw:openclaw /data \
