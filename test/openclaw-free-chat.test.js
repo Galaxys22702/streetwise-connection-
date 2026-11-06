@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, statSync, symlinkSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, statSync, symlinkSync, chmodSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 const { configureFreeChat, planConfig, planSessions } = createRequire(import.meta.url)('../infra/openclaw/configure-free-chat.cjs');
+const { DatabaseSync } = createRequire(import.meta.url)('node:sqlite');
 const free = 'openrouter/openrouter/free';
 const inkling = 'openrouter/thinkingmachines/inkling:free';
 const suffix = '.pre-jarvis-free-chat-v1';
@@ -41,7 +42,7 @@ test('tuning bounds long retries, keeps reasoning, saves foreground quota, and r
   const f = fixture(t);
   const configBefore = readFileSync(f.target, 'utf8');
   const sessionsBefore = readFileSync(f.store, 'utf8');
-  assert.deepEqual(configureFreeChat(f.env), { reason: 'applied', sessionsApplied: 1, sessionsSkipped: 0 });
+  assert.deepEqual(configureFreeChat(f.env), { reason: 'applied', sessionsApplied: 1, sessionsSkipped: 0, sqliteApplied: 0, sqliteSkipped: 0 });
   const next = f.read(f.target);
   assert.deepEqual(next.agents.defaults.model, { primary: free, fallbacks: [] });
   assert.equal(next.agents.defaults.thinkingDefault, 'minimal');
@@ -61,7 +62,7 @@ test('tuning bounds long retries, keeps reasoning, saves foreground quota, and r
     assert.equal(statSync(file + suffix).mode & 0o777, 0o600);
     assert.equal(statSync(file).mode & 0o777, 0o600);
   }
-  assert.deepEqual(configureFreeChat(f.env), { reason: 'unchanged', sessionsApplied: 0, sessionsSkipped: 0 });
+  assert.deepEqual(configureFreeChat(f.env), { reason: 'unchanged', sessionsApplied: 0, sessionsSkipped: 0, sqliteApplied: 0, sqliteSkipped: 0 });
 });
 
 test('unrelated, locked, and external sessions are preserved while free-router split routes inherit the default', () => {
@@ -117,7 +118,7 @@ test('config backup failure prevents session tuning and conflicting session back
   assert.deepEqual(f.read(f.store), f.sessions);
   rmSync(f.target + suffix);
   writeFileSync(f.store + suffix, '{}', { mode: 0o600 });
-  assert.deepEqual(configureFreeChat(f.env), { reason: 'applied', sessionsApplied: 0, sessionsSkipped: 1 });
+  assert.deepEqual(configureFreeChat(f.env), { reason: 'applied', sessionsApplied: 0, sessionsSkipped: 1, sqliteApplied: 0, sqliteSkipped: 0 });
   assert.deepEqual(f.read(f.store), f.sessions);
 });
 
@@ -136,6 +137,105 @@ test('symlinked config, backups and session directories are never followed', t =
   writeFileSync(join(outside, 'sessions.json'), JSON.stringify(f.sessions));
   rmSync(join(f.state, 'agents', 'main', 'sessions'), { recursive: true });
   symlinkSync(outside, join(f.state, 'agents', 'main', 'sessions'));
-  assert.deepEqual(configureFreeChat(f.env), { reason: 'applied', sessionsApplied: 0, sessionsSkipped: 0 });
+  assert.deepEqual(configureFreeChat(f.env), { reason: 'applied', sessionsApplied: 0, sessionsSkipped: 0, sqliteApplied: 0, sqliteSkipped: 0 });
   assert.deepEqual(f.read(join(outside, 'sessions.json')), f.sessions);
+});
+
+function sessionDatabase(file, rows, transcript = 'keep-history') {
+  mkdirSync(join(file, '..'), { recursive: true });
+  const db = new DatabaseSync(file);
+  db.exec(`CREATE TABLE session_nodes (
+    session_key TEXT PRIMARY KEY,
+    current_session_id TEXT NOT NULL,
+    entry_json TEXT NOT NULL
+  ) STRICT;
+  CREATE TABLE transcript_events (
+    event_id TEXT PRIMARY KEY,
+    body TEXT NOT NULL
+  );`);
+  const insert = db.prepare('INSERT INTO session_nodes (session_key, current_session_id, entry_json) VALUES (?, ?, ?)');
+  for (const [key, entry] of Object.entries(rows)) insert.run(key, 'session-' + key, JSON.stringify(entry));
+  db.prepare('INSERT INTO transcript_events (event_id, body) VALUES (?, ?)').run('event-1', transcript);
+  db.close();
+}
+
+function readNodes(file) {
+  const db = new DatabaseSync(file, { readOnly: true });
+  const nodes = db.prepare('SELECT session_key, current_session_id, entry_json FROM session_nodes ORDER BY session_key').all();
+  const transcript = db.prepare('SELECT event_id, body FROM transcript_events').all();
+  db.close();
+  return { nodes, transcript };
+}
+
+test('canonical SQLite free-route pins are released without rewriting transcript history', t => {
+  const f = fixture(t);
+  const dbPath = join(f.state, 'agents', 'main', 'agent', 'openclaw-agent.sqlite');
+  const history = 'user said ' + inkling + ' and must remain';
+  sessionDatabase(dbPath, {
+    'agent:main:main': {
+      model: 'thinkingmachines/inkling:free', modelProvider: 'openrouter',
+      modelOverride: 'thinkingmachines/inkling:free', providerOverride: 'openrouter',
+      modelOverrideSource: 'user', thinkingLevel: 'off', messages: [{ content: history }]
+    },
+    'agent:main:locked': { modelOverride: inkling, modelSelectionLocked: true, thinkingLevel: 'high', messages: ['locked'] },
+    'agent:main:other': { modelOverride: 'vendor/paid', providerOverride: 'openrouter', thinkingLevel: 'high', messages: ['paid'] }
+  }, history);
+  assert.deepEqual(configureFreeChat(f.env), { reason: 'applied', sessionsApplied: 1, sessionsSkipped: 0, sqliteApplied: 1, sqliteSkipped: 0 });
+  const { nodes, transcript } = readNodes(dbPath);
+  const main = JSON.parse(nodes[1].entry_json);
+  assert.equal(nodes[1].session_key, 'agent:main:main');
+  assert.equal(nodes[1].current_session_id, 'session-agent:main:main');
+  assert.equal(main.model, 'openrouter/free');
+  assert.equal(main.modelProvider, 'openrouter');
+  assert.equal(main.thinkingLevel, 'minimal');
+  assert.equal(Object.hasOwn(main, 'modelOverride'), false);
+  assert.deepEqual(main.messages, [{ content: history }]);
+  assert.deepEqual(JSON.parse(nodes[2].entry_json).messages, ['paid']);
+  assert.equal(JSON.parse(nodes[0].entry_json).modelSelectionLocked, true);
+  assert.equal(transcript.length, 1);
+  assert.equal(transcript[0].event_id, 'event-1');
+  assert.equal(transcript[0].body, history);
+  const backup = dbPath + suffix;
+  assert.equal(statSync(backup).mode & 0o777, 0o600);
+  const prior = readNodes(backup);
+  assert.equal(JSON.parse(prior.nodes[1].entry_json).modelOverride, 'thinkingmachines/inkling:free');
+  assert.deepEqual(configureFreeChat(f.env), { reason: 'unchanged', sessionsApplied: 0, sessionsSkipped: 0, sqliteApplied: 0, sqliteSkipped: 0 });
+  assert.equal(readNodes(dbPath).nodes[1].entry_json, nodes[1].entry_json);
+});
+
+test('SQLite pin release can run without retuning config and refuses symlinks, conflicts, and unknown schemas', t => {
+  const f = fixture(t);
+  const dbPath = join(f.state, 'agents', 'main', 'agent', 'openclaw-agent.sqlite');
+  sessionDatabase(dbPath, { 'agent:main:main': { model: free, thinkingLevel: 'medium', messages: ['stay'] } });
+  const beforeConfig = readFileSync(f.target, 'utf8');
+  assert.deepEqual(configureFreeChat({ ...f.env, JARVIS_FREE_CHAT_PROFILE: '0', JARVIS_RELEASE_SQLITE_PINS: '1' }),
+    { reason: 'unchanged', sessionsApplied: 0, sessionsSkipped: 0, sqliteApplied: 1, sqliteSkipped: 0 });
+  assert.equal(readFileSync(f.target, 'utf8'), beforeConfig);
+  assert.equal(JSON.parse(readNodes(dbPath).nodes[0].entry_json).thinkingLevel, 'minimal');
+  assert.equal(readNodes(dbPath).transcript[0].body, 'keep-history');
+
+  const outside = join(f.state, 'outside.sqlite');
+  sessionDatabase(outside, { 'agent:main:main': { modelOverride: inkling, thinkingLevel: 'off' } });
+  rmSync(dbPath);
+  symlinkSync(outside, dbPath);
+  const linked = readFileSync(outside);
+  assert.deepEqual(configureFreeChat({ ...f.env, JARVIS_FREE_CHAT_PROFILE: '0', JARVIS_RELEASE_SQLITE_PINS: '1' }),
+    { reason: 'unchanged', sessionsApplied: 0, sessionsSkipped: 0, sqliteApplied: 0, sqliteSkipped: 0 });
+  assert.deepEqual(readFileSync(outside), linked);
+
+  rmSync(dbPath);
+  sessionDatabase(dbPath, { 'agent:main:main': { modelOverride: free, thinkingLevel: 'high', messages: ['again'] } });
+  writeFileSync(dbPath + suffix, 'not-a-database', { mode: 0o600 });
+  assert.deepEqual(configureFreeChat({ ...f.env, JARVIS_FREE_CHAT_PROFILE: '0', JARVIS_RELEASE_SQLITE_PINS: '1' }),
+    { reason: 'unchanged', sessionsApplied: 0, sessionsSkipped: 0, sqliteApplied: 0, sqliteSkipped: 1 });
+  assert.equal(JSON.parse(readNodes(dbPath).nodes[0].entry_json).thinkingLevel, 'high');
+
+  rmSync(dbPath + suffix);
+  rmSync(dbPath);
+  const bare = new DatabaseSync(dbPath);
+  bare.exec('CREATE TABLE unrelated (id INTEGER)');
+  bare.close();
+  chmodSync(dbPath, 0o600);
+  assert.deepEqual(configureFreeChat({ ...f.env, JARVIS_FREE_CHAT_PROFILE: '0', JARVIS_RELEASE_SQLITE_PINS: '1' }),
+    { reason: 'unchanged', sessionsApplied: 0, sessionsSkipped: 0, sqliteApplied: 0, sqliteSkipped: 1 });
 });
