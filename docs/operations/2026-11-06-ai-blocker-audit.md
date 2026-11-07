@@ -43,4 +43,10 @@ The gateway has one replica and the existing `/data` volume. At inspection, one-
 1. In the owner's password-protected Railway `/setup` page, select **Manage Devices**, identify the pending HP/browser request, and approve that exact device. The inspected template supports this native flow; do not disable authentication or approve unidentified devices.
 2. In the approved OpenClaw chat, send `/model default -s`, then `/think default`. These supported commands clear the active session overrides without enabling paid routes.
 3. Send `Reply exactly: JARVIS FREE OK`. Require the complete visible reply, a free model route and no paid fallback/billing failure. HTTP 200, gateway health and an opened stream alone do not satisfy this check.
-4. After the candidate is reviewed and deployed through the existing PR process, inspect startup `sqliteApplied`/`sqliteSkipped` counts and repeat the same live reply check. No production configuration or volume data was changed during this audit.
+4. After deployment through the existing PR process, inspect startup `sqliteApplied`/`sqliteSkipped` counts and repeat the same live reply check. The initial inspection changed no production configuration or volume data; subsequent rollout findings follow below.
+
+## Rollout follow-up: canonical certification
+
+PR #139 was merged and deployed. A session-only rollout applied one SQLite store, but the gateway then rejected a canonical row: OpenClaw's `AFTER UPDATE OF entry_json` trigger had reset `entry_valid` to zero. The initial reduced fixture omitted that trigger, so its passing tests did not establish canonical admission. The published OpenClaw 2026.9.9 package confirms that its native writer explicitly recertifies after rewriting JSON.
+
+The corrective change adds that transaction step and a narrow startup recovery for the existing private snapshot. Only an exact known model-only rewrite of a previously certified row can be recertified; every other promoted column and both copies of session identity must still match. It never replaces a database or changes transcript tables. Tests now include the upstream invalidation trigger and rejection of unrelated or subsequently edited rows. The session-release flag is disabled for future deployments. Gateway recovery and a complete live reply must be verified separately after deployment.
