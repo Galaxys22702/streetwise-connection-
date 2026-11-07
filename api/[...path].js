@@ -125,7 +125,9 @@ async function requireUser(req) {
 
 export default async function handler(req, res) {
   applySecurityHeaders(res);
-  const url = new URL(req.url || "/", "https://streetwise.local");
+  let url;
+  try { url = new URL(req.url || "/", "https://streetwise.local"); }
+  catch { return sendJson(res, 400, { error: "invalid_request_url" }); }
 
   if (req.method === "GET" && url.pathname === "/api/health") {
     const health = await buildHealthStatus({ runtime: "vercel" });

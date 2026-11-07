@@ -20,12 +20,14 @@ try {
 } catch [System.Net.Sockets.SocketException] {
     # A refused connection means the local port is available.
 } finally { $probe.Dispose() }
-$previousKey = $env:OPENAI_API_KEY
+$previousKey = $env:OPENROUTER_API_KEY
 $process = $null
-$keySecure = Read-Host 'OpenAI API key (hidden; leave blank for offline planners)' -AsSecureString
-$ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($keySecure)
-try { $env:OPENAI_API_KEY = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr) }
-finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr); $keySecure.Dispose() }
+if (-not $previousKey) {
+    $keySecure = Read-Host 'OpenRouter API key (hidden; free models only; leave blank for offline planners)' -AsSecureString
+    $ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($keySecure)
+    try { $env:OPENROUTER_API_KEY = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr) }
+    finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr); $keySecure.Dispose() }
+}
 try {
     $process = Start-Process -FilePath $node.Source -ArgumentList 'server.js' -WorkingDirectory $PSScriptRoot -NoNewWindow -PassThru
     $ready = $false
@@ -43,7 +45,7 @@ try {
     [void](Read-Host)
 } finally {
     if ($process -and -not $process.HasExited) { Stop-Process -Id $process.Id }
-    if ($null -eq $previousKey) { Remove-Item Env:\OPENAI_API_KEY -ErrorAction SilentlyContinue }
-    else { $env:OPENAI_API_KEY = $previousKey }
+    if ($null -eq $previousKey) { Remove-Item Env:\OPENROUTER_API_KEY -ErrorAction SilentlyContinue }
+    else { $env:OPENROUTER_API_KEY = $previousKey }
     $previousKey = $null
 }

@@ -217,3 +217,23 @@ test('Auto alias matching preserves other providers and respects safeguards', t 
   assert.equal(recoverModel(blocked.env), 'backup_unavailable');
   assert.deepEqual(blocked.read(), blocked.cfg);
 });
+
+test('legacy session aliases and split provider fields recover without rewriting another provider or transcript', t => {
+  const f = fixture(t, free);
+  const state = join(f.target, '..');
+  const store = join(state, 'agents', 'main', 'sessions', 'sessions.json');
+  mkdirSync(join(state, 'agents', 'main', 'sessions'), { recursive: true });
+  const sessions = {
+    split: { modelOverride: 'openrouter/auto', providerOverride: 'openrouter', model: 'openrouter:auto', modelProvider: 'openrouter' },
+    full: { modelOverride: ' openrouter:auto ', messages: [{ content: 'openrouter/auto' }] },
+    other: { modelOverride: 'openrouter/auto', providerOverride: 'custom' }
+  };
+  writeFileSync(store, JSON.stringify(sessions));
+  assert.equal(recoverModel({ ...f.env, OPENCLAW_STATE_DIR: state }), 'sessions_recovered');
+  const next = JSON.parse(readFileSync(store, 'utf8'));
+  assert.deepEqual(next.split, { modelOverride: 'openrouter/free', providerOverride: 'openrouter', model: 'openrouter/free', modelProvider: 'openrouter' });
+  assert.equal(next.full.modelOverride, free);
+  assert.deepEqual(next.full.messages, sessions.full.messages);
+  assert.deepEqual(next.other, sessions.other);
+  assert.equal(readFileSync(store + '.pre-jarvis-recovery', 'utf8'), JSON.stringify(sessions));
+});

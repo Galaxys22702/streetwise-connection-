@@ -10,9 +10,11 @@ Use Node.js 24 and install with `npm ci`. Store configuration in an ignored loca
 | --- | --- |
 | `JARVIS_ENABLED=true` | Explicitly enable the private API; disabled by default. |
 | `JARVIS_ACCESS_TOKEN` | A separate random owner-access token, at least 32 characters. This is not your provider API key. |
-| `JARVIS_AI_KEY` | Server-only provider credential. Required for free-form answers. |
-| `JARVIS_AI_MODEL` | Provider model identifier, e.g. `gpt-4.1-mini` for OpenAI. |
-| `JARVIS_AI_URL` | Optional HTTPS chat-completions endpoint; defaults to `https://api.openai.com/v1/chat/completions`. |
+| `JARVIS_AI_KEY` | Server-only provider credential. For OpenRouter, `OPENROUTER_API_KEY` is also accepted. |
+| `JARVIS_AI_MODEL` | Defaults to `openrouter/free` on OpenRouter. Only that router and model IDs ending in `:free` are accepted there. OpenClaw-prefixed free IDs are normalized. |
+| `JARVIS_AI_URL` | Optional HTTPS chat-completions endpoint; defaults to `https://openrouter.ai/api/v1/chat/completions`. Existing custom providers require their explicit URL, model and `JARVIS_AI_KEY`. |
+
+OpenRouter requests include `provider.max_price` with zero prompt and completion prices and have no paid fallback. Free rate limits, account restrictions and upstream outages still apply. A provider-specific `OPENROUTER_API_KEY` is never forwarded to a custom provider host. The status field `aiConfigured` validates local configuration; it does not test credentials or prove a completed reply.
 
 Generate your access token locally using `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"` and put it in secure configuration. Use this token to connect in the browser. The browser keeps it in memory only; disconnecting or reloading clears it. Do not put it in URLs or browser storage. Use HTTPS for any remote deployment.
 
@@ -26,6 +28,7 @@ For Vercel, add the variables securely to the chosen deployment environment and 
 - The page provides room-planning, assembly-help and Streetwise-status prompts.
 - Conversation history stays in browser memory and is cleared on disconnect/reload. It is sent with each AI request to the configured provider, whose own data policies apply. No conversation database is added.
 - Chat accepts up to 20 alternating user/assistant messages, 4,000 characters each, 16,000 characters total. Client history trims older complete pairs.
+- OpenRouter rate limits return HTTP 429 with a bounded numeric `Retry-After` when supplied. Authentication and account restrictions return distinct safe error codes without provider response text.
 - Provider requests time out after 30 seconds and do not follow redirects. Responses and errors never expose the provider key. HTTPS/TLS verification remains enabled.
 - Access attempts and chat requests use the existing per-client, process-local rate limiter. A shared owner token is suitable for a private owner interface; this is not a multi-user authentication or distributed quota system.
 - Only the explicit `/status` command runs a tool from chat. AI replies cannot approve or execute commands. The separate command workspace runs owner-reviewed shell commands on a connected development runner. HP/Mac control requires starting a runner on that machine; the cloud runner does not control those computers.
