@@ -1,6 +1,6 @@
 # Jarvis OpenClaw model compatibility
 
-The Railway image builds the pinned upstream template with this directory as its build context. Setup uses OpenClaw's provider defaults when Model is blank. Full model IDs, provider aliases, custom endpoints and gateway routes are passed to OpenClaw without comparing them to the setup group's name. A rejected model change is reported as setup failure.
+The Railway image builds the pinned upstream template with this directory as its build context. For OpenRouter API-key setup, a blank Model or a known Auto alias selects `openrouter/openrouter/free` before the gateway starts. OpenClaw 2026.9.9 otherwise chooses paid Auto, and startup recovery has already run before web onboarding. Other providers retain their native blank default. Explicit non-Auto model IDs, provider aliases, custom endpoints and gateway routes are passed to OpenClaw without comparing them to the setup group's name. A rejected model change is reported as setup failure. This setup default does not constrain explicitly configured paid models or prove live credentials, fallbacks, or a completed free response.
 
 Status refresh preserves the chosen provider and authentication method. Explicitly changing either clears the previous draft key and model so they are not reused with a different provider. Persisted authentication and conversations are unchanged.
 

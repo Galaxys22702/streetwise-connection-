@@ -8,6 +8,7 @@ import { join } from "node:path";
 
 const require = createRequire(import.meta.url);
 const methods = require("../infra/openclaw/setup-models.cjs");
+const { resolveSetupModel } = require("../infra/openclaw/setup-route.cjs");
 const optimizer = new URL("../infra/openclaw/optimize-plugins.cjs", import.meta.url);
 const groups = [
   { value: "google", options: [{ value: "gemini-api-key" }] },
@@ -20,6 +21,25 @@ const groups = [
 function app(values = {}) {
   return { authGroups: [], selectedGroup: "", selectedAuth: "", authChoices: [], authSecret: "", model: "", ...methods, ...values };
 }
+
+test("OpenRouter setup resolves blank and known Auto selections to the free router before gateway startup", () => {
+  for (const model of [undefined, '', '  ', 'auto', 'openrouter/auto', 'openrouter:auto', ' openrouter/openrouter/auto ']) {
+    const payload = { authChoice: 'openrouter-api-key', model, authSecret: 'fixture-only' };
+    const before = { ...payload };
+    assert.equal(resolveSetupModel(payload), 'openrouter/openrouter/free');
+    assert.deepEqual(payload, before);
+  }
+});
+
+test("Setup preserves explicit non-Auto models and other providers' native defaults", () => {
+  for (const authChoice of ['gemini-api-key', 'openai-api-key', 'custom-api-key', 'ollama', undefined]) {
+    assert.equal(resolveSetupModel({ authChoice }), '');
+    assert.equal(resolveSetupModel({ authChoice, model: ' custom/model ' }), 'custom/model');
+  }
+  for (const model of ['openrouter/openrouter/free', 'openrouter/vendor/model:free', 'openrouter/vendor/explicit-model']) {
+    assert.equal(resolveSetupModel({ authChoice: 'openrouter-api-key', model }), model);
+  }
+});
 
 test("OpenClaw setup refresh preserves provider, auth method and full gateway or alias model IDs", () => {
   for (const [group, auth, model] of [
