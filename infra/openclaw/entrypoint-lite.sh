@@ -43,4 +43,8 @@ gosu openclaw node /app/recover-model.cjs
 gosu openclaw node /app/configure-free-chat.cjs
 gosu openclaw node /app/optimize-plugins.cjs
 
+if [ "${JARVIS_APPROVE_LOCAL_OPERATOR:-0}" = "1" ] || [ "${JARVIS_STATUS_PROBE:-0}" = "1" ]; then
+  gosu openclaw bash -c 'stdbuf -oL node /app/approve-operator.cjs 2>&1 | stdbuf -oL tee -a /data/jarvis-operator-assist.log' &
+fi
+
 exec gosu openclaw node src/server.js
