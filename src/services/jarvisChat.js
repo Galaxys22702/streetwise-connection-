@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import { resolveJarvisProvider, requestJarvisReply } from "./jarvisProvider.js";
 import {
   createJarvis, createToolRegistry, createPolicy, createAuditLog,
   createMemory, createStreetwiseStatusTool
@@ -22,10 +23,12 @@ export function authorizeJarvis(req, env = process.env) {
 }
 
 export function jarvisStatus(env = process.env) {
+  let aiConfigured = false;
+  try { aiConfigured = Boolean(resolveJarvisProvider(env)); } catch { /* Invalid configuration is not ready. */ }
   return {
     ok: true,
     name: "Jarvis",
-    aiConfigured: Boolean(env.JARVIS_AI_KEY && env.JARVIS_AI_MODEL),
+    aiConfigured,
     capabilities: ["streetwise.status"],
     computerControl: false
   };
@@ -76,33 +79,7 @@ export async function chatWithJarvis(body, { env = process.env, fetchImpl = fetc
     };
   }
 
-  if (!env.JARVIS_AI_KEY || !env.JARVIS_AI_MODEL) {
-    throw problem("jarvis_ai_not_configured", 503);
-  }
-  let endpoint;
-  try {
-    endpoint = new URL(env.JARVIS_AI_URL || "https://api.openai.com/v1/chat/completions");
-    if (endpoint.protocol !== "https:" || endpoint.username || endpoint.password || endpoint.hash) throw new Error();
-  } catch {
-    throw problem("jarvis_invalid_provider_url", 503);
-  }
-  try {
-    const response = await fetchImpl(endpoint, {
-      method: "POST", redirect: "error", signal: AbortSignal.timeout(30000),
-      headers: { "content-type": "application/json", authorization: `Bearer ${env.JARVIS_AI_KEY}` },
-      body: JSON.stringify({
-        model: env.JARVIS_AI_MODEL,
-        messages: [{ role: "system", content: "You are Jarvis, the user's helpful assistant. Give clear, practical answers, including furniture selection, layout and assembly help. Ask for measurements, budget or model instructions when necessary. You can answer questions but cannot control computers, purchase items or perform physical actions. Never claim you performed an action. The user can send /status for a verified Streetwise status. Do not invent current prices, product availability, tool results or access to private files." }, ...messages],
-        max_completion_tokens: 1000
-      })
-    });
-    if (!response.ok) throw new Error();
-    const data = await response.json();
-    const reply = data?.choices?.[0]?.message?.content;
-    if (typeof reply !== "string" || !reply.trim() || reply.length > 16000) throw new Error();
-    return { ok: true, reply: reply.trim(), source: "ai" };
-  } catch {
-    // Provider responses and exceptions can contain credentials or private conversation text.
-    throw problem("jarvis_provider_unavailable", 502);
-  }
+  const reply = await requestJarvisReply(messages, { env, fetchImpl,
+    instructions: "You are Jarvis, the user's helpful assistant. Give clear, practical answers, including furniture selection, layout and assembly help. Ask for measurements, budget or model instructions when necessary. You can answer questions but cannot control computers, purchase items or perform physical actions. Never claim you performed an action. The user can send /status for a verified Streetwise status. Do not invent current prices, product availability, tool results or access to private files." });
+  return { ok: true, reply, source: "ai" };
 }

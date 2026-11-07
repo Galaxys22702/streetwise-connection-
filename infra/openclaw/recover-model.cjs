@@ -179,8 +179,9 @@ function rewriteSessionStore(parsed, model) {
     }
     const copy = { ...entry };
     for (const field of ['model', 'modelOverride']) {
-      if (copy[field] === PAID_AUTO) {
-        copy[field] = model;
+      const provider = copy[field === 'model' ? 'modelProvider' : 'providerOverride'];
+      if (isPaidAuto(copy[field]) && (!provider || provider === 'openrouter')) {
+        copy[field] = provider === 'openrouter' ? model.slice('openrouter/'.length) : model;
         changed = true;
       }
     }
@@ -304,5 +305,5 @@ function recoverModel(env = process.env) {
     return 'skipped';
   }
 }
-module.exports = { recoverModel, readRegular, savePrivateBackup, replaceJson, sessionStores, isValidFree };
+module.exports = { recoverModel, readRegular, savePrivateBackup, replaceJson, sessionStores, isValidFree, isPaidAuto };
 if (require.main === module) console.log('[JARVIS] Model recovery: ' + recoverModel() + '.');

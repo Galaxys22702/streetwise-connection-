@@ -5,7 +5,7 @@ import vercelHandler from "../api/[...path].js";
 import { authorizeJarvis, jarvisStatus, chatWithJarvis } from "../src/services/jarvisChat.js";
 
 const token = "test-only-access-token-32-characters-long";
-const env = { JARVIS_ENABLED: "true", JARVIS_ACCESS_TOKEN: token, JARVIS_AI_KEY: "test-provider-secret", JARVIS_AI_MODEL: "test-model" };
+const env = { JARVIS_ENABLED: "true", JARVIS_ACCESS_TOKEN: token, JARVIS_AI_KEY: "test-provider-secret", JARVIS_AI_MODEL: "test-model", JARVIS_AI_URL: "https://api.openai.com/v1/chat/completions" };
 const question = { messages: [{ role: "user", content: "Help me choose a sofa." }] };
 
 test("Jarvis requires explicit enablement and a strong server-side access token", () => {

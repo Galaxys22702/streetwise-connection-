@@ -42,12 +42,14 @@ test('HP chat calls only the provider and returns text without exposing credenti
   let calls = 0;
   const { chat } = await start(t, { apiKey: 'test-only-placeholder', fetchImpl: async (url, options) => {
     calls++;
-    assert.equal(url, 'https://api.openai.com/v1/responses');
+    assert.equal(url.href, 'https://openrouter.ai/api/v1/chat/completions');
     const body = JSON.parse(options.body);
-    assert.equal(body.store, false);
-    assert.equal(body.input, 'Hello');
+    assert.equal(options.redirect, 'error');
+    assert.equal(body.model, 'openrouter/free');
+    assert.equal(body.messages.at(-1).content, 'Hello');
+    assert.deepEqual(body.provider.max_price, { prompt: 0, completion: 0 });
     assert.ok(options.signal);
-    return Response.json({ output: [{ content: [{ type: 'output_text', text: 'Hello, sir.' }] }] });
+    return Response.json({ choices: [{ message: { content: 'Hello, sir.' } }] });
   } });
   const response = await chat({ message: 'Hello' });
   assert.equal(response.status, 200);
@@ -60,4 +62,18 @@ test('HP provider errors are bounded and do not disclose provider response detai
   const response = await chat({ message: 'Hello' });
   assert.equal(response.status, 502);
   assert.doesNotMatch(await response.text(), /must not leak|test-only-placeholder/);
+});
+
+test('HP chat blocks paid routes before contacting a provider and reports free-quota throttling honestly', async t => {
+  const paid = await start(t, { apiKey: 'test-only-placeholder', model: 'openrouter/auto',
+    fetchImpl: () => assert.fail('a paid route must not run') });
+  const refused = await paid.chat({ message: 'Hello' });
+  assert.equal(refused.status, 503);
+  assert.match((await refused.json()).error, /Paid models are blocked/);
+  const limited = await start(t, { apiKey: 'test-only-placeholder',
+    fetchImpl: async () => new Response('private upstream details', { status: 429, headers: { 'retry-after': '30' } }) });
+  const response = await limited.chat({ message: 'Hello' });
+  assert.equal(response.status, 429);
+  assert.equal(response.headers.get('retry-after'), '30');
+  assert.doesNotMatch(await response.text(), /private upstream details|test-only-placeholder/);
 });

@@ -12,6 +12,7 @@ try {
 
 if (!pool) {
   console.error("DATABASE_URL is required to start the hosted service.");
+  console.error("For personal HP JARVIS without PostgreSQL, run: npm run jarvis:local");
   process.exit(1);
 }
 

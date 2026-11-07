@@ -141,7 +141,12 @@ async function serveStatic(pathname, res) {
 }
 
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url || "/", "http://localhost");
+  let url;
+  try { url = new URL(req.url || "/", "http://localhost"); }
+  catch {
+    applySecurityHeaders(res, "/");
+    return sendJson(res, 400, { error: "invalid_request_url" });
+  }
   applySecurityHeaders(res, url.pathname);
 
   if (req.method === "GET" && url.pathname === "/health") {

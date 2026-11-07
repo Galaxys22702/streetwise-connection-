@@ -2,6 +2,7 @@ import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { resolveJarvisProvider, requestJarvisReply } from '../../src/services/jarvisProvider.js';
 
 const assets = new Map([
   ['/', 'index.html'], ['/index.js', 'index.js'],
@@ -9,7 +10,12 @@ const assets = new Map([
   ['/jarvis-money.html', 'jarvis-money.html'], ['/jarvis-money.js', 'jarvis-money.js']
 ]);
 
-export function createLocalServer({ apiKey = process.env.OPENAI_API_KEY || '', model = process.env.OPENAI_MODEL || 'gpt-4.1-mini', fetchImpl = fetch } = {}) {
+export function createLocalServer({ apiKey = process.env.OPENROUTER_API_KEY || '', model = process.env.OPENROUTER_MODEL || 'openrouter/free', fetchImpl = fetch } = {}) {
+  // The HP runner always uses the guarded free OpenRouter route, regardless of
+  // unrelated OpenAI/custom-provider settings inherited from another project.
+  const env = { OPENROUTER_API_KEY: apiKey, OPENROUTER_MODEL: model };
+  let aiConfigured = false;
+  try { aiConfigured = Boolean(resolveJarvisProvider(env)); } catch { /* Report invalid routing on chat. */ }
   let inFlight = false;
   return http.createServer(async (req, res) => {
     const send = (status, data) => {
@@ -25,7 +31,7 @@ export function createLocalServer({ apiKey = process.env.OPENAI_API_KEY || '', m
     if (req.headers.host !== expectedHost) return send(403, { error: 'Open JARVIS using its 127.0.0.1 address.' });
     if (req.headers.origin && req.headers.origin !== `http://${expectedHost}`) return send(403, { error: 'Cross-origin requests are blocked.' });
     try {
-      if (req.method === 'GET' && req.url === '/health') return send(200, { ok: true, aiConfigured: Boolean(apiKey) });
+      if (req.method === 'GET' && req.url === '/health') return send(200, { ok: true, aiConfigured });
       if (req.method === 'GET' && assets.has(req.url)) {
         const file = assets.get(req.url);
         const body = await readFile(new URL(file, import.meta.url));
@@ -46,21 +52,25 @@ export function createLocalServer({ apiKey = process.env.OPENAI_API_KEY || '', m
       try { input = JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { return send(400, { error: 'Invalid JSON' }); }
       const message = typeof input?.message === 'string' ? input.message.trim() : '';
       if (!message || message.length > 4000) return send(400, { error: 'Message must be 1–4000 characters' });
-      if (!apiKey) return send(503, { error: 'AI not configured. Restart with the Windows launcher.' });
+      if (!apiKey) return send(503, { error: 'AI not configured. Restart with the Windows launcher and enter your OpenRouter key in its hidden prompt.' });
       if (inFlight) return send(429, { error: 'Wait for the current response.' });
       inFlight = true;
       try {
-        const upstream = await fetchImpl('https://api.openai.com/v1/responses', {
-          method: 'POST', headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
-          body: JSON.stringify({ model, store: false, instructions: 'You are JARVIS, a practical creative and technical assistant for Rob the Producer. Address the user as sir. Provide useful answers and drafts. You have no execution tools: never claim to send, publish, purchase, deploy, or edit files. Do not request secrets.', input: message, max_output_tokens: 1000 }),
-          signal: AbortSignal.timeout(30000)
-        });
-        if (!upstream.ok) return send(502, { error: `AI provider request failed (${upstream.status}). Check API billing and configuration.` });
-        const data = await upstream.json();
-        const answer = (data.output || []).flatMap(item => item.content || []).filter(part => part.type === 'output_text').map(part => part.text).join('\n');
-        return send(200, { answer: answer || 'No text returned.' });
+        const answer = await requestJarvisReply([{ role: 'user', content: message }], { env, fetchImpl,
+          instructions: 'You are JARVIS, a practical creative and technical assistant for Rob the Producer. Address the user as sir. Provide useful answers and drafts. You have no execution tools: never claim to send, publish, purchase, deploy, or edit files. Do not request secrets.' });
+        return send(200, { answer });
       } finally { inFlight = false; }
-    } catch { if (!res.headersSent) send(502, { error: 'Request failed. Try again.' }); else res.end(); }
+    } catch (error) {
+      const notices = {
+        jarvis_free_model_required: 'Choose openrouter/free or a model ending in :free. Paid models are blocked.',
+        jarvis_provider_auth_failed: 'OpenRouter did not accept the API key. Check it in your OpenRouter account.',
+        jarvis_provider_billing_required: 'OpenRouter refused this free request because of account restrictions. No paid fallback was attempted.',
+        jarvis_provider_rate_limited: 'OpenRouter free quota is busy or exhausted. Wait before retrying; changing models does not reset it.'
+      };
+      if (error.retryAfterSeconds) res.setHeader('Retry-After', String(error.retryAfterSeconds));
+      if (!res.headersSent) send(error.statusCode || 502, { error: notices[error.message] || 'Request failed. Try again.' });
+      else res.end();
+    }
   });
 }
 
