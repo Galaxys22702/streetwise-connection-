@@ -147,21 +147,32 @@ function sessionDatabase(file, rows, transcript = 'keep-history') {
   db.exec(`CREATE TABLE session_nodes (
     session_key TEXT PRIMARY KEY,
     current_session_id TEXT NOT NULL,
-    entry_json TEXT NOT NULL
+    entry_json TEXT NOT NULL,
+    entry_valid INTEGER NOT NULL DEFAULT 0,
+    updated_at INTEGER NOT NULL
   ) STRICT;
+  CREATE TRIGGER session_nodes_entry_valid_after_entry_update
+  AFTER UPDATE OF entry_json ON session_nodes BEGIN
+    UPDATE session_nodes SET entry_valid = 0 WHERE session_key = NEW.session_key;
+  END;
   CREATE TABLE transcript_events (
     event_id TEXT PRIMARY KEY,
     body TEXT NOT NULL
   );`);
-  const insert = db.prepare('INSERT INTO session_nodes (session_key, current_session_id, entry_json) VALUES (?, ?, ?)');
-  for (const [key, entry] of Object.entries(rows)) insert.run(key, 'session-' + key, JSON.stringify(entry));
+  const insert = db.prepare('INSERT INTO session_nodes (session_key, current_session_id, entry_json, entry_valid, updated_at) VALUES (?, ?, ?, 1, ?)');
+  for (const [key, entry] of Object.entries(rows)) {
+    // Canonical entries carry identity in both JSON and promoted columns.
+    entry.sessionId ??= 'session-' + key;
+    entry.updatedAt ??= 1;
+    insert.run(key, entry.sessionId, JSON.stringify(entry), entry.updatedAt);
+  }
   db.prepare('INSERT INTO transcript_events (event_id, body) VALUES (?, ?)').run('event-1', transcript);
   db.close();
 }
 
 function readNodes(file) {
   const db = new DatabaseSync(file, { readOnly: true });
-  const nodes = db.prepare('SELECT session_key, current_session_id, entry_json FROM session_nodes ORDER BY session_key').all();
+  const nodes = db.prepare('SELECT session_key, current_session_id, entry_json, entry_valid, updated_at FROM session_nodes ORDER BY session_key').all();
   const transcript = db.prepare('SELECT event_id, body FROM transcript_events').all();
   db.close();
   return { nodes, transcript };
@@ -187,6 +198,7 @@ test('canonical SQLite free-route pins are released without rewriting transcript
   assert.equal(nodes[1].current_session_id, 'session-agent:main:main');
   assert.equal(main.model, 'openrouter/free');
   assert.equal(main.modelProvider, 'openrouter');
+  assert.equal(nodes[1].entry_valid, 1);
   assert.equal(main.thinkingLevel, 'minimal');
   assert.equal(Object.hasOwn(main, 'modelOverride'), false);
   assert.deepEqual(main.messages, [{ content: history }]);
@@ -283,4 +295,32 @@ test('a prior SQLite snapshot is never reused when transcript history has advanc
   assert.deepEqual(JSON.parse(readNodes(dbPath).nodes[0].entry_json), entries.active);
   assert.equal(readNodes(dbPath).transcript[0].body, 'new transcript');
   assert.equal(readNodes(dbPath + suffix).transcript[0].body, 'old transcript');
+});
+
+test('startup repairs only our exact backed-up rewrite after the canonical trigger cleared certification', t => {
+  const f = fixture(t);
+  const file = join(f.state, 'agents', 'main', 'agent', 'openclaw-agent.sqlite');
+  const entries = {
+    'agent:main:main': { modelOverride: inkling, thinkingLevel: 'off' },
+    'agent:main:other': { modelOverride: 'vendor/model:free', thinkingLevel: 'off' },
+    'agent:main:changed': { modelOverride: inkling, thinkingLevel: 'off' }
+  };
+  sessionDatabase(file, entries, 'transcript remains');
+  sessionDatabase(file + suffix, structuredClone(entries), 'transcript remains');
+  chmodSync(file + suffix, 0o600);
+  const db = new DatabaseSync(file);
+  const planned = planSessions(entries);
+  db.prepare('UPDATE session_nodes SET entry_json = ? WHERE session_key = ?').run(JSON.stringify(planned['agent:main:main']), 'agent:main:main');
+  db.prepare('UPDATE session_nodes SET entry_valid = 0 WHERE session_key = ?').run('agent:main:other');
+  db.prepare('UPDATE session_nodes SET entry_json = ? WHERE session_key = ?').run(JSON.stringify({ ...planned['agent:main:changed'], label: 'concurrent owner change' }), 'agent:main:changed');
+  db.close();
+  assert.equal(readNodes(file).nodes.every(row => row.entry_valid === 0), true);
+  assert.deepEqual(configureFreeChat({ ...f.env, JARVIS_FREE_CHAT_PROFILE: '0' }),
+    { reason: 'sqlite_certification_repair', sqliteCertified: 1, certificationSkipped: 0 });
+  const rows = Object.fromEntries(readNodes(file).nodes.map(row => [row.session_key, row]));
+  assert.equal(rows['agent:main:main'].entry_valid, 1);
+  assert.equal(rows['agent:main:other'].entry_valid, 0);
+  assert.equal(rows['agent:main:changed'].entry_valid, 0);
+  assert.equal(readNodes(file).transcript[0].body, 'transcript remains');
+  assert.deepEqual(configureFreeChat({ ...f.env, JARVIS_FREE_CHAT_PROFILE: '0' }), { reason: 'disabled' });
 });

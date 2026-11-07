@@ -147,14 +147,17 @@ function releaseSqliteFile(file, options) {
     db = new sqlite.DatabaseSync(file, { timeout: 2000 });
     const table = db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'session_nodes'").get();
     if (!table || !String(table.sql).includes('entry_json')) return 'skipped';
+    const columns = new Set(db.prepare('PRAGMA table_info(session_nodes)').all().map(row => row.name));
+    if (!['entry_valid', 'current_session_id', 'updated_at'].every(name => columns.has(name))) return 'skipped';
     const updates = [];
-    for (const row of db.prepare('SELECT session_key, entry_json FROM session_nodes').all()) {
+    for (const row of db.prepare('SELECT * FROM session_nodes').all()) {
       let parsed;
       try { parsed = JSON.parse(row.entry_json); } catch { return 'skipped'; }
       if (!record(parsed)) continue;
       const planned = planSessions({ entry: parsed }, options).entry;
       if (JSON.stringify(parsed) === JSON.stringify(planned)) continue;
-      updates.push({ key: row.session_key, original: row.entry_json, next: JSON.stringify(planned) });
+      if (row.entry_valid !== 1 || !validIdentity(row, parsed) || !validIdentity(row, planned)) return 'skipped';
+      updates.push({ key: row.session_key, original: row.entry_json, next: JSON.stringify(planned), before: row });
     }
     if (!updates.length) return 'unchanged';
     const backup = file + BACKUP;
@@ -169,11 +172,16 @@ function releaseSqliteFile(file, options) {
     db.exec("VACUUM INTO '" + backup.replaceAll("'", "''") + "'");
     const created = fs.lstatSync(backup);
     if (created.isSymbolicLink() || !created.isFile() || (created.mode & 0o077) !== 0) return 'backup_unavailable';
-    const update = db.prepare('UPDATE session_nodes SET entry_json = ? WHERE session_key = ? AND entry_json = ?');
+    const update = db.prepare('UPDATE session_nodes SET entry_json = ? WHERE session_key = ? AND entry_json = ? AND entry_valid = 1');
+    const certify = db.prepare('UPDATE session_nodes SET entry_valid = 1 WHERE session_key = ? AND entry_json = ?');
     db.exec('BEGIN IMMEDIATE');
     try {
       for (const row of updates) {
+        if (JSON.stringify(db.prepare('SELECT * FROM session_nodes WHERE session_key = ?').get(row.key)) !== JSON.stringify(row.before)) throw new Error('conflict');
         if (update.run(row.next, row.key, row.original).changes !== 1) throw new Error('conflict');
+        // OpenClaw's AFTER UPDATE OF entry_json trigger resets entry_valid to 0.
+        // Its native writer recertifies after an identity-preserving rewrite.
+        if (certify.run(row.key, row.next).changes !== 1) throw new Error('certification_failed');
       }
       db.exec('COMMIT');
     } catch {
@@ -188,6 +196,60 @@ function releaseSqliteFile(file, options) {
   }
 }
 
+function validIdentity(row, entry) {
+  return typeof entry.sessionId === 'string' && entry.sessionId === row.current_session_id &&
+    typeof entry.updatedAt === 'number' && Number.isFinite(entry.updatedAt) && entry.updatedAt === row.updated_at;
+}
+
+// Recover only the exact model-only rewrite produced by our earlier migration.
+// A previously certified snapshot is the authority; unrelated invalid rows are
+// never marked valid. Neither JSON nor transcript/history tables are rewritten.
+function certifyKnownSqliteRepairs(stateDir, cfg) {
+  let sqliteCertified = 0;
+  let certificationSkipped = 0;
+  for (const file of sqliteSessionFiles(stateDir, cfg)) {
+    const backup = file + BACKUP;
+    let db, prior;
+    try {
+      if (!regularDatabase(backup) || (fs.lstatSync(backup).mode & 0o077) !== 0) continue;
+      const { DatabaseSync } = require('node:sqlite');
+      db = new DatabaseSync(file, { timeout: 2000 });
+      prior = new DatabaseSync(backup, { readOnly: true, timeout: 2000 });
+      const before = new Map(prior.prepare('SELECT * FROM session_nodes').all().map(row => [row.session_key, row]));
+      const candidates = [];
+      for (const row of db.prepare('SELECT * FROM session_nodes WHERE entry_valid = 0').all()) {
+        const original = before.get(row.session_key);
+        if (!original || original.entry_valid !== 1 || Object.keys(original).length !== Object.keys(row).length || Object.keys(original).some(key =>
+          !['entry_json', 'entry_valid'].includes(key) && original[key] !== row[key])) continue;
+        const parsed = JSON.parse(original.entry_json);
+        const planned = planSessions({ entry: parsed }, { recoverPaidAuto: true }).entry;
+        if (!validIdentity(original, parsed) || !validIdentity(row, planned) ||
+            JSON.stringify(parsed) === JSON.stringify(planned) || JSON.stringify(planned) !== row.entry_json) continue;
+        candidates.push(row);
+      }
+      if (!candidates.length) continue;
+      const certify = db.prepare('UPDATE session_nodes SET entry_valid = 1 WHERE session_key = ? AND entry_json = ? AND entry_valid = 0 AND current_session_id = ? AND updated_at = ?');
+      db.exec('BEGIN IMMEDIATE');
+      try {
+        for (const row of candidates) {
+          if (JSON.stringify(db.prepare('SELECT * FROM session_nodes WHERE session_key = ?').get(row.session_key)) !== JSON.stringify(row)) throw new Error('conflict');
+          if (certify.run(row.session_key, row.entry_json, row.current_session_id, row.updated_at).changes !== 1) throw new Error('conflict');
+        }
+        db.exec('COMMIT');
+      } catch (error) {
+        try { db.exec('ROLLBACK'); } catch { /* no certification committed */ }
+        throw error;
+      }
+      sqliteCertified += 1;
+    } catch { certificationSkipped += 1; }
+    finally {
+      if (prior) try { prior.close(); } catch { /* closed */ }
+      if (db) try { db.close(); } catch { /* closed */ }
+    }
+  }
+  return { sqliteCertified, certificationSkipped };
+}
+
 function save(file, original, next) {
   if (JSON.stringify(JSON.parse(original)) === JSON.stringify(next)) return 'unchanged';
   if (!savePrivateBackup(file, original, BACKUP)) return 'backup_unavailable';
@@ -197,13 +259,17 @@ function save(file, original, next) {
 function configureFreeChat(env = process.env) {
   const profile = env.JARVIS_FREE_CHAT_PROFILE === '1';
   const sqliteOnly = env.JARVIS_RELEASE_SQLITE_PINS === '1';
-  if (!profile && !sqliteOnly) return { reason: 'disabled' };
   const target = env.OPENCLAW_CONFIG_PATH || path.join(env.OPENCLAW_STATE_DIR || '/data/.openclaw', 'openclaw.json');
   try {
     const original = readRegular(target);
     const parsed = JSON.parse(original);
     const next = planConfig(parsed);
-    if (!next) return { reason: 'unsupported_config' };
+    if (!next) return { reason: profile || sqliteOnly ? 'unsupported_config' : 'disabled' };
+    const stateDir = env.OPENCLAW_STATE_DIR ||
+      (path.basename(path.dirname(target)) === '.openclaw' ? path.dirname(target) : null);
+    const certification = certifyKnownSqliteRepairs(stateDir, parsed);
+    if (!profile && !sqliteOnly) return certification.sqliteCertified || certification.certificationSkipped
+      ? { reason: 'sqlite_certification_repair', ...certification } : { reason: 'disabled' };
     const sessionOptions = { recoverPaidAuto: env.JARVIS_RECOVER_PAID_AUTO === undefined || env.JARVIS_RECOVER_PAID_AUTO === '1' };
     let config = 'unchanged';
     let sessionsApplied = 0;
@@ -227,8 +293,6 @@ function configureFreeChat(env = process.env) {
     }
     let sqliteApplied = 0;
     let sqliteSkipped = 0;
-    const stateDir = env.OPENCLAW_STATE_DIR ||
-      (path.basename(path.dirname(target)) === '.openclaw' ? path.dirname(target) : null);
     for (const file of sqliteSessionFiles(stateDir, profile ? next : parsed)) {
       const result = releaseSqliteFile(file, sessionOptions);
       if (result === 'applied') sqliteApplied += 1;
@@ -236,7 +300,7 @@ function configureFreeChat(env = process.env) {
     }
     return { reason: config, sessionsApplied, sessionsSkipped, sqliteApplied, sqliteSkipped };
   } catch {
-    return { reason: 'skipped' };
+    return { reason: profile || sqliteOnly ? 'skipped' : 'disabled' };
   }
 }
 
