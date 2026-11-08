@@ -19,7 +19,7 @@
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
     "pg": "^8.23.1",
-    "stripe": "^23.0.1"
+    "stripe": "^23.1.0"
   },
   "engines": {
     "node": "24.x"
