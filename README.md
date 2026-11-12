@@ -238,6 +238,14 @@ npm run check:production
 
 The default payment and connectivity providers remain mocks during local development.
 
+### Web Analytics
+
+The site uses Vercel's static HTML integration in `public/analytics.js`. The build copies
+`public/` without bundling, so this browser entry must not import npm package names.
+`@vercel/analytics` remains pinned in the lockfile. Enable Web Analytics on the existing
+Vercel project before deploying, then verify a successful `/_vercel/insights/script.js`
+request and a page view in the Analytics dashboard. Local checks do not prove ingestion.
+
 ## Launch timeline
 
 Target launch-readiness date: **November 30, 2026**. Planned public opening target: **March 2027**. December is reserved for final acceptance, controlled production verification, policy/support readiness and launch authorisation. Neither date overrides mandatory provider, legal, regulatory, security, economics, customer-policy or staging gates.
