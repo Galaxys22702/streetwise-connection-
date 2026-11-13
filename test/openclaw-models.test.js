@@ -1,13 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile, rm, mkdir } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
 const methods = require("../infra/openclaw/setup-models.cjs");
+const { resolveSetupModel } = require("../infra/openclaw/setup-route.cjs");
 const optimizer = new URL("../infra/openclaw/optimize-plugins.cjs", import.meta.url);
 const groups = [
   { value: "google", options: [{ value: "gemini-api-key" }] },
@@ -20,6 +22,75 @@ const groups = [
 function app(values = {}) {
   return { authGroups: [], selectedGroup: "", selectedAuth: "", authChoices: [], authSecret: "", model: "", ...methods, ...values };
 }
+
+test("OpenRouter setup resolves blank and known Auto selections to the free router before gateway startup", () => {
+  for (const model of [undefined, "", "  ", "auto", "openrouter/auto", "openrouter:auto", " openrouter/openrouter/auto "]) {
+    const payload = { authChoice: "openrouter-api-key", model, authSecret: "fixture-only" };
+    const before = { ...payload };
+    assert.equal(resolveSetupModel(payload), "openrouter/openrouter/free");
+    assert.deepEqual(payload, before);
+  }
+});
+
+test("Setup preserves explicit non-Auto models and other providers' native defaults", () => {
+  for (const authChoice of ["gemini-api-key", "openai-api-key", "custom-api-key", "ollama", undefined]) {
+    assert.equal(resolveSetupModel({ authChoice }), "");
+    assert.equal(resolveSetupModel({ authChoice, model: " custom/model " }), "custom/model");
+  }
+  for (const model of ["openrouter/openrouter/free", "openrouter/vendor/model:free", "openrouter/vendor/explicit-model"]) {
+    assert.equal(resolveSetupModel({ authChoice: "openrouter-api-key", model }), model);
+  }
+});
+
+test("Pinned wrapper patch selects the free router before the first gateway start", async () => {
+  const root = await mkdtemp(join(tmpdir(), "jarvis-setup-route-"));
+  try {
+    await mkdir(join(root, "src/public"), { recursive: true });
+    await writeFile(join(root, "src/server.js"), `        log.info("wrapper", "running openclaw doctor --fix...");
+        if (dr.output) log.info("wrapper", dr.output);
+
+function validatePayload(payload) {
+  return null;
+}
+
+    const onboardArgs = buildOnboardArgs(payload);
+      if (payload.model?.trim()) {
+        stream(\`[setup] Setting model to \${payload.model.trim()}...\\n\`);
+        const modelResult = await runCmd(OPENCLAW_NODE, clawArgs(["models", "set", payload.model.trim()]));
+        stream(\`[models set] exit=\${modelResult.code}\\n\`);
+      }
+`);
+    await writeFile(join(root, "src/public/setup.html"), `          this.authGroups = j.authGroups || [];
+          if (this.authGroups.length > 0) {
+            this.selectedGroup = this.authGroups[0].value;
+            this.updateAuthChoices();
+          }
+      updateAuthChoices() {
+        const group = this.currentGroup;
+        this.authChoices = (group && group.options) ? group.options : [];
+        if (this.authChoices.length > 0) {
+          this.selectedAuth = this.authChoices[0].value;
+        }
+      },
+@change="updateAuthChoices()"
+x-model="selectedAuth" class="select"
+Format: provider/model-name
+`);
+    const patch = join(dirname(fileURLToPath(import.meta.url)), "../infra/openclaw/patch-startup.cjs");
+    execFileSync(process.execPath, [patch, root], { encoding: "utf8" });
+    const server = await readFile(join(root, "src/server.js"), "utf8");
+    const setup = await readFile(join(root, "src/public/setup.html"), "utf8");
+    assert.match(server, /function resolveSetupModel\(payload\)/);
+    assert.match(server, /const selectedModel = resolveSetupModel\(payload\);/);
+    assert.match(server, /if \(selectedModel\)/);
+    assert.match(server, /\["models", "set", selectedModel\]/);
+    assert.equal(server.includes("payload.model.trim()"), false);
+    assert.match(server, /return "openrouter\/openrouter\/free"/);
+    assert.match(setup, /openrouter\/openrouter\/free/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
 
 test("OpenClaw setup refresh preserves provider, auth method and full gateway or alias model IDs", () => {
   for (const [group, auth, model] of [
