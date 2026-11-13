@@ -1,0 +1,33 @@
+name: OpenClaw image
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "infra/openclaw/**"
+      - "test/openclaw-*.test.js"
+      - ".github/workflows/openclaw-build.yml"
+  push:
+    branches: [main]
+    paths:
+      - "infra/openclaw/**"
+      - ".github/workflows/openclaw-build.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: openclaw-image-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  openclaw-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build the actual Railway OpenClaw image
+        run: docker build -t jarvis-openclaw:verify infra/openclaw

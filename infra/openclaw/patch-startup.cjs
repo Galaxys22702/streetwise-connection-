@@ -2,6 +2,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const modelMethods = require("./setup-models.cjs");
+const { resolveSetupModel } = require("./setup-route.cjs");
 const root = process.argv[2] || "/app";
 
 function replaceOnce(source, before, after, description) {
@@ -24,6 +25,18 @@ if (first < 0 || last < first) throw new Error("Unexpected template startup stru
 server = server.slice(0, first)
   + '        log.info("wrapper", "Automatic doctor repair deferred; gateway starts directly.");'
   + server.slice(last + end.length);
+
+// The native OpenRouter onboarding default is paid Auto. Resolve the setup
+// model on the server so blank input cannot start that route on the first boot.
+server = replaceOnce(server, "function validatePayload(payload) {",
+  resolveSetupModel.toString() + "\n\nfunction validatePayload(payload) {", "setup model resolver");
+server = replaceOnce(server, "    const onboardArgs = buildOnboardArgs(payload);",
+  "    const selectedModel = resolveSetupModel(payload);\n    const onboardArgs = buildOnboardArgs(payload);", "setup model selection");
+server = replaceOnce(server, "      if (payload.model?.trim()) {",
+  "      if (selectedModel) {", "setup model condition");
+server = replaceOnce(server, "${payload.model.trim()}", "${selectedModel}", "setup model message");
+server = replaceOnce(server, '["models", "set", payload.model.trim()]',
+  '["models", "set", selectedModel]', "setup model command");
 
 // A failed model selection must not continue as a successful setup.
 const modelResult = '        stream(`[models set] exit=${modelResult.code}\\n`);';
@@ -53,12 +66,13 @@ setup = replaceOnce(setup, oldChoices, methods + ",", "authentication choices");
 setup = replaceOnce(setup, '@change="updateAuthChoices()"', '@change="changeAuthProvider()"', "provider change handler");
 setup = replaceOnce(setup, 'x-model="selectedAuth" class="select"', 'x-model="selectedAuth" @change="changeAuthMethod()" class="select"', "authentication change handler");
 setup = replaceOnce(setup, "Format: provider/model-name",
-  "Optional: leave blank for the provider default. Otherwise use the full model ID from your provider or gateway.",
+  "Optional: OpenRouter defaults to openrouter/openrouter/free. Other providers keep their native default. Otherwise use the full model ID from your provider or gateway.",
   "model guidance");
 
-// Retain the upstream empty model default. Authentication groups and model
-// prefixes are not equivalent (e.g. self-hosted/ollama, copilot/github-copilot,
-// OpenAI/Codex, and multi-provider gateways). Let OpenClaw resolve its catalog.
+// Retain empty input in the page; the server resolves OpenRouter safely.
+// Authentication groups and model prefixes are not equivalent (e.g.
+// self-hosted/ollama, copilot/github-copilot, OpenAI/Codex, and multi-provider
+// gateways). Let OpenClaw resolve its catalog.
 // Write only after every expected template anchor has been verified.
 fs.writeFileSync(serverFile, server);
 fs.writeFileSync(setupFile, setup);
