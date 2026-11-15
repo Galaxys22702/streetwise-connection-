@@ -2,7 +2,7 @@
 
 Start: 2026-08-31  
 Target readiness date: 2026-11-30  
-Planned public opening target: March 2027 (tentative)  
+Planned public opening target: January 1, 2027 (tentative; only if mandatory gates pass and owner authorises launch)  
 Goal: Make Streetwise technically, operationally, commercially, and compliance-ready for a controlled cellular launch, while keeping public sales disabled until every mandatory external approval is complete.
 
 ## Definition of success on 2026-11-30
