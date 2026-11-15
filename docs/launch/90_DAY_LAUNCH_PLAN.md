@@ -23,7 +23,7 @@ Streetwise is considered launch-ready only when all mandatory gates below are co
 - monitoring, backups, audit logging, and rollback procedures pass;
 - final production launch authorisation is signed.
 
-If provider or regulator approval is still pending on November 30, the software/operations target remains complete but public commercial launch stays locked. The planned March 2027 opening provides additional time for commercial and regulatory acceptance, but no calendar date overrides a failed launch gate.
+If provider or regulator approval is still pending on November 30, the software/operations target remains complete but public commercial launch stays locked. The tentative January 1, 2027 public opening allows December for commercial and regulatory acceptance, but no calendar date overrides a failed launch gate.
 
 ## Non-negotiable production lock during the 90 days
 
