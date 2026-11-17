@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { readRegular, savePrivateBackup, replaceJson, sessionStores, isValidFree, isPaidAuto } = require('./recover-model.cjs');
 const FREE = 'openrouter/openrouter/free';
+const FREE_MAX_TOKENS = 1024;
 const INKLING = 'openrouter/thinkingmachines/inkling:free';
 const BACKUP = '.pre-jarvis-free-chat-v1';
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -50,6 +51,18 @@ function planConfig(cfg) {
     ? Math.min(tuned.timeoutSeconds, 120) : 120;
   // Save scarce free requests for foreground chat. Keep custom heartbeat details.
   tuned.heartbeat = { ...tuned.heartbeat, every: '0m' };
+  // Bound each free-router response: an uncapped request previously asked for
+  // 16,384 tokens and hit OpenRouter affordability limits on a $0 balance.
+  // The cap belongs in the models[<free>] entry; a params key under
+  // agents.defaults.model is never read for this and would silently do nothing.
+  // Only an existing free entry is capped: creating one here would also create
+  // an allowlist where the owner had none. Non-record params are left alone.
+  if (record(tuned.models) && record(tuned.models[FREE])) {
+    const entry = tuned.models[FREE];
+    if (entry.params == null || record(entry.params)) {
+      entry.params = { ...entry.params, maxTokens: FREE_MAX_TOKENS };
+    }
+  }
   return next;
 }
 
@@ -304,5 +317,5 @@ function configureFreeChat(env = process.env) {
   }
 }
 
-module.exports = { configureFreeChat, planConfig, planSessions, sqliteSessionFiles };
+module.exports = { configureFreeChat, planConfig, planSessions, sqliteSessionFiles, FREE_MAX_TOKENS };
 if (require.main === module) console.log('[JARVIS] Free chat profile: ' + JSON.stringify(configureFreeChat()) + '.');
