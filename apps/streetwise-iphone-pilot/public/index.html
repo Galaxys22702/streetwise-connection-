@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Private Streetwise Calling diagnostics for your browser.">
+<title>Streetwise Calling | iPhone Pilot</title>
+<link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script><script src="/call.js" defer></script>
+</head>
+<body>
+<main>
+<header><span class="mark" aria-hidden="true">S</span><strong class="brand">Streetwise <span>Connections</span></strong><span class="mode">Private pilot</span></header>
+<section class="intro"><p class="location">Las Vegas · iPhone pilot</p><h1>Call over<br><em>the internet.</em></h1><p>Start a private browser call, or check the audio on this iPhone. Calls to regular phone numbers are disabled.</p></section>
+<section class="card" aria-labelledby="title">
+<h2 id="title">Private voice room</h2>
+<p>Open the invite in another signed-in browser. Both browsers need microphone access.</p>
+<button id="start" type="button">Start call</button>
+<p class="result" id="status" role="status">Your microphone stays off until you start.</p>
+<div id="share" hidden><label for="invite">Private invite link</label><input id="invite" readonly><button id="copy" type="button">Copy invite</button></div>
+<div id="controls" hidden><button id="mute" type="button" aria-pressed="false">Mute</button> <button id="end" type="button">End call</button></div>
+<p id="media-status" class="result" hidden aria-live="polite"></p><button id="listen" hidden type="button">Play incoming audio</button><audio id="remote" autoplay playsinline></audio>
+</section><section class="card" aria-labelledby="route-title">
+<h2 id="route-title">Phone route check</h2>
+<form id="route">
+<label for="number">Phone number with area code</label>
+<input id="number" type="tel" required inputmode="tel" maxlength="30" placeholder="(702) 555-0102" autocomplete="off">
+<button>Test route</button>
+</form>
+<p class="result" id="route-result" role="status">The number stays in this page.</p>
+</section>
+<section class="card" aria-labelledby="audio-title">
+<h2 id="audio-title">Browser audio check</h2>
+<p>Check the microphone, speaker, or WebRTC audio on this iPhone. These tests stay on this device.</p>
+<div class="test-actions">
+<button type="button" id="mic-test">Test microphone call</button>
+<button type="button" id="audio-test">Test without microphone</button>
+<button type="button" id="speaker-test">Play speaker tone</button>
+</div>
+<p class="result" id="audio-result" role="status">Ready to test.</p>
+</section>
+</main>
+</body>
+</html>
