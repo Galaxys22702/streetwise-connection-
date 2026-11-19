@@ -37,8 +37,11 @@ ENV OPENCLAW_ENTRY=/usr/local/lib/node_modules/openclaw/dist/entry.js
 ENV OPENCLAW_SUPERVISOR_MODE=external
 # Exact openrouter/openrouter/auto routes move to the free router. Set to 0 to keep Auto.
 ENV JARVIS_RECOVER_PAID_AUTO=1
-# Approve operator browsers that already passed gateway auth. Never approves node devices.
+# Approve operator browsers that already passed gateway auth. Never approves node devices by itself.
 ENV JARVIS_APPROVE_LOCAL_OPERATOR=1
+# Approve one named Windows laptop. The display name is a Railway variable, not baked into this image.
+# Set JARVIS_APPROVE_WINDOWS_NODE=0 to stop accepting that laptop.
+ENV JARVIS_APPROVE_WINDOWS_NODE=1
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
  CMD curl -fsS --max-time 4 "http://localhost:${PORT:-8080}/setup/healthz" || exit 1
