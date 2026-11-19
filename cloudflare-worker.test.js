@@ -63,12 +63,102 @@ test("confirms waitlist signup only after successful upstream storage", async ()
   assert.equal((await res.json()).joined, true);
 });
 
-test("keeps unavailable JARVIS and unfinished customer APIs closed", async () => {
+test("keeps JARVIS locked without a private access token and customer APIs closed", async () => {
   const jarvis = await worker.fetch(new Request(`${base}/api/jarvis/status`), {});
   assert.equal(jarvis.status, 503);
-  assert.equal((await jarvis.json()).error, "jarvis_disabled");
+  assert.equal((await jarvis.json()).error, "jarvis_access_not_configured");
   const payments = await worker.fetch(new Request(`${base}/api/payments/checkout`, { method: "POST" }), {});
   assert.equal(payments.status, 404);
+});
+
+const token = "local-test-only-token-that-is-not-a-real-secret";
+const auth = { authorization: `Bearer ${token}` };
+
+test("rejects an incorrect JARVIS token", async () => {
+  const res = await worker.fetch(new Request(`${base}/api/jarvis/status`, {
+    headers: { authorization: "Bearer incorrect" }
+  }), { JARVIS_ACCESS_TOKEN: token, OPENROUTER_API_KEY: "not-a-real-key" });
+  assert.equal(res.status, 401);
+  assert.equal((await res.json()).error, "jarvis_access_denied");
+});
+
+test("connects with correct JARVIS token but reports missing provider", async () => {
+  const res = await worker.fetch(new Request(`${base}/api/jarvis/status`, { headers: auth }), {
+    JARVIS_ACCESS_TOKEN: token
+  });
+  assert.equal(res.status, 200);
+  const status = await res.json();
+  assert.equal(status.aiConfigured, false);
+  assert.equal(status.commandsAvailable, false);
+  assert.equal(status.computerControl, false);
+});
+
+test("routes chat only to OpenRouter's free model with zero price ceiling", async () => {
+  globalThis.fetch = async (url, options) => {
+    assert.equal(String(url), "https://openrouter.ai/api/v1/chat/completions");
+    assert.equal(options.headers.authorization, "Bearer not-a-real-key");
+    const body = JSON.parse(options.body);
+    assert.equal(body.model, "openrouter/free");
+    assert.deepEqual(body.provider.max_price, { prompt: 0, completion: 0 });
+    assert.equal(body.messages[1].content, "Hello");
+    return Response.json({ choices: [{ message: { content: "Hi there" } }] });
+  };
+  const res = await worker.fetch(new Request(`${base}/api/jarvis/chat`, {
+    method: "POST", headers: { ...auth, "content-type": "application/json" },
+    body: JSON.stringify({ messages: [{ role: "user", content: "Hello" }] })
+  }), { JARVIS_ACCESS_TOKEN: token, OPENROUTER_API_KEY: "not-a-real-key" });
+  assert.equal(res.status, 200);
+  assert.deepEqual(await res.json(), { ok: true, reply: "Hi there", source: "ai" });
+});
+
+test("never calls paid models even when configured", async () => {
+  globalThis.fetch = async () => { throw new Error("Paid model request must not occur"); };
+  const res = await worker.fetch(new Request(`${base}/api/jarvis/chat`, {
+    method: "POST", headers: { ...auth, "content-type": "application/json" },
+    body: JSON.stringify({ messages: [{ role: "user", content: "Hello" }] })
+  }), { JARVIS_ACCESS_TOKEN: token, OPENROUTER_API_KEY: "not-a-real-key", JARVIS_AI_MODEL: "openai/gpt-4" });
+  assert.equal(res.status, 503);
+  assert.equal((await res.json()).error, "jarvis_free_model_required");
+});
+
+test("rejects malformed chat history before provider call", async () => {
+  globalThis.fetch = async () => { throw new Error("Invalid input must not reach provider"); };
+  const res = await worker.fetch(new Request(`${base}/api/jarvis/chat`, {
+    method: "POST", headers: { ...auth, "content-type": "application/json" },
+    body: JSON.stringify({ messages: [{ role: "assistant", content: "bad" }] })
+  }), { JARVIS_ACCESS_TOKEN: token, OPENROUTER_API_KEY: "not-a-real-key" });
+  assert.equal(res.status, 400);
+  assert.equal((await res.json()).error, "jarvis_invalid_messages");
+});
+
+test("refuses paid-provider response without retry or fallback", async () => {
+  let calls = 0;
+  globalThis.fetch = async () => { calls++; return Response.json({}, { status: 402 }); };
+  const res = await worker.fetch(new Request(`${base}/api/jarvis/chat`, {
+    method: "POST", headers: { ...auth, "content-type": "application/json" },
+    body: JSON.stringify({ messages: [{ role: "user", content: "Hello" }] })
+  }), { JARVIS_ACCESS_TOKEN: token, OPENROUTER_API_KEY: "not-a-real-key" });
+  assert.equal(res.status, 502);
+  assert.equal((await res.json()).error, "jarvis_provider_billing_required");
+  assert.equal(calls, 1);
+});
+
+test("provides local /status without an AI key", async () => {
+  globalThis.fetch = async () => { throw new Error("No provider request expected"); };
+  const res = await worker.fetch(new Request(`${base}/api/jarvis/chat`, {
+    method: "POST", headers: { ...auth, "content-type": "application/json" },
+    body: JSON.stringify({ messages: [{ role: "user", content: "/status" }] })
+  }), { JARVIS_ACCESS_TOKEN: token });
+  assert.equal(res.status, 200);
+  assert.equal((await res.json()).source, "streetwise.status");
+});
+
+test("denies command execution even with a valid token", async () => {
+  const res = await worker.fetch(new Request(`${base}/api/jarvis/commands/run`, {
+    method: "POST", headers: auth
+  }), { JARVIS_ACCESS_TOKEN: token });
+  assert.equal(res.status, 503);
+  assert.equal((await res.json()).error, "jarvis_commands_unavailable");
 });
 
 test("passes static assets to Cloudflare", async () => {
