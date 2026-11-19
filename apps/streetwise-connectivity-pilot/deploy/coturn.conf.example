@@ -1,0 +1,27 @@
+listening-port=3478
+tls-listening-port=5349
+realm=streetwiseconnection.com
+fingerprint
+use-auth-secret
+# Set static-auth-secret to the same generated secret used as TURN_SHARED_SECRET.
+# Set external-ip=PUBLIC_IPV4/PRIVATE_IPV4 only if the host is behind NAT.
+min-port=49160
+max-port=49200
+cert=/etc/streetwise/turn-tls/fullchain.pem
+pkey=/etc/streetwise/turn-tls/privkey.pem
+no-cli
+no-loopback-peers
+no-multicast-peers
+no-dtls
+no-tlsv1
+no-tlsv1_1
+user-quota=4
+total-quota=32
+denied-peer-ip=10.0.0.0-10.255.255.255
+denied-peer-ip=127.0.0.0-127.255.255.255
+denied-peer-ip=169.254.0.0-169.254.255.255
+denied-peer-ip=172.16.0.0-172.31.255.255
+denied-peer-ip=192.168.0.0-192.168.255.255
+denied-peer-ip=::1
+denied-peer-ip=fc00::-fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+denied-peer-ip=fe80::-febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff
