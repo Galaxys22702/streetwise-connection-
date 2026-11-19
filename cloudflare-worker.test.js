@@ -153,6 +153,36 @@ test("provides local /status without an AI key", async () => {
   assert.equal((await res.json()).source, "streetwise.status");
 });
 
+test("JARVIS ONLINE is a clearly labeled local connectivity probe and spends no free quota", async () => {
+  globalThis.fetch = async () => { throw new Error("Local status probe must never reach OpenRouter"); };
+  const res = await worker.fetch(new Request(`${base}/api/jarvis/chat`, {
+    method: "POST", headers: { ...auth, "content-type": "application/json" },
+    body: JSON.stringify({ messages: [{ role: "user", content: "JARVIS ONLINE" }] })
+  }), { JARVIS_ACCESS_TOKEN: token });
+  assert.equal(res.status, 200);
+  const result = await res.json();
+  assert.equal(result.source, "streetwise.status");
+  assert.match(result.reply, /local status reply, not an OpenRouter AI response/i);
+});
+
+test("provider 429 preserves a safe daily Retry-After without paid fallback or automatic retries", async () => {
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls++;
+    return Response.json({ error: { message: "never leak provider messages" } }, {
+      status: 429, headers: { "retry-after": "86400" }
+    });
+  };
+  const res = await worker.fetch(new Request(`${base}/api/jarvis/chat`, {
+    method: "POST", headers: { ...auth, "content-type": "application/json" },
+    body: JSON.stringify({ messages: [{ role: "user", content: "Hello" }] })
+  }), { JARVIS_ACCESS_TOKEN: token, OPENROUTER_API_KEY: "not-a-real-key" });
+  assert.equal(res.status, 429);
+  assert.equal(res.headers.get("retry-after"), "86400");
+  assert.deepEqual(await res.json(), { error: "jarvis_provider_rate_limited" });
+  assert.equal(calls, 1);
+});
+
 test("denies command execution even with a valid token", async () => {
   const res = await worker.fetch(new Request(`${base}/api/jarvis/commands/run`, {
     method: "POST", headers: auth
