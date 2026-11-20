@@ -197,10 +197,13 @@ async function jarvisChat(request, env) {
   if (!messages) return json(400, { error: "jarvis_invalid_messages" });
 
   const latest = messages.at(-1).content;
-  if (/^(\/status|streetwise status|check streetwise status)$/i.test(latest)) {
+  if (/^(\/status|streetwise status|check streetwise status|jarvis online)$/i.test(latest)) {
+    const probe = /^jarvis online$/i.test(latest);
     return json(200, {
       ok: true,
-      reply: "Streetwise Connection's website is live. Public launch mode: waitlist. Cellular service is not live.",
+      reply: probe
+        ? "JARVIS web connection is online. This is a local status reply, not an OpenRouter AI response. Free AI availability has not been verified."
+        : "Streetwise Connection's website is live. Public launch mode: waitlist. Cellular service is not live.",
       source: "streetwise.status"
     });
   }
@@ -231,7 +234,10 @@ async function jarvisChat(request, env) {
       try { await upstream.body?.cancel(); } catch { /* Never log private upstream content. */ }
       if (upstream.status === 429) {
         const retry = upstream.headers.get("retry-after") || "";
-        return json(429, { error: "jarvis_provider_rate_limited" }, /^\d{1,4}$/.test(retry) ? { "retry-after": retry } : {});
+        // Never retry automatically: failed free requests can consume daily quota.
+        // Preserve a bounded numeric Retry-After, including a possible daily reset.
+        const seconds = /^\d{1,6}$/.test(retry) ? Math.min(86400, Number(retry)) : null;
+        return json(429, { error: "jarvis_provider_rate_limited" }, seconds === null ? {} : { "retry-after": String(seconds) });
       }
       if ([401, 403].includes(upstream.status)) return json(502, { error: "jarvis_provider_auth_failed" });
       if (upstream.status === 402) return json(502, { error: "jarvis_provider_billing_required" });

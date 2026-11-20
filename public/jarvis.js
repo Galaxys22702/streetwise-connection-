@@ -1,11 +1,13 @@
 import { createJarvisVoice } from "./jarvis-voice.js";
 import { createCommandControls } from "./jarvis-commands.js";
+import { retryAfterSeconds, isLocalStatusPrompt } from "./jarvis-rate-limit.js";
 
 const byId = id => document.getElementById(id);
 let token = "";
 let history = [];
 let busy = false;
 let listening = false;
+let freeAiCooldownUntil = 0;
 const voice = createJarvisVoice({
   onTranscript(text) {
     const draft = byId("message");
@@ -79,8 +81,14 @@ async function api(path, body) {
     headers: { authorization: `Bearer ${token}`, ...(body ? { "content-type": "application/json" } : {}) },
     ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(35000)
   });
-  const data = await response.json();
-  if (!response.ok) throw new Error(errors[data.error] || "Jarvis couldn’t complete that request. Please try again.");
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(errors[data.error] || (response.status === 429
+      ? "The request was rate-limited. Please wait before trying again."
+      : "Jarvis couldn’t complete that request. Please try again."));
+    if (response.status === 429) error.retryAfterSeconds = retryAfterSeconds(response.headers.get("retry-after"));
+    throw error;
+  }
   return data;
 }
 
@@ -123,6 +131,7 @@ byId("disconnect").addEventListener("click", () => {
   voice.stop();
   byId("speak-replies").checked = false;
   token = ""; history = [];
+  freeAiCooldownUntil = 0;
   byId("messages").replaceChildren();
   byId("message").value = "";
   byId("workspace").hidden = true;
@@ -135,6 +144,11 @@ byId("chat-form").addEventListener("submit", async event => {
   const draft = byId("message").value;
   const content = draft.trim();
   if (!content || busy || listening || commandControls.running) return;
+  if (!isLocalStatusPrompt(content) && Date.now() < freeAiCooldownUntil) {
+    const remainingMinutes = Math.ceil((freeAiCooldownUntil - Date.now()) / 60000);
+    byId("notice").textContent = `Free AI is cooling down for about ${remainingMinutes} more minute${remainingMinutes === 1 ? "" : "s"}. No request was sent. You can still use /status.`;
+    return;
+  }
   voice.stop();
   busy = true;
   byId("voice-input").disabled = true;
@@ -156,7 +170,11 @@ byId("chat-form").addEventListener("submit", async event => {
     byId("notice").textContent = result.source === "ai" ? "Reply received. AI answers can be mistaken; check product instructions and measurements." : "Verified Streetwise status received.";
     if (byId("speak-replies").checked && !document.hidden) voice.speak(result.reply);
   } catch (error) {
-    byId("notice").textContent = error.message;
+    if (error.retryAfterSeconds) {
+      freeAiCooldownUntil = Date.now() + error.retryAfterSeconds * 1000;
+      const minutes = Math.ceil(error.retryAfterSeconds / 60);
+      byId("notice").textContent = `${error.message} Paused for at least ${minutes} minute${minutes === 1 ? "" : "s"} to conserve free requests. /status still works.`;
+    } else byId("notice").textContent = error.message;
   } finally {
     busy = false;
     byId("voice-input").disabled = !voice.canListen;
