@@ -7,7 +7,7 @@ import { makeWorker } from './index.mjs';
 test('private call room accepts one guest and relays ordered, retry-safe signals', async t => {
   const sql = new DatabaseSync(':memory:');
   t.after(() => sql.close());
-  sql.exec(readFileSync('drizzle/0000_call_rooms.sql','utf8'));
+  sql.exec(readFileSync(new URL('../drizzle/0000_call_rooms.sql', import.meta.url),'utf8'));
   const env = { DB:{ prepare(query) {
     return { bind(...args) {
       return { first:async () => sql.prepare(query).get(...args),
