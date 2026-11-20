@@ -49,7 +49,7 @@ test('tuning bounds long retries, keeps reasoning, saves foreground quota, and r
   assert.equal(next.agents.defaults.timeoutSeconds, 120);
   assert.deepEqual(next.agents.defaults.heartbeat, { every: '0m', prompt: 'keep' });
   for (const key of ['plugins', 'auth', 'tools']) assert.deepEqual(next[key], f.cfg[key]);
-  assert.deepEqual(next.agents.defaults.models, f.cfg.agents.defaults.models);
+  assert.deepEqual(next.agents.defaults.models, { [free]: { alias: 'Free', params: { temperature: 0.4, maxTokens: 1024 } } });
   const entry = f.read(f.store)['agent:main:main'];
   assert.equal(entry.model, 'openrouter/free');
   assert.equal(entry.modelProvider, 'openrouter');
@@ -105,9 +105,44 @@ test('Inkling string defaults gain an allowed free router and preserve custom mo
   const cfg = { agents: { defaults: { model: inkling, models: { [inkling]: { alias: 'Legacy' } }, timeoutSeconds: 30 } } };
   const next = planConfig(cfg);
   assert.equal(next.agents.defaults.model, free);
-  assert.deepEqual(next.agents.defaults.models, { [inkling]: { alias: 'Legacy' }, [free]: {} });
+  assert.deepEqual(next.agents.defaults.models, { [inkling]: { alias: 'Legacy' }, [free]: { params: { maxTokens: 1024 } } });
   assert.equal(next.agents.defaults.timeoutSeconds, 30);
   assert.equal(cfg.agents.defaults.model, inkling);
+});
+
+test('free primary gains the 1024 maxTokens cap in the models entry, never under model params', () => {
+  for (const entry of [{}, { params: { temperature: 0.2 } }, { params: { maxTokens: 16384 } }]) {
+    const cfg = { agents: { defaults: { model: { primary: free, fallbacks: [] }, models: { [free]: entry } } } };
+    const before = structuredClone(cfg);
+    const next = planConfig(cfg);
+    assert.equal(next.agents.defaults.models[free].params.maxTokens, 1024);
+    assert.equal(next.agents.defaults.model.params, undefined);
+    assert.deepEqual(cfg, before);
+  }
+  const capped = planConfig({ agents: { defaults: { model: { primary: free, fallbacks: [] },
+    models: { [free]: { params: { temperature: 0.2 } } } } } });
+  assert.deepEqual(capped.agents.defaults.models[free].params, { temperature: 0.2, maxTokens: 1024 });
+});
+
+test('paid primary gets no cap and no change, even with a free allowlist entry present', t => {
+  const cfg = { agents: { defaults: { model: { primary: 'openrouter/vendor/paid', fallbacks: [] },
+    models: { [free]: {}, 'openrouter/vendor/paid': {} } } } };
+  assert.equal(planConfig(cfg), null);
+  const f = fixture(t, cfg);
+  assert.deepEqual(configureFreeChat(f.env), { reason: 'unsupported_config' });
+  assert.deepEqual(f.read(f.target), f.cfg);
+  assert.equal(JSON.stringify(f.read(f.target)).includes('maxTokens'), false);
+});
+
+test('an existing correct cap is left untouched and the tuned config is unchanged', t => {
+  const cfg = { agents: { defaults: { model: { primary: free, fallbacks: [] },
+    models: { [free]: { alias: 'Free', params: { temperature: 0.2, maxTokens: 1024 } } },
+    thinkingDefault: 'minimal', timeoutSeconds: 120, heartbeat: { every: '0m' } } } };
+  assert.deepEqual(planConfig(structuredClone(cfg)), cfg);
+  const f = fixture(t, cfg);
+  writeFileSync(f.store, '{}');
+  assert.deepEqual(configureFreeChat(f.env), { reason: 'unchanged', sessionsApplied: 0, sessionsSkipped: 0, sqliteApplied: 0, sqliteSkipped: 0 });
+  assert.deepEqual(f.read(f.target), f.cfg);
 });
 
 test('config backup failure prevents session tuning and conflicting session backups are reported', t => {
