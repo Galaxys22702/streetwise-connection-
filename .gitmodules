@@ -1,0 +1,7 @@
+[submodule "integrations/superpowers"]
+	path = integrations/superpowers
+	url = https://github.com/Galaxys22702/superpowers.git
+[submodule "integrations/repo-audit-cleanup"]
+	path = integrations/repo-audit-cleanup
+	url = https://github.com/Galaxys22702/repo-audit-cleanup.git
+	update = none
