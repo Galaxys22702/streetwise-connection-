@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node scripts/start.js",
+    "jarvis:local": "node --env-file-if-exists=.env --env-file-if-exists=.env.local jarvis/local/server.js",
     "dev": "node --watch src/server.js",
     "db:migrate": "node scripts/migrate.js",
     "test": "node --test",
