@@ -12,6 +12,7 @@ COPY db ./db
 COPY scripts ./scripts
 COPY docs ./docs
 COPY test ./test
+COPY app/llm ./app/llm
 COPY jarvis ./jarvis
 COPY infra/openclaw ./infra/openclaw
 RUN node --check src/server.js \
