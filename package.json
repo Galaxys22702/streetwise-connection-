@@ -6,7 +6,6 @@
   "type": "module",
   "scripts": {
     "start": "node scripts/start.js",
-    "jarvis:local": "node --env-file-if-exists=.env --env-file-if-exists=.env.local jarvis/local/server.js",
     "dev": "node --watch src/server.js",
     "db:migrate": "node scripts/migrate.js",
     "test": "node --test",
@@ -19,7 +18,7 @@
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
     "pg": "^8.23.1",
-    "stripe": "^23.0.1"
+    "stripe": "^23.1.0"
   },
   "engines": {
     "node": "24.x"
