@@ -20,7 +20,7 @@ test('leaving the page while sharing an invite does not end the waiting room', a
     addEventListener() {}
     close() {}
   }
-  runInNewContext(readFileSync('public/call.js','utf8'),{
+  runInNewContext(readFileSync(new URL('../public/call.js', import.meta.url),'utf8'),{
     document:{ getElementById }, URL, URLSearchParams, AbortSignal,
     location:new URL('https://pilot.example/'),
     window:{ RTCPeerConnection:MockPeer }, RTCPeerConnection:MockPeer,
