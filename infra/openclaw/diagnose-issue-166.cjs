@@ -24,7 +24,8 @@ function diagnose(env = process.env) {
     configBackup: backupState(configFile), plan: 'unknown',
     jsonSessionStores: 0, sessionThinking: { off: 0, minimal: 0, other: 0, unset: 0 },
     lockedSessions: 0, sessionBackupsPresent: 0, unreadableStores: 0,
-    sqliteSessionState: 'not_inspected'
+    sqliteSessionState: 'not_inspected',
+    note: 'JSON session counts are not proof of the active SQLite session state'
   };
   try {
     const config = JSON.parse(readRegular(configFile));
@@ -39,7 +40,7 @@ function diagnose(env = process.env) {
   } catch { result.config = 'unavailable'; }
   for (const file of sessionStores(stateDir)) {
     result.jsonSessionStores++;
-    if (backupState(file) !== 'absent') result.sessionBackupsPresent++;
+    if (backupState(file) === 'exists_private') result.sessionBackupsPresent++;
     try {
       const entries = JSON.parse(readRegular(file));
       if (!entries || typeof entries !== 'object' || Array.isArray(entries)) throw Error('invalid');
