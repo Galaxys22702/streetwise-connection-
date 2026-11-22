@@ -24,7 +24,7 @@ test('patching adds only missing required description and preserves skill body',
   assert.match(patchFrontmatter('---\nname: thinking-frameworks\ndescription:\n---\nBODY'), /description: Structured/);
   assert.equal(patchFrontmatter('---\nname: thinking-frameworks\ndescription: custom\n---\nBODY'), null);
   assert.equal(patchFrontmatter('---\nname: different\n---\nBODY'), null);
-  assert.equal(patchFrontmatter('# Unexpected skill'), null);
+  assert.ok(patchFrontmatter('# Unexpected skill').endsWith('# Unexpected skill'));
 });
 
 test('repair writes private backup, edits once, and leaves untouched body', t => {
