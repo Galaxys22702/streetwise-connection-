@@ -30,6 +30,8 @@ async function main() {
     new Error('HTTP 429 Too Many Requests'),
   ]) {
     const classified = setupCore.s(err, route);
+    const safeStatus = ['rate_limit', 'unknown', 'billing', 'format', 'unavailable'].includes(classified.status) ? classified.status : 'other';
+    console.log('[JARVIS] Issue #166: 429 signal classification = ' + safeStatus + ' (test form only).');
     if (classified.status !== 'rate_limit') {
       throw Error('Issue #166: HTTP 429 was not classified as rate_limit; refusing image.');
     }
