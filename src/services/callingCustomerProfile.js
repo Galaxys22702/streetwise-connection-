@@ -8,7 +8,7 @@ export function createCustomerProfileBridge({ query = databaseQuery } = {}) {
     if (typeof userId !== 'string' || !/^usr_[0-9a-f]{32}$/.test(userId)) {
       throw new TypeError('authenticated_user_required');
     }
-    if (typeof email !== 'string' || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (typeof email !== 'string' || email.trim().length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       throw new TypeError('valid_email_required');
     }
     const result = await query(
