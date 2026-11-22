@@ -47,6 +47,8 @@ gosu openclaw node /app/configure-free-chat.cjs
 gosu openclaw node /app/inspect-session-thinking-166.cjs || echo '[JARVIS] SQLite thinking audit unavailable.'
 # Repair only the known skill's missing YAML description, with a private exact backup.
 gosu openclaw node /app/repair-skill-description.cjs || echo '[JARVIS] Skill metadata repair unavailable.'
+# Emit only fixed enum categories of the already-persisted skill header. No content, path or writes.
+gosu openclaw node /app/inspect-thinking-skill-shape-166.cjs || echo '[JARVIS] Read-only thinking skill format: {"status":"unavailable","reason":"read_failed"}.'
 gosu openclaw node /app/optimize-plugins.cjs
 
 if [ "${JARVIS_APPROVE_LOCAL_OPERATOR:-0}" = "1" ] || [ "${JARVIS_STATUS_PROBE:-0}" = "1" ]; then
