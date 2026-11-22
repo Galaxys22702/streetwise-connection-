@@ -68,7 +68,34 @@ test("Command child excludes Jarvis and database keys and redacts inherited cred
   const command = 'printf "chat=%s ai=%s db=%s gh=%s" "$JARVIS_ACCESS_TOKEN" "$JARVIS_AI_KEY" "$DATABASE_URL" "$GH_TOKEN"';
   const ticket = await runner.prepare({ command, cwd: root }, "node");
   const result = await runner.run({ id: ticket.id }, "node");
-  assert.equal(result.output, "chat= ai= db= gh=[redacted]");
+  assert.equal(result.output, "chat= ai= db= gh=");
+});
+
+test("Child shell cannot inherit GitHub tokens or injected Git credential configuration", async t => {
+  const { env } = await fixture(t);
+  Object.assign(env, {
+    GH_TOKEN: "synthetic-gh-token-for-test",
+    GITHUB_TOKEN: "synthetic-github-token-for-test",
+    GIT_ASKPASS: "/tmp/synthetic-askpass",
+    GH_CONFIG_DIR: "/tmp/synthetic-gh",
+    GIT_CONFIG_GLOBAL: "/tmp/synthetic-gitconfig",
+    GIT_CONFIG_SYSTEM: "/tmp/synthetic-system-gitconfig",
+    XDG_CONFIG_HOME: "/tmp/synthetic-xdg",
+    GIT_CONFIG_COUNT: "1",
+    GIT_CONFIG_KEY_0: "http.extraheader",
+    GIT_CONFIG_VALUE_0: "Authorization: Bearer synthetic-git-token"
+  });
+  const forbidden = [
+    "GH_TOKEN", "GITHUB_TOKEN", "GIT_ASKPASS", "GH_CONFIG_DIR",
+    "GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM", "XDG_CONFIG_HOME",
+    "GIT_CONFIG_COUNT", "GIT_CONFIG_KEY_0", "GIT_CONFIG_VALUE_0"
+  ];
+  const command = `node -e 'process.stdout.write(${JSON.stringify(forbidden)}.some(key => process.env[key]) ? "leak" : "clean")'`;
+  const runner = createCommandWorkspace({ env });
+  const ticket = await runner.prepare({ command }, "node");
+  const result = await runner.run({ id: ticket.id }, "node");
+  assert.equal(result.succeeded, true);
+  assert.equal(result.output, "clean");
 });
 
 test("Proxy passwords and Git authorization token components are redacted", async t => {
