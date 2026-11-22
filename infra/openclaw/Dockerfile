@@ -6,9 +6,8 @@ RUN apt-get update \
 RUN npm install -g --allow-scripts=openclaw openclaw@2026.9.9 \
  && node --version | grep -Eq '^v26[.]' \
  && openclaw --version | grep -Eq '^OpenClaw 2026[.]9[.]9( |$)'
-# Fail closed if the pinned runtime's setup probe no longer matches the audited anchor.
-COPY patch-issue-166.cjs /tmp/patch-issue-166.cjs
-RUN node /tmp/patch-issue-166.cjs && rm /tmp/patch-issue-166.cjs
+# Do not modify OpenClaw's bundled setup probe without a verified unique source anchor.
+# Issue #166 retains read-only diagnostics; direct probe patching is not yet authorized.
 RUN npm install -g clawhub@latest
 WORKDIR /app
 # Immutable upstream source. All credentials and conversation state remain on the Railway volume.
