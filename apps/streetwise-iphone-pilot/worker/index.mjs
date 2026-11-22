@@ -1,3 +1,6 @@
+// Public, unlimited, no-account STUN discovery. A TURN relay is still needed
+// on networks that cannot establish a direct WebRTC media path.
+const iceServers = Object.freeze([{ urls:'stun:stun.cloudflare.com:3478' }]);
 const inviteMs = 15 * 60_000;
 const callMs = 60 * 60_000;
 const token = () => Array.from(crypto.getRandomValues(new Uint8Array(24)), n => n.toString(16).padStart(2, '0')).join('');
@@ -58,7 +61,7 @@ async function openRoom(db, user, now) {
   const result = await db.prepare(
     "INSERT INTO call_rooms (id,owner,host_key,guest_key,phase,expires) SELECT ?,?,?,?,'waiting',? WHERE (SELECT COUNT(*) FROM call_rooms WHERE owner=? AND expires>? AND phase<>'ended') < 4"
   ).bind(roomId,user,await keyHash(key),await keyHash(invitation),now + inviteMs,user,now).run();
-  return result.meta.changes ? json({ roomId,key,invitation,iceServers:[] },201) : fail('room_limit',429);
+  return result.meta.changes ? json({ roomId,key,invitation,iceServers },201) : fail('room_limit',429);
 }
 
 async function roomAction(request, db, id, action, url) {
@@ -93,7 +96,7 @@ async function roomAction(request, db, id, action, url) {
       guestKey = await keyHash(guest);
       phase = 'joined';
       expires = now + callMs;
-      response = { key:guest, iceServers:[] };
+      response = { key:guest, iceServers };
       events.push({ id:nextId, from:role, type:'ready' });
     } else if (action === 'leave') {
       if (phase === 'ended') return json({});
@@ -133,7 +136,7 @@ async function roomAction(request, db, id, action, url) {
 
 export function makeWorker(assets) {
   return {
-    async fetch(request, env) {
+    async fetch(request, env, ctx) {
       const url = new URL(request.url);
       if (request.method === 'GET' && Object.hasOwn(assets,url.pathname)) {
         const asset = assets[url.pathname];
@@ -147,8 +150,16 @@ export function makeWorker(assets) {
           return fail('storage_unavailable',503);
         }
       }
-      const user = request.headers.get('oai-authenticated-user-id');
-      if (!user) return fail('sign_in_required',401);
+      // Never trust visitor identity supplied in an HTTP request header.
+      // Cloudflare Access authenticates the Worker invocation and injects ctx.access.
+      // Requests without verified Access identity must fail closed.
+      let user;
+      try {
+        user = ctx?.access ? (await ctx.access.getIdentity())?.email : null;
+      } catch {
+        return fail('sign_in_required',401);
+      }
+      if (typeof user !== 'string' || !user.includes('@')) return fail('sign_in_required',401);
       if (request.headers.get('X-Streetwise') !== '1' ||
         (request.headers.has('Origin') && request.headers.get('Origin') !== url.origin)) {
         return fail('same_origin_required',403);
