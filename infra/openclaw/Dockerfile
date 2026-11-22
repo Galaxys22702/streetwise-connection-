@@ -6,6 +6,14 @@ RUN apt-get update \
 RUN npm install -g --allow-scripts=openclaw openclaw@2026.9.9 \
  && node --version | grep -Eq '^v26[.]' \
  && openclaw --version | grep -Eq '^OpenClaw 2026[.]9[.]9( |$)'
+# Patch ONLY the pinned OpenClaw .mjs setup-inference probe in this image.
+# No /data access, no session edits, no provider requests. Fail closed on version drift.
+COPY probe-gate-166.cjs /app/probe-gate-166.cjs
+COPY patch-pinned-mjs-166.cjs /tmp/patch-pinned-mjs-166.cjs
+RUN node --check /app/probe-gate-166.cjs \
+ && node /tmp/patch-pinned-mjs-166.cjs --check \
+ && node /tmp/patch-pinned-mjs-166.cjs \
+ && rm /tmp/patch-pinned-mjs-166.cjs
 RUN npm install -g clawhub@latest
 WORKDIR /app
 # Immutable upstream source. All credentials and conversation state remain on the Railway volume.
