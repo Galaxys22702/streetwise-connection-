@@ -5,6 +5,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 COPY Dockerfile ./Dockerfile
+COPY vercel.json ./vercel.json
 COPY api ./api
 COPY src ./src
 COPY public ./public
