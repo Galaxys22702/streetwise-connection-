@@ -3,7 +3,8 @@
 // Does not touch /data, credentials, or model configuration.
 const fs = require('node:fs');
 const path = require('node:path');
-const root = process.argv[2] || '/usr/local/lib/node_modules/openclaw/dist';
+const checkOnly = process.argv.includes('--check');
+const root = process.argv.find(arg => arg !== '--check' && arg !== process.argv[0] && arg !== process.argv[1]) || '/usr/local/lib/node_modules/openclaw/dist';
 const files = [];
 function walk(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -27,5 +28,9 @@ if (hits.length !== 1) {
 const { file, source } = hits[0];
 const patched = source.replace(anchor, match => match.replace(/thinkLevel:\s*["']off["']/, 'thinkLevel: "minimal"').replace(/reasoningLevel:\s*["']off["']/, 'reasoningLevel: "minimal"'));
 if (patched === source) throw new Error('Issue #166: no thinking change applied.');
-fs.writeFileSync(file, patched);
-console.log('[JARVIS] Issue #166: setup probe thinking pinned to minimal (one verified anchor).');
+if (checkOnly) {
+  console.log('[JARVIS] Issue #166: exactly one setup probe anchor verified; no files modified.');
+} else {
+  fs.writeFileSync(file, patched);
+  console.log('[JARVIS] Issue #166: setup probe thinking pinned to minimal (one verified anchor).');
+}
