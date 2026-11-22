@@ -89,3 +89,44 @@ test('probe-only permanent lack of readiness exits with zero calls after twelve 
  assert.equal(checks,12);
  assert.equal(calls,0);
 });
+test('an error JSON log followed by success JSON cannot produce ONLINE',()=>{
+ const bad=JSON.stringify({status:'error',message:'provider offline'})+'\n'+msg(base);
+ assert.equal(a.summarizeReply(bad,0).online,false);
+});
+test('a prior pending JSON log followed by success JSON also fails closed',()=>{
+ const bad=JSON.stringify({status:'pending'})+'\n'+msg(base);
+ assert.equal(a.summarizeReply(bad,0).online,false);
+});
+const request = { role:'operator', requestId:'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' };
+test('a nonzero device-list exit must never approve a request',async()=>{
+ let approves=0;
+ const found=await a.approvePending(async args=>{
+   if(args[1]==='list') return {code:1,out:JSON.stringify({pending:[request]})};
+   approves++;return {code:0,out:'{}'};
+ });
+ assert.equal(approves,0);assert.deepEqual(found,[]);
+});
+test('an error-status device list never approves even with exit code zero',async()=>{
+ let approves=0;
+ const found=await a.approvePending(async args=>{
+   if(args[1]==='list') return {code:0,out:JSON.stringify({status:'error',pending:[request]})};
+   approves++;return {code:0,out:'{}'};
+ });
+ assert.equal(approves,0);assert.deepEqual(found,[]);
+});
+test('zero-exit approval returning structured error is not success',async()=>{
+ let approves=0;
+ const found=await a.approvePending(async args=>{
+   if(args[1]==='list') return {code:0,out:JSON.stringify({pending:[request]})};
+   approves++;return {code:0,out:JSON.stringify({status:'error',message:'denied'})};
+ });
+ assert.equal(approves,1);assert.deepEqual(found,[]);
+});
+test('valid successful operator-only approval still works',async()=>{
+ let approves=0;
+ const found=await a.approvePending(async args=>{
+   if(args[1]==='list') return {code:0,out:JSON.stringify({pending:[request,{role:'node',requestId:'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'}]})};
+   approves++;return {code:0,out:JSON.stringify({status:'ok'})};
+ });
+ assert.equal(approves,1);assert.deepEqual(found,[request.requestId]);
+});

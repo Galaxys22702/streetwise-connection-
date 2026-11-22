@@ -22,16 +22,19 @@ function createNoPendingLogGate({ now = Date.now, intervalMs = 60 * 60 * 1000 } 
 }
 const shouldLogNoPending = createNoPendingLogGate();
 
-function extractJson(text) {
+function extractJsonPositioned(text) {
   const raw = String(text || '');
   for (let index = raw.lastIndexOf('{'); index >= 0; index = index > 0 ? raw.lastIndexOf('{', index - 1) : -1) {
     try {
-      return JSON.parse(raw.slice(index));
+      return { data: JSON.parse(raw.slice(index)), start: index };
     } catch {
       // Keep scanning. OpenClaw may print a log line before the JSON envelope.
     }
   }
   return null;
+}
+function extractJson(text) {
+  return extractJsonPositioned(text)?.data ?? null;
 }
 
 function isOperatorOnly(request) {
@@ -79,7 +82,8 @@ function selectOperatorRequests(list) {
 
 function summarizeReply(text, code = 0) {
   const raw = String(text || '');
-  const envelope = extractJson(raw);
+  const parsed = extractJsonPositioned(raw);
+  const envelope = parsed?.data;
   const result = envelope?.result;
   const meta = result?.meta;
   const agentMeta = meta?.agentMeta;
@@ -93,8 +97,12 @@ function summarizeReply(text, code = 0) {
   const fallbackAttempts = agentMeta?.fallbackAttempts;
   const noFallback = fallbackAttempts == null ||
     (Array.isArray(fallbackAttempts) && fallbackAttempts.length === 0);
-  const prefix = raw.slice(0, Math.max(0, raw.indexOf('{')));
-  const hasErrorMarker = /pairing required|HTTP\s*40[02]|HTTP\s*429|rate.limit|quota exceeded|timed out|(?:^|\n)\s*(?:error|fatal|warning|warn)\b/i.test(prefix);
+  const prefix = parsed ? raw.slice(0, parsed.start) : raw;
+  // A log prefix containing another JSON document might hide an earlier
+  // failed/pending result. Refuse to claim ONLINE from ambiguous output.
+  const hasPriorJson = /(?:^|\n)\s*\{/.test(prefix);
+  const hasErrorMarker = hasPriorJson ||
+    /pairing required|HTTP\s*40[02]|HTTP\s*429|rate.limit|quota exceeded|timed out|(?:^|\n)\s*(?:error|fatal|warning|warn)\b/i.test(prefix);
   const completed = code === 0 &&
     (status === 'ok' || status === 'completed') &&
     !!result && typeof result === 'object' &&
@@ -174,13 +182,23 @@ async function approvePending(run) {
     console.log('[JARVIS] Operator assist: device list did not return parseable JSON (exit=' + listed.code + ').');
     return [];
   }
+  // Device-list failures must never be allowed to trigger approvals even if
+  // the failing command printed a plausible pending list.
+  const listedStatus = parsed && typeof parsed.status === 'string' ? parsed.status : null;
+  if (listed.code !== 0 || parsed.error || (listedStatus && !['ok', 'success'].includes(listedStatus))) {
+    console.log('[JARVIS] Operator assist: device list failed (exit=' + listed.code + ').');
+    return [];
+  }
   const approved = [];
   const candidates = selectOperatorRequests(parsed);
-  if (listed.code !== 0) console.log('[JARVIS] Operator assist: device list failed (exit=' + listed.code + ').');
-  else if (!candidates.length && shouldLogNoPending()) console.log('[JARVIS] Operator assist: no eligible operator-only requests; pending role counts=' + JSON.stringify(pendingRoleSummary(parsed)) + '.');
+  if (!candidates.length && shouldLogNoPending()) console.log('[JARVIS] Operator assist: no eligible operator-only requests; pending role counts=' + JSON.stringify(pendingRoleSummary(parsed)) + '.');
   for (const requestId of candidates) {
     const result = await run(['devices', 'approve', requestId, '--json']);
-    if (result.code === 0 && !/pairing required/i.test(result.out)) approved.push(requestId);
+    const approvalJson = extractJson(result.out);
+    const approvalStatus = typeof approvalJson?.status === 'string' ? approvalJson.status : null;
+    const failedResponse = !!approvalJson?.error ||
+      (approvalStatus !== null && ['error', 'failed', 'denied', 'pending'].includes(approvalStatus));
+    if (result.code === 0 && !failedResponse && !/pairing required/i.test(result.out)) approved.push(requestId);
     else console.log('[JARVIS] Operator assist: approval failed for request ' + requestId.slice(0, 8) + ' (exit=' + result.code + ').');
   }
   return approved;
