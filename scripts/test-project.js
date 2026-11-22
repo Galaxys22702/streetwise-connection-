@@ -1,4 +1,4 @@
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -21,8 +21,16 @@ function collect(directory) {
   }
 }
 
-collect(join(root, "test"));
-collect(join(root, "apps"));
+// Docker's builder image intentionally copies only the primary test/ suite.
+// Require that directory, but include pilot tests whenever apps/ is present.
+const primary = join(root, "test");
+if (!existsSync(primary)) {
+  console.error("Required primary test/ directory is missing.");
+  process.exit(1);
+}
+collect(primary);
+const apps = join(root, "apps");
+if (existsSync(apps)) collect(apps);
 for (const entry of readdirSync(root, { withFileTypes: true })) {
   if (entry.isFile() && testName.test(entry.name)) files.push(join(root, entry.name));
 }
