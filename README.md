@@ -10,9 +10,10 @@ Streetwise does not own towers or licensed radio spectrum. The commercially real
 
 ## Current launch state
 
-Launch target updated: **2026-11-15**
+Launch target updated: **2026-11-21**
 
-- Public mode: waitlist only
+- Live now: Mobile setup help in Las Vegas — by appointment, from $25 (Quick phone setup $29, Transfer + setup $49, Security setup $69, eSIM installation help $25)
+- Public mode: mobile setup help services live; cellular waitlist only
 - Planned public opening target: **January 1, 2027**, subject to all mandatory launch gates
 - Commercial cellular sales: disabled
 - Customer registration/sign-in: built but disabled publicly
@@ -29,7 +30,7 @@ Launch target updated: **2026-11-15**
 - Travel/data integration path: eSIM Go
 - Open5GS work: isolated lab validation only, not production service
 
-The production deployment remains intentionally constrained. Visitors can join the waitlist, but no one can purchase Streetwise cellular service, activate a line, port a number, or create a live paid cellular subscription until provider, legal, regulatory, technical, support, security, and economics gates are complete.
+The production deployment remains intentionally constrained for cellular service. Visitors can book mobile setup help and join the waitlist, but no one can purchase Streetwise cellular service, activate a line, port a number, or create a live paid cellular subscription until provider, legal, regulatory, technical, support, security, and economics gates are complete.
 
 Current launch blockers are external/project-gate items rather than the latest main-branch build: provider onboarding remains unapproved, Nevada formation is not complete, and the official Nevada name check still needs a successful result before filing.
 
