@@ -4,7 +4,7 @@ import { commandsAvailable, createCommandWorkspace } from "./jarvisCommands.js";
 
 const commands = createCommandWorkspace();
 
-export async function handleJarvisApi({ req, res, url, readJsonBody, sendJson, sendError, runtime = "vercel" }) {
+export async function handleJarvisApi({ req, res, url, readJsonBody, sendJson, runtime = "vercel" }) {
   try {
     if (!["/api/jarvis/status", "/api/jarvis/chat", "/api/jarvis/commands/prepare", "/api/jarvis/commands/run"].includes(url.pathname)) {
       return sendJson(res, 404, { error: "not_found" });
