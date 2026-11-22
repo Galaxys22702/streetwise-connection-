@@ -1,7 +1,7 @@
 name: Clean merged branches
 
 on:
-  # Preview after merges land, then apply only after a cooling-off period.
+  # Preview on pushes and schedules. Delete only after manual approval.
   push:
     branches: [main]
   schedule:
@@ -9,9 +9,17 @@ on:
   workflow_dispatch:
     inputs:
       apply:
-        description: Delete qualifying branches (false previews only)
+        description: Delete one expressly approved branch (false previews only)
         type: boolean
         default: false
+      branch:
+        description: Exact approved branch name (required when apply is true)
+        type: string
+        default: ""
+      expected_sha:
+        description: Exact 40-character head SHA (required when apply is true)
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -23,7 +31,10 @@ concurrency:
 
 jobs:
   preview:
-    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.apply)
+    if: >-
+      github.event_name == 'push' ||
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && !inputs.apply)
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -45,16 +56,14 @@ jobs:
       - name: Preview unchanged merged branches
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          CLEANUP_MIN_AGE_DAYS: "7"
+          CLEANUP_MIN_AGE_DAYS: "30"
         run: node scripts/cleanup-merged-branches.js
 
   cleanup:
     if: >-
       github.ref == 'refs/heads/main' &&
-      (
-        github.event_name == 'schedule' ||
-        (github.event_name == 'workflow_dispatch' && inputs.apply)
-      )
+      github.event_name == 'workflow_dispatch' &&
+      inputs.apply
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -77,5 +86,7 @@ jobs:
       - name: Delete only unchanged eligible branches
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          CLEANUP_MIN_AGE_DAYS: "7"
+          CLEANUP_MIN_AGE_DAYS: "30"
+          CLEANUP_APPROVED_BRANCH: ${{ inputs.branch }}
+          CLEANUP_APPROVED_SHA: ${{ inputs.expected_sha }}
         run: node scripts/cleanup-merged-branches.js --apply
