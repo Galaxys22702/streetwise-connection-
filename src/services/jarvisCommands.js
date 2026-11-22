@@ -95,13 +95,13 @@ export function createCommandWorkspace({ env = process.env, now = Date.now, time
 
 function executeCommand(ticket, { env, timeoutMs, maxBytes }) {
   return new Promise((resolveResult, reject) => {
-    // Keep runtime Git/proxy configuration, but don't pass the chat API's own keys to commands.
+    // Forward only basic runtime variables. GitHub tokens, credential helpers, and caller-supplied Git config must not reach shell processes.
     const allowed = new Set(["PATH", "HOME", "USERPROFILE", "SYSTEMROOT", "SystemRoot", "COMSPEC", "PATHEXT",
       "TEMP", "TMP", "LANG", "LC_ALL", "TERM", "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY",
       "http_proxy", "https_proxy", "no_proxy", "NODE_EXTRA_CA_CERTS", "SSL_CERT_FILE", "SSL_CERT_DIR",
-      "REQUESTS_CA_BUNDLE", "CURL_CA_BUNDLE", "GIT_ASKPASS", "GIT_TERMINAL_PROMPT", "GH_TOKEN", "GITHUB_TOKEN",
-      "GH_HOST", "GH_CONFIG_DIR", "GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM", "XDG_CONFIG_HOME", "GIT_CONFIG_COUNT"]);
-    const childEnv = Object.fromEntries(Object.entries(env).filter(([key]) => allowed.has(key) || /^GIT_CONFIG_(KEY|VALUE)_\d+$/.test(key)));
+      "REQUESTS_CA_BUNDLE", "CURL_CA_BUNDLE", "GIT_TERMINAL_PROMPT",
+      "GH_HOST"]);
+    const childEnv = Object.fromEntries(Object.entries(env).filter(([key]) => allowed.has(key)));
     const secrets = new Set(Object.entries(env).filter(([key, value]) =>
       /key|token|secret|password|credential|authorization|^GIT_CONFIG_VALUE_\d+$/i.test(key) && typeof value === "string" && value.length >= 8)
       .map(([, value]) => value));
