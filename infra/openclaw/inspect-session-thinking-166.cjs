@@ -4,9 +4,14 @@
 const path = require('node:path');
 const { DatabaseSync } = require('node:sqlite');
 const { sqliteSessionFiles } = require('./configure-free-chat.cjs');
-function inspect(stateDir) {
+function inspect(stateDir, { includeCategories = false } = {}) {
   const summary = { sqliteStores: 0, unreadable: 0, off: 0, minimal: 0,
     other: 0, unset: 0, locked: 0, invalidRows: 0 };
+  // Fixed allowlist. Never log raw unexpected values, IDs, database paths,
+  // provider settings, messages, or JSON blobs.
+  if (includeCategories) summary.otherLevels = {
+    low: 0, medium: 0, high: 0, xhigh: 0, adaptive: 0, unexpected: 0
+  };
   const files = sqliteSessionFiles(stateDir, null);
   for (const file of files) {
     summary.sqliteStores++;
@@ -28,7 +33,15 @@ function inspect(stateDir) {
           continue;
         }
         const level = row.thinking;
-        summary[level == null ? 'unset' : level === 'off' || level === 'minimal' ? level : 'other']++;
+        const bucket = level == null ? 'unset' :
+          level === 'off' || level === 'minimal' ? level : 'other';
+        summary[bucket]++;
+        if (includeCategories && bucket === 'other') {
+          const label = typeof level === 'string' &&
+            Object.hasOwn(summary.otherLevels, level) && level !== 'unexpected'
+            ? level : 'unexpected';
+          summary.otherLevels[label]++;
+        }
         if (row.locked === 1 || row.locked === 'true') summary.locked++;
       }
     } catch {
@@ -42,7 +55,7 @@ function inspect(stateDir) {
 if (require.main === module) {
   try {
     const stateDir = process.env.OPENCLAW_STATE_DIR || path.join('/data', '.openclaw');
-    console.log('[JARVIS] Read-only SQLite thinking audit: ' + JSON.stringify(inspect(stateDir)) + '.');
+    console.log('[JARVIS] Read-only SQLite thinking audit: ' + JSON.stringify(inspect(stateDir, { includeCategories: true })) + '.');
   } catch {
     console.log('[JARVIS] Read-only SQLite thinking audit: {"status":"unavailable"}.');
   }
