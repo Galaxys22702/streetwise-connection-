@@ -53,3 +53,20 @@ test('read-only --check validates unique anchor without modifying the file', t =
   assert.equal(result.status, 0, result.stderr);
   assert.equal(readFileSync(f.paths[0], 'utf8'), before);
 });
+
+test('read-only --check reports an absent compiled anchor without failing the image build', t => {
+  const f = fixture(t, ['const x = { thinkLevel: "off" };']);
+  const before = readFileSync(f.paths[0], 'utf8');
+  const result = spawnSync(process.execPath, [script, '--check', f.root], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /source attribution unverified, runtime unchanged/);
+  assert.equal(readFileSync(f.paths[0], 'utf8'), before);
+});
+
+test('read-only --check refuses duplicate compiled anchors without changing files', t => {
+  const f = fixture(t, [anchor, anchor]);
+  const before = f.paths.map(p => readFileSync(p, 'utf8'));
+  const result = spawnSync(process.execPath, [script, '--check', f.root], { encoding: 'utf8' });
+  assert.notEqual(result.status, 0);
+  assert.deepEqual(f.paths.map(p => readFileSync(p, 'utf8')), before);
+});
