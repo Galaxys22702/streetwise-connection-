@@ -66,18 +66,36 @@ function selectOperatorRequests(list) {
 }
 
 function summarizeReply(text, code = 0) {
-  const envelope = extractJson(text);
-  const result = envelope?.result ?? envelope;
-  const meta = result?.meta?.agentMeta;
-  const route = meta?.provider === 'openrouter' && typeof meta.model === 'string'
-    ? meta.model.replace(/^openrouter\/(?=openrouter\/)/, '') : '';
-  const free = route === 'openrouter/free';
-  const paidAuto = route === 'openrouter/auto';
-  const completed = code === 0 && (!envelope?.result || envelope.status === 'ok') &&
-    !result?.error && !envelope?.error && !result?.meta?.aborted;
-  const online = completed && free && Array.isArray(result?.payloads) &&
-    result.payloads.some(payload => !payload?.isError && payload?.text?.trim?.() === 'JARVIS ONLINE');
-  return { online, free, paidAuto, models: free || paidAuto ? ['openrouter/' + route] : [] };
+  const raw = String(text || '');
+  const envelope = extractJson(raw);
+  const result = envelope?.result;
+  const meta = result?.meta;
+  const agentMeta = meta?.agentMeta;
+  const model = agentMeta?.provider === 'openrouter' && typeof agentMeta.model === 'string'
+    ? agentMeta.model.replace(/^openrouter\/(?=openrouter\/)/, '') : '';
+  const free = model === 'openrouter/free';
+  const paidAuto = model === 'openrouter/auto';
+  const status = envelope?.status;
+  const stop = meta?.stopReason ?? meta?.finishReason ?? agentMeta?.stopReason;
+  const finalStop = stop === undefined || stop === null || ['stop', 'end_turn', 'completed', 'ok'].includes(stop);
+  const fallbackAttempts = agentMeta?.fallbackAttempts;
+  const noFallback = fallbackAttempts == null ||
+    (Array.isArray(fallbackAttempts) && fallbackAttempts.length === 0);
+  const prefix = raw.slice(0, Math.max(0, raw.indexOf('{')));
+  const hasErrorMarker = /pairing required|HTTP\s*40[02]|HTTP\s*429|rate.limit|quota exceeded|timed out|(?:^|\n)\s*(?:error|fatal|warning|warn)\b/i.test(prefix);
+  const completed = code === 0 &&
+    (status === 'ok' || status === 'completed') &&
+    !!result && typeof result === 'object' &&
+    result.status !== 'error' && !envelope.error && !result.error &&
+    meta?.aborted !== true && meta?.yielded !== true &&
+    noFallback && finalStop && !hasErrorMarker;
+  const payloads = Array.isArray(result?.payloads) ? result.payloads : [];
+  const online = !!completed && free &&
+    payloads.length === 1 &&
+    payloads[0] && !payloads[0].isError && payloads[0].isReasoning !== true &&
+    payloads[0].isCommentary !== true && payloads[0].visible !== false &&
+    typeof payloads[0].text === 'string' && payloads[0].text.trim() === 'JARVIS ONLINE';
+  return { online, free, paidAuto, models: free || paidAuto ? ['openrouter/' + model] : [] };
 }
 
 function probeArgs() {
@@ -187,7 +205,8 @@ async function assist(env = process.env, deps = {}) {
       for (const requestId of again) {
         console.log('[JARVIS] Approved operator pairing request ' + requestId.slice(0, 8) + '.');
       }
-      probed = await statusProbe(run);
+      // Do not make a second inference attempt during startup.
+      // A separate explicitly authorized verification is required after pairing.
     }
     report.probe = probed;
     console.log('[JARVIS] Status probe: ' + JSON.stringify({
