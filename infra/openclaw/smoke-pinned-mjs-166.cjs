@@ -19,6 +19,22 @@ async function main() {
   if (!gate.isFreeRoute({provider:'openrouter', model:'openrouter/free'})) {
     throw Error('OpenRouter free route not recognized.');
   }
+  // Verify the real pinned error classifier recognizes HTTP 429. No request is sent.
+  const coreChunks = fs.readdirSync(dist).filter(name => /^setup-inference-core-[\\w-]+\\.mjs$/.test(name));
+  if (coreChunks.length !== 1) throw Error('Pinned setup-error module not unique.');
+  const setupCore = await import(pathToFileURL(path.join(dist, coreChunks[0])).href);
+  if (typeof setupCore.s !== 'function') throw Error('Pinned setup-error classifier not exported.');
+  const route = { provider: 'openrouter', runConfig: {} };
+  for (const err of [
+    Object.assign(new Error('HTTP 429 Too Many Requests'), { status: 429 }),
+    new Error('HTTP 429 Too Many Requests'),
+  ]) {
+    const classified = setupCore.s(err, route);
+    if (classified.status !== 'rate_limit') {
+      throw Error('Issue #166: HTTP 429 was not classified as rate_limit; refusing image.');
+    }
+  }
+  console.log('[JARVIS] Issue #166: pinned HTTP 429 error classification verified without provider calls.');
   console.log('[JARVIS] Issue #166: pinned module import and guard verified in build image; no probe executed.');
 }
 main().catch(error => {
