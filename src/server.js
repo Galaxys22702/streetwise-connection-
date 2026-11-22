@@ -59,7 +59,7 @@ function applySecurityHeaders(res, pathname) {
   res.setHeader("x-content-type-options", "nosniff");
   res.setHeader("x-frame-options", "DENY");
   res.setHeader("referrer-policy", "no-referrer");
-  res.setHeader("permissions-policy", `camera=(), microphone=${pathname === "/jarvis.html" ? "(self)" : "()"}, geolocation=(), payment=()`);
+  res.setHeader("permissions-policy", `camera=(), microphone=${["/jarvis.html", "/network-lab.html"].includes(pathname) ? "(self)" : "()"}, geolocation=(), payment=()`);
   res.setHeader("cross-origin-opener-policy", "same-origin");
   res.setHeader("cross-origin-resource-policy", "same-origin");
   res.setHeader(
