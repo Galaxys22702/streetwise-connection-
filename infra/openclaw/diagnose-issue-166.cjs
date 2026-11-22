@@ -30,11 +30,11 @@ function inspectSqlite(file) {
         THEN json_extract(entry_json, '$.thinkingLevel') ELSE NULL END AS thinking,
       CASE WHEN entry_valid = 1 AND json_valid(entry_json)
         THEN json_extract(entry_json, '$.modelSelectionLocked') ELSE NULL END AS locked,
-      entry_valid AS valid
-      FROM session_nodes`).all();
+      entry_valid AS valid, json_valid(entry_json) AS validJson
+      FROM session_nodes`).iterate();
     const summary = { off: 0, minimal: 0, other: 0, unset: 0, locked: 0, invalid: 0 };
     for (const row of rows) {
-      if (row.valid !== 1) { summary.invalid++; continue; }
+      if (row.valid !== 1 || row.validJson !== 1) { summary.invalid++; continue; }
       const level = row.thinking;
       const bucket = level == null ? 'unset' : level === 'off' || level === 'minimal' ? level : 'other';
       summary[bucket]++;
