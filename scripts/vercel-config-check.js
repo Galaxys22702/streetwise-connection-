@@ -56,9 +56,12 @@ const voiceHeaders = config.headers.filter(rule => rule.source !== '/(.*)')
   .flatMap(rule => (rule.headers || [])
     .filter(header => String(header.key).toLowerCase() === 'permissions-policy')
     .map(header => ({ source: rule.source, value: header.value })));
-if (voiceHeaders.length !== 1 || voiceHeaders[0].source !== '/jarvis.html' ||
-    voiceHeaders[0].value !== 'camera=(), microphone=(self), geolocation=(), payment=()') {
-  throw new Error('vercel_microphone_must_be_scoped_to_jarvis_page');
+const permittedVoicePages = ['/jarvis.html', '/network-lab.html'];
+const scopedVoicePolicy = 'camera=(), microphone=(self), geolocation=(), payment=()';
+if (voiceHeaders.length !== permittedVoicePages.length ||
+    voiceHeaders.some(({ source, value }) => !permittedVoicePages.includes(source) || value !== scopedVoicePolicy) ||
+    new Set(voiceHeaders.map(({ source }) => source)).size !== permittedVoicePages.length) {
+  throw new Error('vercel_microphone_must_be_scoped_to_approved_pages');
 }
 
 console.log('Vercel config is static/API-only, side-effect free during build, routes nested API paths, and includes required public security headers.');
