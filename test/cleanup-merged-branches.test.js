@@ -16,7 +16,7 @@ const gitAvailable =
 const repository = "owner/project";
 const sha = "a".repeat(40);
 const branch = { name: "finished", protected: false, commit: { sha } };
-const nowMs = Date.parse("2026-09-21T12:00:00Z");
+const nowMs = Date.parse("2026-10-21T12:00:00Z");
 
 const merged = {
   number: 1,
@@ -42,13 +42,24 @@ const select = (branches, prs, options = {}) =>
     { nowMs, ...options }
   );
 
-test("cleanup uses a seven-day cooling-off period by default", () => {
-  assert.equal(DEFAULT_MIN_AGE_DAYS, 7);
+test("cleanup uses a 30-day cooling-off period by default", () => {
+  assert.equal(DEFAULT_MIN_AGE_DAYS, 30);
 
   assert.deepEqual(
     select([branch], [
-      { ...merged, merged_at: "2026-09-18T00:00:00Z" }
+      { ...merged, merged_at: "2026-10-10T00:00:00Z" }
     ]),
+    []
+  );
+});
+
+test("cleanup includes the exact 30-day boundary but rejects newer merges", () => {
+  assert.deepEqual(
+    select([branch], [{ ...merged, merged_at: "2026-09-21T12:00:00Z" }]),
+    [{ name: "finished", sha, pullRequest: 1 }]
+  );
+  assert.deepEqual(
+    select([branch], [{ ...merged, merged_at: "2026-09-21T12:00:01Z" }]),
     []
   );
 });
