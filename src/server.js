@@ -155,7 +155,7 @@ const server = http.createServer(async (req, res) => {
   if (url.pathname.startsWith("/api/pilot/")) {
     try {
       // Do not read request bodies when pilot is disabled.
-      if (process.env.STREETWISE_CALLING_PILOT_ENABLED !== "true") {
+      if (process.env.STREETWISE_CALLING_PILOT_ENABLED !== "true" || isPublicWaitlistOnly()) {
         return sendJson(res, 404, { error: "not_found" });
       }
       enforceRateLimit(req, { scope: "calling_pilot", maxAttempts: 60, windowMs: 60_000 });
