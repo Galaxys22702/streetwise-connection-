@@ -8,6 +8,20 @@ function enabled(value) {
   return value === '1';
 }
 
+// Repeated idle polls must not flood logs or hide actual pairing failures.
+// Still poll for new requests; only the expected empty-list message is throttled.
+function createNoPendingLogGate({ now = Date.now, intervalMs = 60 * 60 * 1000 } = {}) {
+  let lastAt = null;
+  return () => {
+    const current = now();
+    if (!Number.isFinite(current)) return false;
+    if (lastAt !== null && current >= lastAt && current - lastAt < intervalMs) return false;
+    lastAt = current;
+    return true;
+  };
+}
+const shouldLogNoPending = createNoPendingLogGate();
+
 function extractJson(text) {
   const raw = String(text || '');
   for (let index = raw.lastIndexOf('{'); index >= 0; index = raw.lastIndexOf('{', index - 1)) {
@@ -129,7 +143,7 @@ async function approvePending(run) {
   const approved = [];
   const candidates = selectOperatorRequests(parsed);
   if (listed.code !== 0) console.log('[JARVIS] Operator assist: device list failed (exit=' + listed.code + ').');
-  else if (!candidates.length) console.log('[JARVIS] Operator assist: no pending operator-only requests.');
+  else if (!candidates.length && shouldLogNoPending()) console.log('[JARVIS] Operator assist: no pending operator-only requests.');
   for (const requestId of candidates) {
     const result = await run(['devices', 'approve', requestId, '--json']);
     if (result.code === 0 && !/pairing required/i.test(result.out)) approved.push(requestId);
@@ -204,6 +218,7 @@ async function main() {
 module.exports = {
   assist,
   approvePending,
+  createNoPendingLogGate,
   extractJson,
   probeArgs,
   selectOperatorRequests,
