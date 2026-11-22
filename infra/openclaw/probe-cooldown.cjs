@@ -20,6 +20,11 @@ function createProbeCooldown({ now = Date.now, defaultMs = 15 * 60_000 } = {}) {
       until = Math.max(until, now() + Math.min(MAX_MS, Math.max(MIN_MS, requested)));
       return this.remainingMs();
     },
+    async runIfAllowed(request) {
+      if (typeof request !== 'function') throw new TypeError('request must be a function');
+      if (!this.allowed()) return { skipped: true, reason: 'cooldown', retryAfterMs: this.remainingMs() };
+      return { skipped: false, result: await request() };
+    },
     reset() { until = 0; }
   };
 }
