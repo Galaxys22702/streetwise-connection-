@@ -122,11 +122,18 @@ async function gatewayReady(fetchImpl = globalThis.fetch) {
 async function approvePending(run) {
   const listed = await run(['devices', 'list', '--json']);
   const parsed = extractJson(listed.out);
-  if (!parsed) return [];
+  if (!parsed) {
+    console.log('[JARVIS] Operator assist: device list did not return parseable JSON (exit=' + listed.code + ').');
+    return [];
+  }
   const approved = [];
-  for (const requestId of selectOperatorRequests(parsed)) {
+  const candidates = selectOperatorRequests(parsed);
+  if (listed.code !== 0) console.log('[JARVIS] Operator assist: device list failed (exit=' + listed.code + ').');
+  else if (!candidates.length) console.log('[JARVIS] Operator assist: no pending operator-only requests.');
+  for (const requestId of candidates) {
     const result = await run(['devices', 'approve', requestId, '--json']);
     if (result.code === 0 && !/pairing required/i.test(result.out)) approved.push(requestId);
+    else console.log('[JARVIS] Operator assist: approval failed for request ' + requestId.slice(0, 8) + ' (exit=' + result.code + ').');
   }
   return approved;
 }
