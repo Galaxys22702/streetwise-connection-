@@ -190,3 +190,31 @@ document.querySelectorAll("[data-prompt]").forEach(button => {
     byId("message").focus();
   });
 });
+
+
+// A missing private API is not a bad owner token. Do not prompt for one
+// when the server explicitly reports that this website's Jarvis is disabled.
+async function checkJarvisEndpoint() {
+  try {
+    const response = await fetch("/api/jarvis/status", {
+      method: "GET",
+      credentials: "omit",
+      cache: "no-store",
+      headers: { accept: "application/json" },
+      signal: AbortSignal.timeout(8000)
+    });
+    if (response.status !== 503) return;
+    const result = await response.json().catch(() => ({}));
+    if (!["jarvis_disabled", "jarvis_access_not_configured"].includes(result.error)) return;
+    byId("access-token").disabled = true;
+    byId("connect-form").querySelector("button").disabled = true;
+    byId("token-note").textContent =
+      "The private JARVIS API on this website is not enabled. The Railway OpenClaw gateway is a separate service.";
+    byId("notice").textContent =
+      "Website JARVIS is unavailable until its private server configuration is enabled. No access token was sent.";
+  } catch {
+    // A preflight network failure is not proof the API is disabled.
+    // Keep the manual flow available so the user can retry it normally.
+  }
+}
+checkJarvisEndpoint();
