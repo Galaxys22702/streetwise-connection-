@@ -23,10 +23,9 @@ All tables live in `streetwise_core`, not the public API schema. RLS is enabled 
 
 ## Suggested read-only smoke query
 ```sql
-select table_name, row_security
-from information_schema.tables t
-join pg_class c on c.relname = t.table_name
-join pg_namespace n on n.oid = c.relnamespace and n.nspname = t.table_schema
-where t.table_schema = 'streetwise_core'
-order by table_name;
+select c.relname as table_name, c.relrowsecurity as rls_enabled
+from pg_class c
+join pg_namespace n on n.oid = c.relnamespace
+where n.nspname = 'streetwise_core' and c.relkind = 'r'
+order by c.relname;
 ```
