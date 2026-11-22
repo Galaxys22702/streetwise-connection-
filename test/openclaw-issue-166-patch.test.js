@@ -45,3 +45,11 @@ test('non-probe thinking settings are preserved', t => {
   assert.equal(invoke(f.root).status, 0);
   assert.equal(readFileSync(f.paths[1], 'utf8'), 'const userSession = { thinkLevel: "off" };');
 });
+
+test('read-only --check validates unique anchor without modifying the file', t => {
+  const f = fixture(t, ['const probe = { ' + anchor + ' };']);
+  const before = readFileSync(f.paths[0], 'utf8');
+  const result = spawnSync(process.execPath, [script, '--check', f.root], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(readFileSync(f.paths[0], 'utf8'), before);
+});
