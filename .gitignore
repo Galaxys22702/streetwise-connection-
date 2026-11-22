@@ -1,36 +1,57 @@
-# Dependencies
+# Dependencies and package caches
 node_modules/
 .npm/
+.cache/
+.turbo/
 
-# Environment and secrets
+# Local environment and credentials (examples remain tracked)
 .env
 .env.*
 !.env.example
+!**/.env.example
+.dev.vars
+.dev.vars.*
 *.pem
 *.key
+*.p8
+*.p12
+*.pfx
+*.keystore
 
-# Logs and runtime state
+# Logs, temporary data and local databases
 logs/
 *.log
 npm-debug.log*
 *.pid
 *.pid.lock
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+tmp/
+.tmp/
 
-# Test and build output
+# Tests, compilers and generated websites
 coverage/
+.nyc_output/
 *.lcov
 dist/
+build/
+.next/
+.output/
+*.tsbuildinfo
 
-# Deployment/local platform metadata
+# Deployment metadata and local tool state
 .vercel/
+.wrangler/
 
-# Local caches and editor/OS files
-.cache/
-.tmp/
-tmp/
+# Editor and operating-system files
 .DS_Store
+Thumbs.db
 .vscode/
 .idea/
 
-# Node diagnostic reports
+# Node diagnostics
 report.*.json
