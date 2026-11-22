@@ -2,6 +2,9 @@ import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
 
 // Short-lived in-memory possession challenge for isolated single-instance
 // pilots. Do not use across replicas or as a production verification service.
+// IMPORTANT: Echoing a challenge is NOT proof of possession of a device key.
+// This helper MUST NOT mark a device verified. Verification requires a
+// cryptographic signature against a previously enrolled public key.
 export function createDeviceChallengeStore({ now = () => Date.now(), ttlMs = 5 * 60_000, maxChallenges = 100 } = {}) {
   const challenges = new Map();
   function prune() {
