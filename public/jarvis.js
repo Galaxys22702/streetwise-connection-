@@ -115,8 +115,8 @@ byId("connect-form").addEventListener("submit", async event => {
     byId("connection").hidden = true;
     byId("workspace").hidden = false;
     commandControls.connect(status.commandsAvailable);
-    byId("availability").textContent = status.commandsAvailable ? "Jarvis connected · Command workspace ready" : status.aiConfigured ? "Jarvis connected · Chat ready" : "Jarvis connected · Status available";
-    byId("notice").textContent = status.aiConfigured ? "Your messages are sent to the configured AI provider. Don’t share passwords or other secrets." : errors.jarvis_ai_not_configured;
+    byId("availability").textContent = status.commandsAvailable ? "Jarvis connected · Commands configured" : status.aiConfigured ? "Jarvis connected · AI configured (test a reply)" : "Jarvis connected · Status available";
+    byId("notice").textContent = status.aiConfigured ? "AI is configured, but a successful live reply has not been confirmed by this connection check. Do not share passwords or secrets." : errors.jarvis_ai_not_configured;
     bubble("assistant", "Hello, I’m Jarvis. What would you like help with?");
     byId("message").focus();
   } catch (error) {
