@@ -263,9 +263,25 @@ function certifyKnownSqliteRepairs(stateDir, cfg) {
   return { sqliteCertified, certificationSkipped };
 }
 
-function save(file, original, next) {
+// A legacy private configuration snapshot can differ after earlier legitimate
+// tuning. Opt-in only: retain it, create one more immutable private snapshot,
+// and fail closed if the old backup is unsafe or the v2 slot is occupied.
+function privatePriorBackupDiffers(file, original) {
+  try {
+    const backup = file + BACKUP;
+    const info = fs.lstatSync(backup);
+    if (!info.isFile() || info.isSymbolicLink() ||
+        (info.mode & 0o077) !== 0 || info.size > 16 * 1024 * 1024) return false;
+    return readRegular(backup, true) !== original;
+  } catch { return false; }
+}
+
+function save(file, original, next, { allowConfigBackupV2 = false } = {}) {
   if (JSON.stringify(JSON.parse(original)) === JSON.stringify(next)) return 'unchanged';
-  if (!savePrivateBackup(file, original, BACKUP)) return 'backup_unavailable';
+  if (!savePrivateBackup(file, original, BACKUP)) {
+    if (!allowConfigBackupV2 || !privatePriorBackupDiffers(file, original) ||
+        !savePrivateBackup(file, original, BACKUP + '-v2')) return 'backup_unavailable';
+  }
   return replaceJson(file, original, next) ? 'applied' : 'changed_during_read';
 }
 
@@ -288,7 +304,7 @@ function configureFreeChat(env = process.env) {
     let sessionsApplied = 0;
     let sessionsSkipped = 0;
     if (profile) {
-      config = save(target, original, next);
+      config = save(target, original, next, { allowConfigBackupV2: env.JARVIS_ALLOW_CONFIG_BACKUP_V2 === '1' });
       if (!['applied', 'unchanged'].includes(config)) return { reason: config };
       // An arbitrary custom config path does not imply ownership of nearby sessions.
       const stateDir = env.OPENCLAW_STATE_DIR ||
