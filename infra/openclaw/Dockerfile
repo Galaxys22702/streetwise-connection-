@@ -20,7 +20,7 @@ RUN node --check /tmp/smoke-pinned-mjs-166.cjs \
  && node /tmp/smoke-pinned-mjs-166.cjs \
  && rm /tmp/smoke-pinned-mjs-166.cjs
 # Execute mocked transport tests against the actual patched function; never contact a provider.
-COPY test/openclaw-issue-166-compiled-function.test.cjs /tmp/issue166-compiled-function.test.cjs
+COPY compiled-function-166-fixture.cjs /tmp/issue166-compiled-function.test.cjs
 RUN JARVIS166_COMPILED_FIXTURE="$(find /usr/local/lib/node_modules/openclaw/dist -maxdepth 1 -type f -name 'setup-inference-turn-*.mjs' -print -quit)" \
     JARVIS166_GUARD_MODULE=/app/probe-gate-166.cjs \
     node --test /tmp/issue166-compiled-function.test.cjs \
