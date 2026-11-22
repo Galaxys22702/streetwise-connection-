@@ -12,6 +12,7 @@ function retryAfterMs(header, now = Date.now()) {
 }
 function createProbeCooldown({ now = Date.now, defaultMs = 15 * 60_000 } = {}) {
   let until = 0;
+  let inFlight = false;
   return {
     allowed() { return now() >= until; },
     remainingMs() { return Math.max(0, until - now()); },
@@ -23,7 +24,10 @@ function createProbeCooldown({ now = Date.now, defaultMs = 15 * 60_000 } = {}) {
     async runIfAllowed(request) {
       if (typeof request !== 'function') throw new TypeError('request must be a function');
       if (!this.allowed()) return { skipped: true, reason: 'cooldown', retryAfterMs: this.remainingMs() };
-      return { skipped: false, result: await request() };
+      if (inFlight) return { skipped: true, reason: 'in_flight' };
+      inFlight = true;
+      try { return { skipped: false, result: await request() }; }
+      finally { inFlight = false; }
     },
     reset() { until = 0; }
   };
