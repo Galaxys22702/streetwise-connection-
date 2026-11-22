@@ -26,11 +26,11 @@ if [ -d "${OPENCLAW_STATE_DIR:-/data/.openclaw}/agents" ]; then
   echo "[JARVIS] Persistent agent settings exist; preserving saved authentication and conversations."
 fi
 
-# The free-chat profile must never bind or select the legacy Google provider.
+# Free-chat mode must never bind or select the legacy Google provider.
 if [ "${JARVIS_FREE_CHAT_PROFILE:-0}" != "1" ] && [ "${JARVIS_USE_RAILWAY_GEMINI:-1}" != "0" ]; then
   # Use the supported native environment SecretRef instead of a live-test variable.
   gosu openclaw node /app/configure-gemini-auth.cjs
-
+  
   # Repair only the known invalid model from the live logs. Leave other models,
   # credentials, agent data, and conversations unchanged.
   if [ -n "${GEMINI_API_KEY:-}" ] && [ -f "${OPENCLAW_STATE_DIR:-/data/.openclaw}/openclaw.json" ]; then
@@ -46,6 +46,10 @@ gosu openclaw node /app/recover-model.cjs
 # Observe existing backup eligibility without modifying saved configuration or exposing paths.
 gosu openclaw node /app/inspect-backup-gate-166.cjs
 gosu openclaw node /app/configure-free-chat.cjs
+# Report only aggregate canonical SQLite thinking levels; never alter persisted sessions.
+gosu openclaw node /app/inspect-session-thinking-166.cjs || echo '[JARVIS] SQLite thinking audit unavailable.'
+# Repair only the known skill's missing YAML description, with a private exact backup.
+gosu openclaw node /app/repair-skill-description.cjs || echo '[JARVIS] Skill metadata repair unavailable.'
 gosu openclaw node /app/optimize-plugins.cjs
 
 if [ "${JARVIS_APPROVE_LOCAL_OPERATOR:-0}" = "1" ] || [ "${JARVIS_STATUS_PROBE:-0}" = "1" ]; then

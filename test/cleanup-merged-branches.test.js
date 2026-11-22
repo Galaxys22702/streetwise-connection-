@@ -7,6 +7,7 @@ import { join } from "node:path";
 import {
   DEFAULT_MIN_AGE_DAYS,
   selectMergedBranches,
+  selectApprovedBranch,
   deleteMergedBranch
 } from "../scripts/cleanup-merged-branches.js";
 
@@ -16,7 +17,7 @@ const gitAvailable =
 const repository = "owner/project";
 const sha = "a".repeat(40);
 const branch = { name: "finished", protected: false, commit: { sha } };
-const nowMs = Date.parse("2026-09-21T12:00:00Z");
+const nowMs = Date.parse("2026-10-21T12:00:00Z");
 
 const merged = {
   number: 1,
@@ -42,13 +43,24 @@ const select = (branches, prs, options = {}) =>
     { nowMs, ...options }
   );
 
-test("cleanup uses a seven-day cooling-off period by default", () => {
-  assert.equal(DEFAULT_MIN_AGE_DAYS, 7);
+test("cleanup uses a 30-day cooling-off period by default", () => {
+  assert.equal(DEFAULT_MIN_AGE_DAYS, 30);
 
   assert.deepEqual(
     select([branch], [
-      { ...merged, merged_at: "2026-09-18T00:00:00Z" }
+      { ...merged, merged_at: "2026-10-10T00:00:00Z" }
     ]),
+    []
+  );
+});
+
+test("cleanup includes the exact 30-day boundary but rejects newer merges", () => {
+  assert.deepEqual(
+    select([branch], [{ ...merged, merged_at: "2026-09-21T12:00:00Z" }]),
+    [{ name: "finished", sha, pullRequest: 1 }]
+  );
+  assert.deepEqual(
+    select([branch], [{ ...merged, merged_at: "2026-09-21T12:00:01Z" }]),
     []
   );
 });
@@ -58,6 +70,17 @@ test("cleanup selects unchanged merged PR branches after the cooling-off period"
     select([branch], [merged]),
     [{ name: "finished", sha, pullRequest: 1 }]
   );
+});
+
+test("manual deletion is limited to one exact approved name and SHA", () => {
+  const candidate = { name: branch.name, sha, pullRequest: 1 };
+  const unrelated = { name: "other", sha: "b".repeat(40), pullRequest: 2 };
+  assert.deepEqual(selectApprovedBranch([candidate, unrelated], branch.name, sha), [candidate]);
+  assert.throws(() => selectApprovedBranch([candidate, unrelated], branch.name, unrelated.sha));
+  assert.throws(() => selectApprovedBranch([candidate, unrelated], unrelated.name, sha));
+  assert.throws(() => selectApprovedBranch([candidate], "", sha));
+  assert.throws(() => selectApprovedBranch([candidate], branch.name, "short"));
+  assert.throws(() => selectApprovedBranch([], branch.name, sha));
 });
 
 test("cleanup preserves main, protected branches and commits added after merging", () => {

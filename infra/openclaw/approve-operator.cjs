@@ -2,7 +2,7 @@
 // Node-role requests stay pending. Tokens and full device records are not logged.
 const { spawn } = require('node:child_process');
 
-const STATUS_MESSAGE = 'JARVIS, report your operational status and respond with JARVIS ONLINE.';
+const STATUS_MESSAGE = 'Reply with exactly JARVIS ONLINE.';
 
 function enabled(value) {
   return value === '1';
@@ -24,7 +24,7 @@ const shouldLogNoPending = createNoPendingLogGate();
 
 function extractJson(text) {
   const raw = String(text || '');
-  for (let index = raw.lastIndexOf('{'); index >= 0; index = raw.lastIndexOf('{', index - 1)) {
+  for (let index = raw.lastIndexOf('{'); index >= 0; index = index > 0 ? raw.lastIndexOf('{', index - 1) : -1) {
     try {
       return JSON.parse(raw.slice(index));
     } catch {
@@ -54,6 +54,18 @@ function pendingOf(list) {
   return [];
 }
 
+function pendingRoleSummary(list) {
+  const summary = { total: 0, operatorOnly: 0, nodeOrMixed: 0, missingOrOtherRole: 0 };
+  for (const request of pendingOf(list)) {
+    summary.total++;
+    if (request && isOperatorOnly(request)) summary.operatorOnly++;
+    else if (request && (request.role === 'node' ||
+      (Array.isArray(request.roles) && request.roles.includes('node')))) summary.nodeOrMixed++;
+    else summary.missingOrOtherRole++;
+  }
+  return summary;
+}
+
 function selectOperatorRequests(list) {
   const chosen = [];
   for (const request of pendingOf(list)) {
@@ -65,15 +77,19 @@ function selectOperatorRequests(list) {
   return chosen;
 }
 
-function summarizeReply(text) {
-  const redacted = String(text || '').replace(/sk-[A-Za-z0-9_-]{8,}/g, '[redacted]');
-  const models = [...new Set([...redacted.matchAll(/openrouter\/(?:[A-Za-z0-9._:-]+\/)*[A-Za-z0-9._:-]+/g)].map(match => match[0]))];
-  return {
-    online: redacted.includes('JARVIS ONLINE'),
-    paidAuto: models.some(model => model === 'openrouter/openrouter/auto' || model === 'openrouter/auto'),
-    free: models.includes('openrouter/openrouter/free') || models.some(model => model.endsWith(':free')),
-    models: models.slice(0, 5)
-  };
+function summarizeReply(text, code = 0) {
+  const envelope = extractJson(text);
+  const result = envelope?.result ?? envelope;
+  const meta = result?.meta?.agentMeta;
+  const route = meta?.provider === 'openrouter' && typeof meta.model === 'string'
+    ? meta.model.replace(/^openrouter\/(?=openrouter\/)/, '') : '';
+  const free = route === 'openrouter/free';
+  const paidAuto = route === 'openrouter/auto';
+  const completed = code === 0 && (!envelope?.result || envelope.status === 'ok') &&
+    !result?.error && !envelope?.error && !result?.meta?.aborted;
+  const online = completed && free && Array.isArray(result?.payloads) &&
+    result.payloads.some(payload => !payload?.isError && payload?.text?.trim?.() === 'JARVIS ONLINE');
+  return { online, free, paidAuto, models: free || paidAuto ? ['openrouter/' + route] : [] };
 }
 
 function probeArgs() {
@@ -124,7 +140,7 @@ function runCli(args, timeoutMs = 20000) {
 async function gatewayReady(fetchImpl = globalThis.fetch) {
   const port = process.env.PORT || '8080';
   try {
-    const response = await fetchImpl(`http://127.0.0.1:${port}/setup/healthz`);
+    const response = await fetchImpl(`http://127.0.0.1:${port}/setup/healthz`, { signal: AbortSignal.timeout(5000) });
     if (!response.ok) return false;
     const body = await response.json();
     return body?.gatewayReachable === true;
@@ -143,7 +159,7 @@ async function approvePending(run) {
   const approved = [];
   const candidates = selectOperatorRequests(parsed);
   if (listed.code !== 0) console.log('[JARVIS] Operator assist: device list failed (exit=' + listed.code + ').');
-  else if (!candidates.length && shouldLogNoPending()) console.log('[JARVIS] Operator assist: no pending operator-only requests.');
+  else if (!candidates.length && shouldLogNoPending()) console.log('[JARVIS] Operator assist: no eligible operator-only requests; pending role counts=' + JSON.stringify(pendingRoleSummary(parsed)) + '.');
   for (const requestId of candidates) {
     const result = await run(['devices', 'approve', requestId, '--json']);
     if (result.code === 0 && !/pairing required/i.test(result.out)) approved.push(requestId);
@@ -155,7 +171,7 @@ async function approvePending(run) {
 async function statusProbe(run) {
   const result = await run(probeArgs(), 100000);
   return {
-    ...summarizeReply(result.out),
+    ...summarizeReply(result.out, result.code),
     code: result.code,
     pairingRequired: /pairing required/i.test(result.out)
   };
@@ -201,27 +217,36 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function main() {
-  if (!enabled(process.env.JARVIS_APPROVE_LOCAL_OPERATOR) && !enabled(process.env.JARVIS_STATUS_PROBE)) {
+async function main(env = process.env, deps = {}) {
+  if (!enabled(env.JARVIS_APPROVE_LOCAL_OPERATOR) && !enabled(env.JARVIS_STATUS_PROBE)) {
     console.log('[JARVIS] Operator assist disabled.');
     return;
   }
   let probed = false;
+  let checks = 0;
   for (;;) {
-    const report = await assist(process.env, { skipProbe: probed });
+    const report = await assist(env, { ...deps, skipProbe: probed });
     if (report.probe) probed = true;
-    if (!enabled(process.env.JARVIS_APPROVE_LOCAL_OPERATOR)) return;
-    await sleep(15000);
+    if (!enabled(env.JARVIS_APPROVE_LOCAL_OPERATOR)) {
+      if (probed) return;
+      if (++checks >= 12) {
+        console.log('[JARVIS] Status probe: gateway readiness timed out.');
+        return;
+      }
+    }
+    await (deps.sleep || sleep)(15000);
   }
 }
 
 module.exports = {
+  main,
   assist,
   approvePending,
   createNoPendingLogGate,
   extractJson,
   probeArgs,
   selectOperatorRequests,
+  pendingRoleSummary,
   statusProbe,
   summarizeReply
 };
