@@ -10,7 +10,7 @@ function visit(dir) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const path = join(dir, entry.name);
     if (entry.isDirectory()) visit(path);
-    else if (entry.isFile() && /\\.test\\.(?:js|mjs|cjs|ts)$/.test(entry.name)) files.push(path);
+    else if (entry.isFile() && /\.test\.(?:js|mjs|cjs|ts)$/.test(entry.name)) files.push(path);
   }
 }
 visit(root);
