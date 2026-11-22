@@ -9,7 +9,7 @@
     "jarvis:local": "node --env-file-if-exists=.env --env-file-if-exists=.env.local jarvis/local/server.js",
     "dev": "node --watch src/server.js",
     "db:migrate": "node scripts/migrate.js",
-    "test": "node --test",
+    "test": "node scripts/run-repository-tests.js",
     "test:coverage": "node --test --experimental-test-coverage",
     "verify": "npm run test:coverage && node scripts/vercel-config-check.js && node scripts/launch-readiness-check.js && node scripts/repository-integrity-check.js",
     "check:production": "node scripts/production-smoke-check.js",
