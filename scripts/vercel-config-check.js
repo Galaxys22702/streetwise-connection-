@@ -10,11 +10,16 @@ if (config.outputDirectory !== 'dist') {
 }
 
 const buildCommand = String(config.buildCommand || '');
-if (!buildCommand.includes('public')) {
-  throw new Error('vercel_build_command_must_copy_public');
+const expectedBuildCommand =
+  'node scripts/verify-deployment-provenance.js && ' +
+  'node scripts/test-project.js && ' +
+  'node scripts/launch-readiness-check.js && npm run build';
+if (buildCommand !== expectedBuildCommand) {
+  throw new Error('vercel_build_command_must_use_verified_local_builder');
 }
-if (buildCommand.includes('migrate') || buildCommand.includes('DATABASE_URL')) {
-  throw new Error('vercel_build_command_must_not_mutate_database');
+const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+if (packageJson.scripts?.build !== 'node scripts/build-site.js') {
+  throw new Error('vercel_build_script_must_use_static_site_builder');
 }
 
 const rewrites = Array.isArray(config.rewrites) ? config.rewrites : [];
