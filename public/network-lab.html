@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#040816">
+<meta name="description" content="Streetwise Connection browser readiness lab for secure internet calling. No carrier activation or real calling is offered.">
+<title>Network Lab | Streetwise Connection</title>
+<link rel="stylesheet" href="/styles.css">
+<style>
+.lab-wrap{max-width:960px;margin:0 auto;padding:24px 0 80px}.lab-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin:30px 0}.lab-card{padding:24px;border:1px solid rgba(90,154,255,.28);border-radius:20px;background:#0a1530}.lab-card h2{font-size:1.2rem;letter-spacing:0;line-height:1.3;margin:0 0 14px}.lab-card strong{font-size:1.1rem;color:#67efb5}.lab-card p{font-size:.95rem}.lab-actions{display:flex;gap:12px;flex-wrap:wrap}.lab-button{cursor:pointer;padding:14px 20px;border:0;border-radius:12px;background:#49c8ff;color:#041020;font-weight:800}.lab-button:focus-visible,a:focus-visible{outline:3px solid #ffd98a;outline-offset:3px}.lab-notice{border-left:4px solid #ffd98a;padding:12px 18px;background:#101b35}.lab-status{min-height:26px;color:#e4efff}.lab-small{font-size:.85rem}.lab-footer{padding:24px 0;border-top:1px solid rgba(90,154,255,.2)}
+</style>
+</head>
+<body>
+<header class="hero"><nav class="site-nav" aria-label="Main navigation"><a class="brand" href="/"><span class="brand-name"><strong>Streetwise</strong><small>Connection</small></span></a><a href="/">Back to home</a></nav></header>
+<main class="lab-wrap" id="main">
+<p class="eyebrow">Streetwise Connection · Engineering pilot</p>
+<h1 style="font-size:clamp(2.8rem,7vw,5rem)">Network <span>Lab.</span></h1>
+<p class="lead">Check whether your phone's browser has the basic capabilities needed for future internet calling. This test stays on your device.</p>
+<p class="lab-notice"><strong>Development only.</strong> This is not a working phone service, carrier coverage test, eSIM activation, speed test, or emergency calling service. Do not use it to contact 911.</p>
+<div class="lab-actions"><button id="run-check" class="lab-button" type="button">Check this device</button><button id="mic-check" class="lab-button" type="button">Test microphone permission</button></div>
+<p id="lab-message" class="lab-status" role="status" aria-live="polite">No checks run yet.</p>
+<div class="lab-grid">
+<section class="lab-card"><h2>Connection</h2><strong id="connection-value">Not checked</strong><p id="connection-detail">Shows the browser's online indicator, not actual carrier coverage.</p></section>
+<section class="lab-card"><h2>Secure browser</h2><strong id="secure-value">Not checked</strong><p>Secure contexts are required for microphone access.</p></section>
+<section class="lab-card"><h2>Real-time calling API</h2><strong id="webrtc-value">Not checked</strong><p>WebRTC support is a prerequisite, not proof a call can connect.</p></section>
+<section class="lab-card"><h2>Microphone</h2><strong id="mic-value">Not checked</strong><p>Permission is requested only when you tap the microphone button. No audio is recorded or uploaded.</p></section>
+</div>
+<section class="lab-card"><h2>What Streetwise is building</h2><p>Our pilot architecture will need secure identity and device pairing, a signaling service, encrypted media transport, NAT traversal (STUN/TURN), call-session records, abuse controls, and mobile testing. Public phone numbers and carrier calling require separate provider interconnection.</p><p><a href="/">Return to Streetwise Connection</a></p></section>
+<footer class="lab-footer"><p class="lab-small">Diagnostics are local to this page. No microphone stream is retained. Browser connection hints may be unavailable or inaccurate.</p></footer>
+</main>
+<script type="module" src="/network-lab.js"></script>
+</body></html>
