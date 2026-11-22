@@ -138,7 +138,7 @@ The repository already contains:
 - Draft privacy, terms, refund, and support documents
 - Isolated Open5GS lab scaffold and validation workflow for non-production research
 - Streetwise brand/service-mark evidence record
-- Current dependency maintenance including Stripe 22.6.2 and Node.js 24 workflow support
+- Current dependency maintenance including Stripe 23.1.0 (locked) and Node.js 24 workflow support
 
 The existing data/eSIM work is not discarded. It becomes the connectivity-provisioning foundation underneath a broader cellular product.
 
@@ -206,38 +206,45 @@ Do not promise unlimited data, unlimited hotspot, guaranteed network switching, 
 
 ```text
 api/                Vercel API entry points
-src/                application/server code
-src/config/         launch and product configuration
-src/providers/      wholesale provider adapters
+src/                application/server code and services
+app/                shared AI routing/guard utilities
+apps/               isolated connectivity and iPhone pilot applications
+jarvis/             JARVIS core modules and local Windows launcher
+infra/openclaw/     OpenClaw gateway image, startup and diagnostics
+public/             static website and browser scripts
 db/migrations/      PostgreSQL migrations
-scripts/            verification, migration, economics, and smoke checks
-public/             public waitlist experience
-docs/               documentation index
-docs/launch/        launch status, readiness, and owner actions
-docs/finance/       payments, financial readiness, and provider economics
-docs/providers/     provider evaluation, outreach, and onboarding
-docs/product/       roadmap, positioning, and customer product plans
-docs/operations/    architecture, security, provisioning, and repository operations
-docs/business/      formation, licensing, policy, and regulatory working documents
-lab/                isolated non-production Open5GS research/validation
-.github/workflows/  CI and provider/payment/lab validation
+scripts/            build, syntax checks, tests, migrations, diagnostics
+test/               primary Node.js tests
+docs/               technical, launch, financial, provider and business documents
+lab/                isolated non-production Open5GS validation
+.github/workflows/  CI, security and provider/payment/lab validation
 ```
 
-## Verification
+## Developer setup and verification
 
-Run the repository verification suite before merging:
+Use Node.js **24.x** (the version required by `package.json` and CI) and npm. On Windows, run these in **PowerShell** from the repository root; the same commands work in Bash:
 
-```bash
+```powershell
+npm ci
+npm run lint
+npm test
+npm run build
 npm run verify
 ```
 
-Run the deployed production smoke check with:
+- `npm run lint` is a dependency-free **JavaScript syntax** and JSON configuration check. It is not ESLint or static type checking; this repository has no tracked TypeScript sources or configured type checker.
+- `npm test` runs Node's existing full test discovery, including primary and pilot tests. The Vercel packaging path separately runs `scripts/test-project.js` against the primary `test/` directory.
+- `npm run build` copies `public/` into the generated `dist/` directory using Node, so it works on Windows. **It replaces `dist/` only**; `dist/` is Git-ignored.
+- `npm run verify` performs syntax validation, the coverage test suite, Vercel configuration and launch gate checks, repository integrity checks, then the local static build.
+- GitHub Actions separately validates Node 24, Docker/database smoke tests, and security scans. A passing local build does **not** prove a successful Vercel, Railway, Cloudflare or OpenRouter deployment.
 
-```bash
+Only run the live production smoke check when you intend to check the deployed service:
+
+```powershell
 npm run check:production
 ```
 
-The default payment and connectivity providers remain mocks during local development.
+Keep local `.env` files, credentials, generated output, database files, and host-specific configuration out of Git. Do not commit user records or provider credentials. The default payment and connectivity providers remain mocks during local development.
 
 ## Launch timeline
 
