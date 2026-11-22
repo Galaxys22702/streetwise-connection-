@@ -1,7 +1,7 @@
 name: Clean merged branches
 
 on:
-  # Preview after merges land, then apply only after a cooling-off period.
+  # Preview on pushes and schedules. Delete only after manual approval.
   push:
     branches: [main]
   schedule:
@@ -23,7 +23,10 @@ concurrency:
 
 jobs:
   preview:
-    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.apply)
+    if: >-
+      github.event_name == 'push' ||
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && !inputs.apply)
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -45,15 +48,15 @@ jobs:
       - name: Preview unchanged merged branches
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          CLEANUP_MIN_AGE_DAYS: "7"
+          CLEANUP_MIN_AGE_DAYS: "30"
         run: node scripts/cleanup-merged-branches.js
 
   cleanup:
     if: >-
       github.ref == 'refs/heads/main' &&
       (
-        github.event_name == 'schedule' ||
-        (github.event_name == 'workflow_dispatch' && inputs.apply)
+        github.event_name == 'workflow_dispatch' &&
+      inputs.apply
       )
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -77,5 +80,5 @@ jobs:
       - name: Delete only unchanged eligible branches
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          CLEANUP_MIN_AGE_DAYS: "7"
+          CLEANUP_MIN_AGE_DAYS: "30"
         run: node scripts/cleanup-merged-branches.js --apply
