@@ -72,3 +72,36 @@ test('simultaneous probes admit only one request, and release lock after failure
   await assert.rejects(guard.runIfAllowed(() => { throw new Error('mock failure'); }), /mock failure/);
   assert.deepEqual(await guard.runIfAllowed(() => 'recovered'), { skipped: false, result: 'recovered' });
 });
+
+test('structured HTTP 429 automatically starts cooldown without a second request', async () => {
+  let clock = 0;
+  let requests = 0;
+  const guard = createProbeCooldown({ now: () => clock });
+  const rateLimited = () => {
+    requests++;
+    const error = new Error('rate limited');
+    error.status = 429;
+    error.headers = { 'retry-after': '120' };
+    throw error;
+  };
+  await assert.rejects(guard.runIfAllowed(rateLimited), /rate limited/);
+  assert.equal(guard.remainingMs(), 120000);
+  assert.deepEqual(await guard.runIfAllowed(rateLimited), {
+    skipped: true, reason: 'cooldown', retryAfterMs: 120000
+  });
+  assert.equal(requests, 1);
+  clock = 120000;
+  assert.deepEqual(await guard.runIfAllowed(() => { requests++; return 'OK'; }), {
+    skipped: false, result: 'OK'
+  });
+  assert.equal(requests, 2);
+});
+test('non-429 errors do not activate cooldown', async () => {
+  const guard = createProbeCooldown({ now: () => 0 });
+  await assert.rejects(guard.runIfAllowed(() => {
+    const error = new Error('unsupported thinking');
+    error.statusCode = 400;
+    throw error;
+  }), /unsupported thinking/);
+  assert.equal(guard.allowed(), true);
+});
