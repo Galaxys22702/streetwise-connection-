@@ -20,9 +20,10 @@ async function main() {
     throw Error('OpenRouter free route not recognized.');
   }
   // Verify the real pinned error classifier recognizes HTTP 429. No request is sent.
-  const coreChunks = fs.readdirSync(dist).filter(name => /^setup-inference-core-[\\w-]+\\.mjs$/.test(name));
-  if (coreChunks.length !== 1) throw Error('Pinned setup-error module not unique.');
-  const setupCore = await import(pathToFileURL(path.join(dist, coreChunks[0])).href);
+  // This pinned package contains several core variants; resolve the one imported by this probe.
+  const linkedCore = [...source.matchAll(/from\s+["']\.\/(setup-inference-core-[\w-]+\.mjs)["']/g)].map(match => match[1]);
+  if (linkedCore.length !== 1) throw Error('Pinned setup-error dependency link not unique.');
+  const setupCore = await import(pathToFileURL(path.join(dist, linkedCore[0])).href);
   if (typeof setupCore.s !== 'function') throw Error('Pinned setup-error classifier not exported.');
   const route = { provider: 'openrouter', runConfig: {} };
   for (const err of [
