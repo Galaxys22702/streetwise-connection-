@@ -56,21 +56,49 @@ test('approval uses the exact request id and ignores an unreadable list', async 
 test('the status probe asks for minimal thinking and reports free routing without secrets', async () => {
   assert.deepEqual(assist.probeArgs(), [
     'agent', '--agent', 'main', '--session-key', 'jarvis-status-probe', '--message',
-    'JARVIS, report your operational status and respond with JARVIS ONLINE.',
+    'Reply with exactly JARVIS ONLINE.',
     '--model', 'openrouter/openrouter/free',
     '--thinking', 'minimal', '--timeout', '90', '--json'
   ]);
-  const summary = assist.summarizeReply('model openrouter/openrouter/free JARVIS ONLINE\nsk-or-v1-secretvalue');
-  assert.equal(summary.online, true);
-  assert.equal(summary.free, true);
-  assert.equal(summary.paidAuto, false);
-  assert.deepEqual(summary.models, ['openrouter/openrouter/free']);
-  assert.equal(JSON.stringify(summary).includes('secretvalue'), false);
-  const nested = assist.summarizeReply('openrouter/thinkingmachines/inkling:free');
-  assert.equal(nested.free, true);
-  assert.equal(nested.paidAuto, false);
-  assert.deepEqual(nested.models, ['openrouter/thinkingmachines/inkling:free']);
-  const paid = assist.summarizeReply('openrouter/openrouter/auto');
-  assert.equal(paid.paidAuto, true);
-  assert.equal(paid.free, false);
+  const reply = { payloads: [{ text: 'JARVIS ONLINE' }], meta: { agentMeta: { provider: 'openrouter', model: 'openrouter/free' } } };
+  const json = (result, status = 'ok') => JSON.stringify({ status, result });
+  assert.deepEqual(assist.summarizeReply(json(reply)), { online: true, free: true, paidAuto: false, models: ['openrouter/openrouter/free'] });
+  for (const output of ['{malformed', 'Reply with exactly JARVIS ONLINE. openrouter/openrouter/free',
+    json(reply, 'error'), json({ ...reply, payloads: [] }), json({ ...reply, meta: {} }),
+    json({ ...reply, payloads: [{ text: 'JARVIS ONLINE', isError: true }] }),
+    json({ ...reply, meta: { agentMeta: { provider: 'other', model: 'openrouter/free' } } })]) {
+    assert.equal(assist.summarizeReply(output).online, false);
+  }
+  assert.equal(assist.summarizeReply(json(reply), 1).online, false);
+  const auto = assist.summarizeReply(json({ ...reply, meta: { agentMeta: { provider: 'openrouter', model: 'openrouter/auto' } } }));
+  assert.equal(auto.online, false);
+  assert.equal(auto.paidAuto, true);
+});
+
+
+test('idle operator polling logs at most once per hour without suppressing future checks', () => {
+  let now = 0;
+  const gate = assist.createNoPendingLogGate({ now: () => now });
+  assert.equal(gate(), true);
+  now = 15_000;
+  assert.equal(gate(), false);
+  now = 3_599_999;
+  assert.equal(gate(), false);
+  now = 3_600_000;
+  assert.equal(gate(), true);
+  now = 3_615_000;
+  assert.equal(gate(), false);
+});
+
+test('probe-only startup waits for readiness and sends at most one request', async () => {
+  for (const readyAt of [1, 3, Infinity]) {
+    let checks = 0, calls = 0;
+    await assist.main({ JARVIS_STATUS_PROBE: '1' }, {
+      ready: async () => ++checks >= readyAt,
+      sleep: async () => {},
+      run: async () => { calls++; return { code: 1, out: 'rate limited' }; }
+    });
+    assert.equal(checks, Math.min(12, readyAt));
+    assert.equal(calls, Number(readyAt !== Infinity));
+  }
 });
