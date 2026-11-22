@@ -20,3 +20,16 @@ test("Jarvis connection UI distinguishes configuration from live reply readiness
   assert.ok(!ui.includes("Jarvis connected · Chat ready"));
   assert.ok(!ui.includes("Command workspace ready"));
 });
+
+
+test("account controls remain unavailable until internal access is confirmed", () => {
+  const html = read("public/account.html");
+  const script = read("public/account.js");
+  assert.ok(html.includes('id="account-submit" class="button" type="button" hidden'));
+  assert.ok(html.includes('id="account-email" type="email" autocomplete="email" maxlength="254" required disabled'));
+  assert.ok(html.includes('href="/#waitlist"'));
+  assert.ok(script.includes('fetch("/api/public-status"'));
+  assert.ok(script.includes('status?.publicLaunchMode !== "internal"'));
+  assert.ok(script.includes('submitEl.hidden = true'));
+  assert.ok(script.includes('Accounts are not open'));
+});
