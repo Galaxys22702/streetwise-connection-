@@ -55,3 +55,20 @@ test('guard makes zero provider requests during cooldown and one after expiry', 
   assert.deepEqual(await guard.runIfAllowed(request), { skipped: false, result: 'OK' });
   assert.equal(requests, 1);
 });
+
+test('simultaneous probes admit only one request, and release lock after failure', async () => {
+  const guard = createProbeCooldown();
+  let calls = 0;
+  let release;
+  const first = guard.runIfAllowed(() => {
+    calls++;
+    return new Promise(resolve => { release = resolve; });
+  });
+  const second = await guard.runIfAllowed(() => { calls++; return 'unexpected'; });
+  assert.deepEqual(second, { skipped: true, reason: 'in_flight' });
+  assert.equal(calls, 1);
+  release('done');
+  assert.deepEqual(await first, { skipped: false, result: 'done' });
+  await assert.rejects(guard.runIfAllowed(() => { throw new Error('mock failure'); }), /mock failure/);
+  assert.deepEqual(await guard.runIfAllowed(() => 'recovered'), { skipped: false, result: 'recovered' });
+});
