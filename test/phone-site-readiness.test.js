@@ -44,3 +44,15 @@ test("Jarvis owner page opts out of indexing without disabling its controls", ()
     header.key === "X-Robots-Tag" && header.value === "noindex, nofollow, noarchive"));
   assert.ok(html.includes('id="connect-form"'));
 });
+
+
+test("Jarvis preflight disables the owner-token form only for explicit 503 unavailability", () => {
+  const ui = read("public/jarvis.js");
+  assert.ok(ui.includes('fetch("/api/jarvis/status"'));
+  assert.ok(ui.includes('credentials: "omit"'));
+  assert.ok(ui.includes('response.status !== 503'));
+  assert.ok(ui.includes('"jarvis_disabled", "jarvis_access_not_configured"'));
+  assert.ok(ui.includes('byId("access-token").disabled = true'));
+  assert.ok(ui.includes('byId("connect-form").querySelector("button").disabled = true'));
+  assert.ok(ui.includes('The Railway OpenClaw gateway is a separate service.'));
+});
