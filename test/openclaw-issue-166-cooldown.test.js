@@ -41,3 +41,17 @@ test('400 does not consume cooldown; successful recovery after expiry', () => {
   guard.reset();
   assert.equal(guard.remainingMs(), 0);
 });
+
+test('guard makes zero provider requests during cooldown and one after expiry', async () => {
+  let clock = 0;
+  let requests = 0;
+  const guard = createProbeCooldown({ now: () => clock });
+  const request = async () => { requests++; return 'OK'; };
+  guard.rateLimited('120');
+  const blocked = await guard.runIfAllowed(request);
+  assert.deepEqual(blocked, { skipped: true, reason: 'cooldown', retryAfterMs: 120000 });
+  assert.equal(requests, 0);
+  clock = 120000;
+  assert.deepEqual(await guard.runIfAllowed(request), { skipped: false, result: 'OK' });
+  assert.equal(requests, 1);
+});
