@@ -54,6 +54,18 @@ function pendingOf(list) {
   return [];
 }
 
+function pendingRoleSummary(list) {
+  const summary = { total: 0, operatorOnly: 0, nodeOrMixed: 0, missingOrOtherRole: 0 };
+  for (const request of pendingOf(list)) {
+    summary.total++;
+    if (request && isOperatorOnly(request)) summary.operatorOnly++;
+    else if (request && (request.role === 'node' ||
+      (Array.isArray(request.roles) && request.roles.includes('node')))) summary.nodeOrMixed++;
+    else summary.missingOrOtherRole++;
+  }
+  return summary;
+}
+
 function selectOperatorRequests(list) {
   const chosen = [];
   for (const request of pendingOf(list)) {
@@ -147,7 +159,7 @@ async function approvePending(run) {
   const approved = [];
   const candidates = selectOperatorRequests(parsed);
   if (listed.code !== 0) console.log('[JARVIS] Operator assist: device list failed (exit=' + listed.code + ').');
-  else if (!candidates.length && shouldLogNoPending()) console.log('[JARVIS] Operator assist: no pending operator-only requests.');
+  else if (!candidates.length && shouldLogNoPending()) console.log('[JARVIS] Operator assist: no eligible operator-only requests; pending role counts=' + JSON.stringify(pendingRoleSummary(parsed)) + '.');
   for (const requestId of candidates) {
     const result = await run(['devices', 'approve', requestId, '--json']);
     if (result.code === 0 && !/pairing required/i.test(result.out)) approved.push(requestId);
@@ -234,6 +246,7 @@ module.exports = {
   extractJson,
   probeArgs,
   selectOperatorRequests,
+  pendingRoleSummary,
   statusProbe,
   summarizeReply
 };
