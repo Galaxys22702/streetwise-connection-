@@ -74,3 +74,18 @@ test('the status probe asks for minimal thinking and reports free routing withou
   assert.equal(paid.paidAuto, true);
   assert.equal(paid.free, false);
 });
+
+
+test('idle operator polling logs at most once per hour without suppressing future checks', () => {
+  let now = 0;
+  const gate = assist.createNoPendingLogGate({ now: () => now });
+  assert.equal(gate(), true);
+  now = 15_000;
+  assert.equal(gate(), false);
+  now = 3_599_999;
+  assert.equal(gate(), false);
+  now = 3_600_000;
+  assert.equal(gate(), true);
+  now = 3_615_000;
+  assert.equal(gate(), false);
+});

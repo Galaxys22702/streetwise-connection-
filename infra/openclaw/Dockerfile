@@ -38,9 +38,10 @@ COPY optimize-plugins.cjs ./optimize-plugins.cjs
 COPY configure-gemini-auth.cjs ./configure-gemini-auth.cjs
 COPY recover-model.cjs ./recover-model.cjs
 COPY configure-free-chat.cjs ./configure-free-chat.cjs
+COPY inspect-backup-gate-166.cjs ./inspect-backup-gate-166.cjs
 COPY approve-operator.cjs ./approve-operator.cjs
 COPY --chmod=755 entrypoint-lite.sh ./entrypoint-lite.sh
-RUN node --check /app/optimize-plugins.cjs && node --check /app/configure-gemini-auth.cjs && node --check /app/recover-model.cjs && node --check /app/configure-free-chat.cjs && node --check /app/approve-operator.cjs && bash -n /app/entrypoint-lite.sh
+RUN node --check /app/optimize-plugins.cjs && node --check /app/configure-gemini-auth.cjs && node --check /app/recover-model.cjs && node --check /app/configure-free-chat.cjs && node --check /app/inspect-backup-gate-166.cjs && node --check /app/approve-operator.cjs && bash -n /app/entrypoint-lite.sh
 RUN useradd -m -s /bin/bash openclaw \
  && chown -R openclaw:openclaw /app \
  && mkdir -p /data && chown openclaw:openclaw /data \
