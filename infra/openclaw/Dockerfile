@@ -14,6 +14,11 @@ RUN node --check /app/probe-gate-166.cjs \
  && node /tmp/patch-pinned-mjs-166.cjs --check \
  && node /tmp/patch-pinned-mjs-166.cjs \
  && rm /tmp/patch-pinned-mjs-166.cjs
+# Smoke-load the modified ESM chunk without invoking any setup probe or provider.
+COPY smoke-pinned-mjs-166.cjs /tmp/smoke-pinned-mjs-166.cjs
+RUN node --check /tmp/smoke-pinned-mjs-166.cjs \
+ && node /tmp/smoke-pinned-mjs-166.cjs \
+ && rm /tmp/smoke-pinned-mjs-166.cjs
 RUN npm install -g clawhub@latest
 WORKDIR /app
 # Immutable upstream source. All credentials and conversation state remain on the Railway volume.
