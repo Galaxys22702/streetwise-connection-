@@ -3,7 +3,7 @@ import { execFileSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-export const DEFAULT_MIN_AGE_DAYS = 7;
+export const DEFAULT_MIN_AGE_DAYS = 30;
 
 export function selectMergedBranches(
   branches,
