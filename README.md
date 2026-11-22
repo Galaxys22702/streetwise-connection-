@@ -233,7 +233,7 @@ npm run verify
 ```
 
 - `npm run lint` is a dependency-free **JavaScript syntax** and JSON configuration check. It is not ESLint or static type checking; this repository has no tracked TypeScript sources or configured type checker.
-- `npm test` runs Node's existing full test discovery, including primary and pilot tests. The Vercel packaging path separately runs `scripts/test-project.js` against the primary `test/` directory.
+- `npm test` explicitly runs the project's Node.js tests from `test/`, `apps/`, and the repository root. The same runner powers the Vercel packaging check and coverage. It excludes vendored submodules and avoids recursive discovery of the runner itself.
 - `npm run build` copies `public/` into the generated `dist/` directory using Node, so it works on Windows. **It replaces `dist/` only**; `dist/` is Git-ignored.
 - `npm run verify` performs syntax validation, the coverage test suite, Vercel configuration and launch gate checks, repository integrity checks, then the local static build.
 - GitHub Actions separately validates Node 24, Docker/database smoke tests, and security scans. A passing local build does **not** prove a successful Vercel, Railway, Cloudflare or OpenRouter deployment.
