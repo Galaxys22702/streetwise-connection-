@@ -38,6 +38,7 @@ import { enforceWaitlistRateLimit } from "./services/waitlistRateLimit.js";
 import { enforceRateLimit } from "./services/requestRateLimit.js";
 import { joinWaitlist, waitlistStatus } from "./services/waitlistService.js";
 import { handleFacebookAdminApi } from "./services/facebookAdminApi.js";
+import { createCallingPilot } from "./services/callingPilotApi.js";
 
 const configuredPort = Number(process.env.PORT || 3000);
 if (!Number.isInteger(configuredPort) || configuredPort < 1 || configuredPort > 65535) {
@@ -140,6 +141,8 @@ async function serveStatic(pathname, res) {
   }
 }
 
+const callingPilot = createCallingPilot({ authenticate: authenticateRequest });
+
 const server = http.createServer(async (req, res) => {
   let url;
   try { url = new URL(req.url || "/", "http://localhost"); }
@@ -148,6 +151,20 @@ const server = http.createServer(async (req, res) => {
     return sendJson(res, 400, { error: "invalid_request_url" });
   }
   applySecurityHeaders(res, url.pathname);
+
+  if (url.pathname.startsWith("/api/pilot/")) {
+    try {
+      // Do not read request bodies when pilot is disabled.
+      if (process.env.STREETWISE_CALLING_PILOT_ENABLED !== "true") {
+        return sendJson(res, 404, { error: "not_found" });
+      }
+      const body = req.method === "POST" ? await readJsonBody(req) : {};
+      const result = await callingPilot({ method: req.method, pathname: url.pathname, body, request: req });
+      return sendJson(res, result.status, result.json);
+    } catch (error) {
+      return sendError(res, error);
+    }
+  }
 
   if (req.method === "GET" && url.pathname === "/health") {
     const health = await buildHealthStatus({ runtime: "node" });
