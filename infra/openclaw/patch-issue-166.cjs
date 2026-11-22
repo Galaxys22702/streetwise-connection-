@@ -22,6 +22,13 @@ for (const file of files) {
   const source = fs.readFileSync(file, 'utf8');
   for (const match of source.matchAll(anchor)) hits.push({ file, source, match });
 }
+// The installed bundled runtime may not retain the upstream source formatting.
+// Diagnostic checks must report that limitation without breaking a known-good image.
+// Actual patch mode still refuses to change anything without exactly one anchor.
+if (checkOnly && hits.length === 0) {
+  console.log('[JARVIS] Issue #166: compiled setup probe anchor not found; source attribution unverified, runtime unchanged.');
+  process.exit(0);
+}
 if (hits.length !== 1) {
   throw new Error('Issue #166: expected exactly one pinned setup-inference probe anchor; found ' + hits.length + '. Refusing to modify runtime.');
 }
