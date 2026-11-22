@@ -33,3 +33,14 @@ test("account controls remain unavailable until internal access is confirmed", (
   assert.ok(script.includes('submitEl.hidden = true'));
   assert.ok(script.includes('Accounts are not open'));
 });
+
+
+test("Jarvis owner page opts out of indexing without disabling its controls", () => {
+  const html = read("public/jarvis.html");
+  const config = JSON.parse(read("vercel.json"));
+  assert.ok(html.includes('<meta name="robots" content="noindex, nofollow, noarchive">'));
+  const policy = config.headers.find((item) => item.source === "/jarvis.html");
+  assert.ok(policy.headers.some((header) =>
+    header.key === "X-Robots-Tag" && header.value === "noindex, nofollow, noarchive"));
+  assert.ok(html.includes('id="connect-form"'));
+});
