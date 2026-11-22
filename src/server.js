@@ -158,6 +158,7 @@ const server = http.createServer(async (req, res) => {
       if (process.env.STREETWISE_CALLING_PILOT_ENABLED !== "true") {
         return sendJson(res, 404, { error: "not_found" });
       }
+      enforceRateLimit(req, { scope: "calling_pilot", maxAttempts: 60, windowMs: 60_000 });
       const body = req.method === "POST" ? await readJsonBody(req) : {};
       const result = await callingPilot({ method: req.method, pathname: url.pathname, body, request: req });
       return sendJson(res, result.status, result.json);
