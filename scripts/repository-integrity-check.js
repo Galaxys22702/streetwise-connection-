@@ -127,6 +127,12 @@ if (
 ) {
   fail("branch cleanup deletion job must be manual-only");
 }
+if (
+  !cleanupJob.includes("CLEANUP_APPROVED_BRANCH: ${{ inputs.branch }}") ||
+  !cleanupJob.includes("CLEANUP_APPROVED_SHA: ${{ inputs.expected_sha }}")
+) {
+  fail("branch cleanup deletion job must require a specific approved branch and SHA");
+}
 
 const facebookAutoPostWorkflow = await readFile(
   path.join(workflowsDir, "facebook-auto-post.yml"),
