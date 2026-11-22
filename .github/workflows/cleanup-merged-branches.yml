@@ -54,10 +54,8 @@ jobs:
   cleanup:
     if: >-
       github.ref == 'refs/heads/main' &&
-      (
-        github.event_name == 'workflow_dispatch' &&
+      github.event_name == 'workflow_dispatch' &&
       inputs.apply
-      )
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
