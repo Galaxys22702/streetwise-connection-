@@ -9,6 +9,7 @@ COPY api ./api
 COPY src ./src
 COPY public ./public
 COPY db ./db
+COPY database ./database
 COPY scripts ./scripts
 COPY docs ./docs
 COPY test ./test
