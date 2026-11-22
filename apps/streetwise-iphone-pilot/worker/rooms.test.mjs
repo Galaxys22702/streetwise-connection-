@@ -15,22 +15,25 @@ test('private call room accepts one guest and relays ordered, retry-safe signals
     }, first:async () => sql.prepare(query).get() };
   } } };
   const worker = makeWorker({});
-  async function request(path,{ user='pilot-owner', key, method='POST', body } = {}) {
+  async function request(path,{ user='pilot-owner@example.com', key, method='POST', body, spoofedHeader=false } = {}) {
     const response = await worker.fetch(new Request('https://pilot.example' + path,{
       method, body:body && JSON.stringify(body),
-      headers:{ 'X-Streetwise':'1', ...(user && { 'oai-authenticated-user-id':user }),
+      headers:{ 'X-Streetwise':'1', ...(spoofedHeader && { 'oai-authenticated-user-id':'forged@example.com' }),
         ...(key && { 'X-Room-Key':key }) }
-    }),env);
+    }),env,user ? { access:{ getIdentity:async () => ({ email:user }) } } : {});
     return { status:response.status, ...await response.json() };
   }
   assert.equal((await request('/api/health',{ method:'GET' })).status,'ready');
   assert.equal((await request('/rooms',{ user:null })).status,401);
+  assert.equal((await request('/rooms',{ user:null, spoofedHeader:true })).status,401);
   const host = await request('/rooms');
   assert.equal(host.status,201);
+  assert.deepEqual(host.iceServers,[{ urls:'stun:stun.cloudflare.com:3478' }]);
   const room = '/rooms/' + host.roomId;
   const claims = await Promise.all(Array.from({ length:2 }, () => request(room + '/join',{ key:host.invitation })));
   assert.deepEqual(claims.map(claim => claim.status).sort(),[200,404]);
   const guest = claims.find(claim => claim.status === 200);
+  assert.deepEqual(guest.iceServers,host.iceServers);
   const events = (key,after=0) => request(room + '/events?after=' + after,{ key, method:'GET' });
   assert.deepEqual((await events(host.key)).events.map(event => event.type),['ready']);
   const send = (key,body) => request(room + '/signal',{ key,body });
