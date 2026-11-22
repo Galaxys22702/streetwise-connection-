@@ -116,8 +116,22 @@ if (!cleanupWorkflow.includes("github.ref == 'refs/heads/main'")) {
 if (!cleanupWorkflow.includes("persist-credentials: false")) {
   fail("branch cleanup preview job must not persist Git credentials");
 }
-if (!cleanupWorkflow.includes('CLEANUP_MIN_AGE_DAYS: "7"')) {
-  fail("branch cleanup workflow must retain the seven-day cooling-off period");
+if ((cleanupWorkflow.match(/CLEANUP_MIN_AGE_DAYS:\s*"30"/g) || []).length !== 2) {
+  fail("branch cleanup preview and apply jobs must both require a 30-day cooling-off period");
+}
+const cleanupJob = cleanupWorkflow.split("\n  cleanup:")[1] || "";
+if (
+  !cleanupJob.includes("github.event_name == 'workflow_dispatch'") ||
+  !cleanupJob.includes("inputs.apply") ||
+  cleanupJob.includes("github.event_name == 'schedule'")
+) {
+  fail("branch cleanup deletion job must be manual-only");
+}
+if (
+  !cleanupJob.includes("CLEANUP_APPROVED_BRANCH: ${{ inputs.branch }}") ||
+  !cleanupJob.includes("CLEANUP_APPROVED_SHA: ${{ inputs.expected_sha }}")
+) {
+  fail("branch cleanup deletion job must require a specific approved branch and SHA");
 }
 
 const facebookAutoPostWorkflow = await readFile(

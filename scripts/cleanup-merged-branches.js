@@ -3,7 +3,7 @@ import { execFileSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-export const DEFAULT_MIN_AGE_DAYS = 7;
+export const DEFAULT_MIN_AGE_DAYS = 30;
 
 export function selectMergedBranches(
   branches,
@@ -56,6 +56,26 @@ export function selectMergedBranches(
       ? [{ name: branch.name, sha: branch.commit.sha, pullRequest: merged.number }]
       : [];
   });
+}
+
+export function selectApprovedBranch(candidates, branchName, expectedSha) {
+  if (
+    typeof branchName !== "string" ||
+    !branchName ||
+    typeof expectedSha !== "string" ||
+    !/^[a-f0-9]{40}$/.test(expectedSha)
+  ) {
+    throw new Error("An exact approved branch name and 40-character SHA are required");
+  }
+
+  const matches = candidates.filter(candidate =>
+    candidate.name === branchName && candidate.sha === expectedSha
+  );
+  if (matches.length !== 1) {
+    throw new Error("Approved branch and SHA do not match one eligible candidate");
+  }
+
+  return matches;
 }
 
 export function deleteMergedBranch(branch, cwd = process.cwd()) {
@@ -148,13 +168,20 @@ async function main() {
     list("pulls?state=all")
   ]);
 
-  const candidates = selectMergedBranches(
+  const eligibleCandidates = selectMergedBranches(
     branches,
     pullRequests,
     repository,
     metadata.default_branch,
     { minAgeDays }
   );
+  const candidates = apply
+    ? selectApprovedBranch(
+        eligibleCandidates,
+        process.env.CLEANUP_APPROVED_BRANCH,
+        process.env.CLEANUP_APPROVED_SHA
+      )
+    : eligibleCandidates;
 
   console.log(
     `${apply ? "Cleanup" : "Preview"}: ${candidates.length} unchanged merged branches qualify after a ${minAgeDays}-day cooling-off period.`

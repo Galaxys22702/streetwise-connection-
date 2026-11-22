@@ -6,6 +6,25 @@ RUN apt-get update \
 RUN npm install -g --allow-scripts=openclaw openclaw@2026.9.9 \
  && node --version | grep -Eq '^v26[.]' \
  && openclaw --version | grep -Eq '^OpenClaw 2026[.]9[.]9( |$)'
+# Patch ONLY the pinned OpenClaw .mjs setup-inference probe in this image.
+# No /data access, no session edits, no provider requests. Fail closed on version drift.
+COPY probe-gate-166.cjs /app/probe-gate-166.cjs
+COPY patch-pinned-mjs-166.cjs /tmp/patch-pinned-mjs-166.cjs
+RUN node --check /app/probe-gate-166.cjs \
+ && node /tmp/patch-pinned-mjs-166.cjs --check \
+ && node /tmp/patch-pinned-mjs-166.cjs \
+ && rm /tmp/patch-pinned-mjs-166.cjs
+# Smoke-load the modified ESM chunk without invoking any setup probe or provider.
+COPY smoke-pinned-mjs-166.cjs /tmp/smoke-pinned-mjs-166.cjs
+RUN node --check /tmp/smoke-pinned-mjs-166.cjs \
+ && node /tmp/smoke-pinned-mjs-166.cjs \
+ && rm /tmp/smoke-pinned-mjs-166.cjs
+# Execute mocked transport tests against the actual patched function; never contact a provider.
+COPY compiled-function-166-fixture.cjs /tmp/issue166-compiled-function.test.cjs
+RUN JARVIS166_COMPILED_FIXTURE="$(find /usr/local/lib/node_modules/openclaw/dist -maxdepth 1 -type f -name 'setup-inference-turn-*.mjs' -print -quit)" \
+    JARVIS166_GUARD_MODULE=/app/probe-gate-166.cjs \
+    node --test /tmp/issue166-compiled-function.test.cjs \
+ && rm /tmp/issue166-compiled-function.test.cjs
 RUN npm install -g clawhub@latest
 WORKDIR /app
 # Immutable upstream source. All credentials and conversation state remain on the Railway volume.
@@ -19,9 +38,12 @@ COPY optimize-plugins.cjs ./optimize-plugins.cjs
 COPY configure-gemini-auth.cjs ./configure-gemini-auth.cjs
 COPY recover-model.cjs ./recover-model.cjs
 COPY configure-free-chat.cjs ./configure-free-chat.cjs
+COPY inspect-backup-gate-166.cjs ./inspect-backup-gate-166.cjs
+COPY inspect-session-thinking-166.cjs ./inspect-session-thinking-166.cjs
+COPY repair-skill-description.cjs ./repair-skill-description.cjs
 COPY approve-operator.cjs ./approve-operator.cjs
 COPY --chmod=755 entrypoint-lite.sh ./entrypoint-lite.sh
-RUN node --check /app/optimize-plugins.cjs && node --check /app/configure-gemini-auth.cjs && node --check /app/recover-model.cjs && node --check /app/configure-free-chat.cjs && node --check /app/approve-operator.cjs && bash -n /app/entrypoint-lite.sh
+RUN node --check /app/optimize-plugins.cjs && node --check /app/configure-gemini-auth.cjs && node --check /app/recover-model.cjs && node --check /app/configure-free-chat.cjs && node --check /app/inspect-backup-gate-166.cjs && node --check /app/inspect-session-thinking-166.cjs && node --check /app/repair-skill-description.cjs && node --check /app/approve-operator.cjs && bash -n /app/entrypoint-lite.sh
 RUN useradd -m -s /bin/bash openclaw \
  && chown -R openclaw:openclaw /app \
  && mkdir -p /data && chown openclaw:openclaw /data \
