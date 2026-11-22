@@ -9,9 +9,17 @@ on:
   workflow_dispatch:
     inputs:
       apply:
-        description: Delete qualifying branches (false previews only)
+        description: Delete one expressly approved branch (false previews only)
         type: boolean
         default: false
+      branch:
+        description: Exact approved branch name (required when apply is true)
+        type: string
+        default: ""
+      expected_sha:
+        description: Exact 40-character head SHA (required when apply is true)
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -79,4 +87,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           CLEANUP_MIN_AGE_DAYS: "30"
+          CLEANUP_APPROVED_BRANCH: ${{ inputs.branch }}
+          CLEANUP_APPROVED_SHA: ${{ inputs.expected_sha }}
         run: node scripts/cleanup-merged-branches.js --apply
