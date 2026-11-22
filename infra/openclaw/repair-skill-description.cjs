@@ -10,12 +10,28 @@ const description = 'Structured approaches to planning, reasoning, and reviewing
 const maxBytes = 128 * 1024;
 
 function patchFrontmatter(source) {
-  if (typeof source !== 'string' || !source.startsWith('---\n')) return null;
-  const close = source.indexOf('\n---\n', 4);
-  if (close < 4 || close > 4096) return null;
-  const header = source.slice(4, close);
+  if (typeof source !== 'string' || source.length === 0) return null;
+  const bom = source.charCodeAt(0) === 0xfeff ? '\ufeff' : '';
+  const text = source.slice(bom.length);
+  const newline = text.includes('\r\n') ? '\r\n' : '\n';
+  const marker = '---' + newline;
+
+  if (!text.startsWith(marker)) {
+    // A missing YAML header is common in older skills. Do not guess at malformed
+    // frontmatter or edit empty/non-Markdown content. Keep the whole body intact.
+    if (text.startsWith('---') || !text.trim() ||
+        !/^\s*(?:#{1,6}\s+\S|[A-Za-z][^\r\n]*\S)/.test(text)) return null;
+    return bom + [
+      '---', 'name: thinking-frameworks',
+      'description: ' + description, '---', ''
+    ].join(newline) + text;
+  }
+
+  const close = text.indexOf(newline + marker, marker.length);
+  if (close < marker.length || close > 4096) return null;
+  const header = text.slice(marker.length, close);
   if (!/^name:[ \t]*['"]?thinking-frameworks['"]?[ \t]*$/m.test(header)) return null;
-  const lines = header.split('\n');
+  const lines = header.split(newline);
   const existing = lines.findIndex(line => /^description[ \t]*:/.test(line));
   if (existing >= 0) {
     const value = lines[existing].replace(/^description[ \t]*:[ \t]*/, '').trim();
@@ -25,7 +41,7 @@ function patchFrontmatter(source) {
     const idx = lines.findIndex(line => /^name[ \t]*:/.test(line));
     lines.splice(idx + 1, 0, 'description: ' + description);
   }
-  return '---\n' + lines.join('\n') + source.slice(close);
+  return bom + marker + lines.join(newline) + text.slice(close);
 }
 
 function safeReadTarget(directory, allowedRoot = '/data') {

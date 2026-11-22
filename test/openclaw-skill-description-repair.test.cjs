@@ -24,7 +24,7 @@ test('patching adds only missing required description and preserves skill body',
   assert.match(patchFrontmatter('---\nname: thinking-frameworks\ndescription:\n---\nBODY'), /description: Structured/);
   assert.equal(patchFrontmatter('---\nname: thinking-frameworks\ndescription: custom\n---\nBODY'), null);
   assert.equal(patchFrontmatter('---\nname: different\n---\nBODY'), null);
-  assert.equal(patchFrontmatter('# Unexpected skill'), null);
+  assert.ok(patchFrontmatter('# Unexpected skill').endsWith('# Unexpected skill'));
 });
 
 test('repair writes private backup, edits once, and leaves untouched body', t => {
@@ -52,5 +52,33 @@ test('refuses conflicting backup, symlink, wrong root and unexpected skill', t =
   assert.equal(repairSkill({ directory: dir, allowedRoot: base }), 'skipped');
   fs.unlinkSync(target);
   fs.writeFileSync(target, '---\nname: other\n---\nBODY');
+  assert.equal(repairSkill({ directory: dir, allowedRoot: base }), 'unchanged_or_unrecognized');
+});
+
+test('plain Markdown with no YAML header receives exactly one safe metadata header', () => {
+  const plain = '# Thinking Frameworks\n\nPreserve the original examples.\n';
+  const patched = patchFrontmatter(plain);
+  assert.ok(patched.startsWith('---\nname: thinking-frameworks\ndescription: '));
+  assert.ok(patched.endsWith(plain));
+  assert.equal(patchFrontmatter(patched), null);
+  assert.equal(patchFrontmatter('---\ninvalid unclosed metadata'), null);
+  assert.equal(patchFrontmatter(''), null);
+});
+
+test('CRLF and UTF-8 BOM skill headers keep their original encoding and content', () => {
+  const source = '\ufeff---\r\nname: thinking-frameworks\r\n---\r\n# Intro\r\nOriginal.\r\n';
+  const updated = patchFrontmatter(source);
+  assert.ok(updated.startsWith('\ufeff---\r\nname: thinking-frameworks\r\ndescription: '));
+  assert.ok(updated.endsWith('# Intro\r\nOriginal.\r\n'));
+  assert.equal(patchFrontmatter(updated), null);
+});
+
+test('plain Markdown repair preserves content and keeps a private original backup', t => {
+  const { base, dir, target } = fixture(t);
+  const source = '# Thinking Frameworks\nOriginal skill instructions.\n';
+  fs.writeFileSync(target, source);
+  assert.equal(repairSkill({ directory: dir, allowedRoot: base }), 'repaired');
+  assert.ok(fs.readFileSync(target, 'utf8').endsWith(source));
+  assert.equal(fs.readFileSync(target + '.pre-jarvis-description-v1', 'utf8'), source);
   assert.equal(repairSkill({ directory: dir, allowedRoot: base }), 'unchanged_or_unrecognized');
 });
