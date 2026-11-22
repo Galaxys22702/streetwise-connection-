@@ -18,7 +18,7 @@ test("an OpenRouter key alone enables free chat with a zero price ceiling and no
       assert.equal(body.model, "openrouter/free");
       assert.deepEqual(body.provider.max_price, { prompt: 0, completion: 0 });
       assert.equal(body.max_tokens, 1000);
-      assert.deepEqual(body.reasoning, { effort: "minimal" });
+      assert.equal(Object.hasOwn(body, "reasoning"), false, "free route must not send optional thinking levels");
       assert.deepEqual(body.messages.at(-1), messages[0]);
       return Response.json({ choices: [{ message: { content: "READY" } }] });
     }
