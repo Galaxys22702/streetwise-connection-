@@ -155,7 +155,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (url.pathname.startsWith("/api/jarvis/")) {
-    return handleJarvisApi({ req, res, url, readJsonBody, sendJson, sendError, runtime: "node" });
+    return handleJarvisApi({ req, res, url, readJsonBody, sendJson, runtime: "node" });
   }
 
   if (url.pathname.startsWith("/api/admin/facebook")) {

@@ -135,7 +135,7 @@ export default async function handler(req, res) {
   }
 
   if (url.pathname.startsWith("/api/jarvis/")) {
-    return handleJarvisApi({ req, res, url, readJsonBody, sendJson, sendError });
+    return handleJarvisApi({ req, res, url, readJsonBody, sendJson });
   }
 
   if (url.pathname.startsWith("/api/admin/facebook")) {
