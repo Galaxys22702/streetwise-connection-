@@ -10,6 +10,16 @@ function retryAfterMs(header, now = Date.now()) {
   if (!Number.isFinite(timestamp)) return null;
   return Math.min(MAX_MS, Math.max(MIN_MS, timestamp - now));
 }
+function readRateLimit(error) {
+  if (!error || typeof error !== 'object') return null;
+  const status = error.status ?? error.statusCode ?? error.response?.status;
+  if (status !== 429 && status !== '429') return null;
+  const headers = error.response?.headers ?? error.headers;
+  const value = typeof headers?.get === 'function'
+    ? headers.get('retry-after')
+    : headers?.['retry-after'] ?? headers?.['Retry-After'];
+  return { retryAfter: typeof value === 'string' ? value : null };
+}
 function createProbeCooldown({ now = Date.now, defaultMs = 15 * 60_000 } = {}) {
   let until = 0;
   let inFlight = false;
@@ -27,9 +37,14 @@ function createProbeCooldown({ now = Date.now, defaultMs = 15 * 60_000 } = {}) {
       if (inFlight) return { skipped: true, reason: 'in_flight' };
       inFlight = true;
       try { return { skipped: false, result: await request() }; }
+      catch (error) {
+        const limited = readRateLimit(error);
+        if (limited) this.rateLimited(limited.retryAfter);
+        throw error;
+      }
       finally { inFlight = false; }
     },
     reset() { until = 0; }
   };
 }
-module.exports = { retryAfterMs, createProbeCooldown };
+module.exports = { retryAfterMs, readRateLimit, createProbeCooldown };
