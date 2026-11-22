@@ -28,3 +28,9 @@ test('anonymous and authenticated roles receive no direct access', () => {
 test('schema does not create billable, provisioning or call activation side effects', () => {
   assert.doesNotMatch(schema, /create trigger|create function|http_post|net\.http|insert into|update\s+streetwise_core/i);
 });
+
+test('existing Streetwise account IDs can map without changing authentication', () => {
+  assert.match(schema, /legacy_user_id text unique/);
+  assert.match(schema, /legacy_user_id_format check/);
+  assert.match(schema, /auth_user_id uuid unique references auth\.users\(id\)/);
+});
