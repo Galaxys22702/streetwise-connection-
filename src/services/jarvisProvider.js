@@ -45,7 +45,6 @@ export async function requestJarvisReply(messages, { env = process.env, fetchImp
         messages: [{ role: "system", content: instructions }, ...messages],
         ...(provider.openrouter ? {
           max_tokens: 1000,
-          reasoning: { effort: "minimal" },
           provider: { max_price: { prompt: 0, completion: 0 } }
         } : { max_completion_tokens: 1000 })
       })
