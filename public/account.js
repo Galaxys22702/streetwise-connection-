@@ -103,4 +103,34 @@ logoutEl.addEventListener("click", async () => {
   }
 });
 
-refresh().catch(() => setMessage("Account service is temporarily unavailable."));
+// The public website is in waitlist-only mode until cellular launch gates pass.
+// Do not display actionable login/register controls when the API deliberately returns 503.
+async function initializeAccountPage() {
+  let status;
+  try {
+    const response = await fetch("/api/public-status", {
+      headers: { accept: "application/json" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(8000)
+    });
+    if (!response.ok) throw new Error("public_status_unavailable");
+    status = await response.json();
+  } catch {
+    status = null;
+  }
+  if (status?.publicLaunchMode !== "internal") {
+    emailEl.disabled = true;
+    passwordEl.disabled = true;
+    submitEl.hidden = true;
+    toggleEl.hidden = true;
+    logoutEl.hidden = true;
+    titleEl.textContent = "Accounts are not open";
+    setMessage(status?.publicLaunchMode === "waitlist"
+      ? "Customer accounts and paid cellular plans are not open yet. You can join the launch waitlist or request independent phone setup help."
+      : "Account availability could not be verified. Account actions are temporarily unavailable.");
+    return;
+  }
+  await refresh();
+}
+
+initializeAccountPage().catch(() => setMessage("Account service is temporarily unavailable."));
