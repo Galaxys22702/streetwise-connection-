@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, statSync, symlinkSync, chmodSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, statSync, symlinkSync, chmodSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 const { configureFreeChat, planConfig, planSessions } = createRequire(import.meta.url)('../infra/openclaw/configure-free-chat.cjs');
@@ -358,4 +358,49 @@ test('startup repairs only our exact backed-up rewrite after the canonical trigg
   assert.equal(rows['agent:main:changed'].entry_valid, 0);
   assert.equal(readNodes(file).transcript[0].body, 'transcript remains');
   assert.deepEqual(configureFreeChat({ ...f.env, JARVIS_FREE_CHAT_PROFILE: '0' }), { reason: 'disabled' });
+});
+
+test('opt-in safe v2 backup preserves historical snapshot while tuning config', t => {
+  const f = fixture(t);
+  const legacy = f.target + suffix;
+  const oldSnapshot = '{}';
+  const current = readFileSync(f.target, 'utf8');
+  writeFileSync(legacy, oldSnapshot, { mode: 0o600 });
+  const result = configureFreeChat({ ...f.env, JARVIS_ALLOW_CONFIG_BACKUP_V2: '1' });
+  assert.equal(result.reason, 'applied');
+  assert.equal(readFileSync(legacy, 'utf8'), oldSnapshot);
+  assert.equal(readFileSync(legacy + '-v2', 'utf8'), current);
+  assert.equal(statSync(legacy + '-v2').mode & 0o777, 0o600);
+  assert.equal(f.read(f.target).agents.defaults.thinkingDefault, 'minimal');
+  assert.equal(f.read(f.target).agents.defaults.heartbeat.every, '0m');
+  assert.equal(configureFreeChat({ ...f.env, JARVIS_ALLOW_CONFIG_BACKUP_V2: '1' }).reason, 'unchanged');
+});
+
+test('v2 requires exact opt-in and refuses unsafe original snapshots', t => {
+  for (const mode of ['off', 'symlink', 'public']) {
+    const f = fixture(t);
+    const legacy = f.target + suffix;
+    const current = readFileSync(f.target, 'utf8');
+    if (mode === 'symlink') symlinkSync(f.target, legacy);
+    else {
+      writeFileSync(legacy, '{}', { mode: 0o600 });
+      if (mode === 'public') chmodSync(legacy, 0o644);
+    }
+    const env = { ...f.env, JARVIS_ALLOW_CONFIG_BACKUP_V2: mode === 'off' ? '0' : '1' };
+    assert.equal(configureFreeChat(env).reason, 'backup_unavailable');
+    assert.equal(readFileSync(f.target, 'utf8'), current);
+    assert.equal(!existsSync(legacy + '-v2'), true);
+  }
+});
+
+test('v2 refuses conflicting snapshot and does not rotate beyond a single new slot', t => {
+  const f = fixture(t);
+  const oldSnapshot = f.target + suffix;
+  const v2 = oldSnapshot + '-v2';
+  const current = readFileSync(f.target, 'utf8');
+  writeFileSync(oldSnapshot, '{}', { mode: 0o600 });
+  writeFileSync(v2, '{"prior":"different"}', { mode: 0o600 });
+  assert.equal(configureFreeChat({ ...f.env, JARVIS_ALLOW_CONFIG_BACKUP_V2: '1' }).reason, 'backup_unavailable');
+  assert.equal(readFileSync(f.target, 'utf8'), current);
+  assert.equal(readFileSync(v2, 'utf8'), '{"prior":"different"}');
 });
