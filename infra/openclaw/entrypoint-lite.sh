@@ -40,6 +40,8 @@ if [ -n "${GEMINI_API_KEY:-}" ] && [ -f "${OPENCLAW_STATE_DIR:-/data/.openclaw}/
 fi
 
 gosu openclaw node /app/recover-model.cjs
+# Observe existing backup eligibility without modifying saved configuration or exposing paths.
+gosu openclaw node /app/inspect-backup-gate-166.cjs
 gosu openclaw node /app/configure-free-chat.cjs
 gosu openclaw node /app/optimize-plugins.cjs
 
