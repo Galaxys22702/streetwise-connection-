@@ -5,6 +5,10 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/favicon.ico",
+      "destination": "/streetwise-mark.png"
+    },
+    {
       "source": "/health",
       "destination": "/api/health"
     },
