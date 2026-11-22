@@ -9,12 +9,7 @@ RUN npm install -g --allow-scripts=openclaw openclaw@2026.9.9 \
 # Inspect the pinned installed bundle without patching it. A missing anchor is
 # reported in build logs but does not modify runtime or break the known-good image.
 COPY patch-issue-166.cjs /tmp/patch-issue-166.cjs
-RUN if node /tmp/patch-issue-166.cjs --check; then \\
-      echo '[JARVIS] Issue #166: compiled probe anchor found'; \\
-    else \\
-      echo '[JARVIS] Issue #166: compiled probe anchor NOT VERIFIED; runtime unchanged'; \\
-    fi \\
- && rm /tmp/patch-issue-166.cjs
+RUN node /tmp/patch-issue-166.cjs --check && rm /tmp/patch-issue-166.cjs
 RUN npm install -g clawhub@latest
 WORKDIR /app
 # Immutable upstream source. All credentials and conversation state remain on the Railway volume.
