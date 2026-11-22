@@ -43,6 +43,8 @@ gosu openclaw node /app/recover-model.cjs
 # Observe existing backup eligibility without modifying saved configuration or exposing paths.
 gosu openclaw node /app/inspect-backup-gate-166.cjs
 gosu openclaw node /app/configure-free-chat.cjs
+# Report only aggregate canonical SQLite thinking levels; never alter persisted sessions.
+gosu openclaw node /app/inspect-session-thinking-166.cjs || echo '[JARVIS] SQLite thinking audit unavailable.'
 gosu openclaw node /app/optimize-plugins.cjs
 
 if [ "${JARVIS_APPROVE_LOCAL_OPERATOR:-0}" = "1" ] || [ "${JARVIS_STATUS_PROBE:-0}" = "1" ]; then
