@@ -28,16 +28,16 @@
         <p class="eyebrow">Streetwise account</p>
         <h1 id="account-heading">Sign in or create your account.</h1>
         <p>Accounts are required before a live Streetwise plan can be purchased. Your payment details stay with the approved payment provider.</p>
-        <p id="account-status" class="result" aria-live="polite"></p>
+        <p id="account-status" class="result" aria-live="polite">Checking account availability…</p><p><a href="/#waitlist">Join the launch waitlist</a> or <a href="/book.html">request phone setup help</a>.</p>
       </div>
       <div class="waitlist-form">
         <div class="form-heading"><span>Customer access</span><strong id="form-title">Sign in</strong></div>
         <label for="account-email">Email address</label>
-        <input id="account-email" type="email" autocomplete="email" maxlength="254" required />
+        <input id="account-email" type="email" autocomplete="email" maxlength="254" required disabled />
         <label for="account-password">Password</label>
-        <input id="account-password" type="password" autocomplete="current-password" minlength="10" maxlength="256" required />
-        <button id="account-submit" class="button" type="button">Sign in ↗</button>
-        <button id="account-toggle" class="text-link" type="button">Create an account instead</button>
+        <input id="account-password" type="password" autocomplete="current-password" minlength="10" maxlength="256" required disabled />
+        <button id="account-submit" class="button" type="button" hidden>Sign in ↗</button>
+        <button id="account-toggle" class="text-link" type="button" hidden>Create an account instead</button>
         <button id="account-logout" class="text-link" type="button" hidden>Sign out</button>
       </div>
     </section>
