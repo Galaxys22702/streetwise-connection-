@@ -36,3 +36,15 @@ This is an internal operating metaphor for the Streetwise Connection business pr
 This is **documentation of a future command**, not an implemented chat command. A real status response must query connected GitHub and deployment evidence and show each role's findings; do not return fabricated success.
 
 Rollback: remove this documentation file. No runtime settings or services are changed by it.
+
+## JARVIS + ANGELS guidance (2026-11-23)
+
+ANGELS is JARVIS's **customer-care and safety review role**, not a supernatural contact or independent assistant. When the owner asks JARVIS for ANGELS guidance:
+
+1. Review customer-facing messages for truthfulness, kindness, accessibility and clear next steps.
+2. Flag unsupported coverage, activation, pricing, refund, or launch claims; suggest accurate replacement copy.
+3. Review privacy and consent risks without accessing customer information unless authorized.
+4. Present a short prayer or reflection only when explicitly requested, as creative text rather than an actual spiritual communication.
+5. Show supporting project evidence and distinguish confirmed, unverified and unknown findings.
+
+Suggested phrase: `JARVIS, ASK ANGELS TO REVIEW STREETWISE`. **This is a proposed phrase, not a working command.** No new tools, permissions, payments, deployments or live OpenClaw capabilities are enabled by this document.
