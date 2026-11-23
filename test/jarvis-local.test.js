@@ -107,5 +107,8 @@ test('DEVIL offline planner routes tasks without provider calls or execution', a
   assert.equal(result.plan.capability, 'Windows diagnostics');
   assert.equal(result.plan.execution, 'not_performed');
   assert.equal(result.plan.requiresApproval, true);
+  assert.equal(result.plan.executionPath, 'private_owner_reviewed_command_workspace');
+  assert.equal(result.plan.commandTicket, null);
+  assert.equal(result.plan.paidServicesAllowed, false);
   assert.equal((await chat({ message: 'DEVIL PLAN:' })).status, 400);
 });
