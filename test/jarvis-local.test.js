@@ -77,3 +77,24 @@ test('HP chat blocks paid routes before contacting a provider and reports free-q
   assert.equal(response.headers.get('retry-after'), '30');
   assert.doesNotMatch(await response.text(), /private upstream details|test-only-placeholder/);
 });
+
+
+test('DEVIL mode activates locally, stays cosmetic and preserves free provider guardrails', async t => {
+  let calls = 0;
+  const { chat } = await start(t, { apiKey: 'test-only-placeholder', fetchImpl: async (url, options) => {
+    calls++;
+    const body = JSON.parse(options.body);
+    assert.equal(body.model, 'openrouter/free');
+    assert.deepEqual(body.provider.max_price, { prompt: 0, completion: 0 });
+    assert.match(JSON.stringify(body.messages), /DEVIL mode is active/);
+    assert.match(JSON.stringify(body.messages), /no additional tools/);
+    return Response.json({ choices: [{ message: { content: 'DEVIL online, sir.' } }] });
+  } });
+  const activated = await chat({ message: 'JARVIS, ACTIVATE DEVIL MODE' });
+  assert.deepEqual(await activated.json(), { answer: 'DEVIL MODE ACTIVATED. Persona online. Permissions unchanged.', devilMode: true });
+  assert.equal(calls, 0);
+  assert.equal((await chat({ message: 'Hello', devilMode: true })).status, 200);
+  assert.equal(calls, 1);
+  const off = await chat({ message: 'JARVIS, DEACTIVATE DEVIL MODE' });
+  assert.equal((await off.json()).devilMode, false);
+});
