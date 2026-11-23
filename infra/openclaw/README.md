@@ -57,3 +57,20 @@ The first November 6 SQLite rollout omitted that certification step and caused g
 The public dashboard is HTTPS in the browser and loopback inside the container. Gateway auth can succeed while the browser stays on `pairing required`, and there is no host shell in which to run `openclaw devices approve`. `JARVIS_APPROVE_LOCAL_OPERATOR=1` (the image default) waits until `/setup/healthz` reports `gatewayReachable`, then approves at most three pending requests per pass, and only when the requested roles are exactly `operator`. Node-role requests, mixed roles, missing ids, and anything that is not a UUID stay pending. Set the variable to `0` to keep every approval manual. The log records an eight-character request prefix, not the device record. Command approval and node pairing stay manual.
 
 `JARVIS_STATUS_PROBE=1` sends one gateway agent turn after the gateway is reachable, on session `jarvis-status-probe`, pinned to `openrouter/openrouter/free` with minimal thinking: “JARVIS, report your operational status and respond with JARVIS ONLINE.” It does not use `--local`, because a local run refuses the state directory while the gateway holds it. The log records the exit code and whether the reply contains that sentence, the free router, or paid Auto. Secrets matching `sk-…` are redacted. Leave the variable unset, or set it back to `0`, after the check. It is one free-router request per process start, not a heartbeat.
+
+
+## Cloudflare Workers AI fallback: implementation gate (not enabled)
+
+Goal: preserve OpenRouter free-only as the primary route and optionally use Cloudflare Workers AI when OpenRouter returns a real quota-related 429. This is a separate provider with its own free allowance, not a way to evade OpenRouter's limits. No production fallback is configured by this document.
+
+Before implementation:
+
+1. Verify the Cloudflare account's Workers AI entitlement, current free allocation, billing behavior, and selected model from official documentation and the account dashboard. Never assume that all models are free or that usage over the allowance is free. Do not enable paid usage.
+2. Choose a Workers AI text-generation model and its documented OpenAI-compatible endpoint. Validate that the pinned OpenClaw version supports a custom provider and its authentication method. Keep any Cloudflare API token in Railway secret variables, never in Git, logs, URLs, or session state.
+3. Implement the fallback behind an explicit default-off flag, only for quota-related 429 responses. Respect Retry-After and a persistent bounded cooldown; do not probe OpenRouter repeatedly. Reject missing/unknown free entitlement or absent credentials by failing closed. Do not use paid Auto, rotate accounts, or bypass provider limits.
+4. Make Cloudflare fallback bounded by an owner-set daily request budget below the verified free allowance; fail closed when usage cannot be measured or quota state is unknown. Do not assume local request counts exactly represent Cloudflare neuron consumption; enforce conservative limits and stop when the provider reports exhaustion.
+5. Preserve existing device/operator pairing and all private snapshots, SQLite session records, provider configuration and free-only routes. Do not change production settings or restart services without a separate deployment authorization.
+6. Add mocked tests for OpenRouter 429 -> cooldown -> Cloudflare selection, Cloudflare quota exhausted -> no further provider call, absent Cloudflare credentials -> no fallback, normal OpenRouter success -> no Cloudflare call, 400 unsupported thinking -> no quota fallback, and no paid route. Run pinned CI including OpenClaw image build.
+7. After code review and explicit approval, deploy in a controlled stage and verify one completed response from each provider within the free allowance. HTTP 200 from /healthz or /readyz is not proof of AI inference.
+
+Known independent blockers: an unapproved OpenClaw client device and repeated memory/listener warnings cannot be fixed by changing AI providers. Keep Streetwise cellular waitlist-only until issue #39 launch gates are complete.
