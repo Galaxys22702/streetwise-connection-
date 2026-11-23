@@ -34,7 +34,7 @@ RUN npm install -g pnpm@11.24.0 \
  && pnpm install --frozen-lockfile --prod
 COPY patch-startup.cjs setup-models.cjs setup-route.cjs ./
 RUN node patch-startup.cjs && node --check /app/src/server.js && rm patch-startup.cjs setup-models.cjs setup-route.cjs
-COPY optimize-plugins.cjs ./optimize-plugins.cjs
+# Bundle the opt-in Streetwise Council skill; do not mutate persistent OpenClaw state.\nCOPY streetwise-council/SKILL.md /app/streetwise-council/SKILL.md\nCOPY optimize-plugins.cjs ./optimize-plugins.cjs
 COPY configure-gemini-auth.cjs ./configure-gemini-auth.cjs
 COPY recover-model.cjs ./recover-model.cjs
 COPY configure-free-chat.cjs ./configure-free-chat.cjs
