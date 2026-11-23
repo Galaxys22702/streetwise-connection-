@@ -32,6 +32,9 @@ export function planDevilTask(task) {
     nextStep: route.next,
     execution: 'not_performed',
     toolsConnected: false,
-    requiresApproval: true
+    requiresApproval: true,
+    executionPath: 'private_owner_reviewed_command_workspace',
+    commandTicket: null,
+    paidServicesAllowed: false
   };
 }
