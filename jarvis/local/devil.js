@@ -14,11 +14,11 @@ export function devilInstructions() {
 }
 
 const routes = Object.freeze([
-  { name: 'Repository engineering', pattern: /\\b(github|repository|pull request|\\bpr\\b|commit|code|tests?)\\b/i, next: 'Inspect repository evidence, prepare a reversible patch, and run tests before proposing a pull request.' },
-  { name: 'Windows diagnostics', pattern: /\\b(windows|bluetooth|driver|powershell|disk|computer)\\b/i, next: 'Collect read-only device evidence first; do not disable services or change drivers without approval.' },
-  { name: 'Defensive security', pattern: /\\b(security|audit|vulnerability|firewall|phishing)\\b/i, next: 'Confirm authorized scope and perform defensive, non-destructive inspection.' },
-  { name: 'Business operations', pattern: /\\b(customer|website|business|streetwise|sales|support)\\b/i, next: 'Review current business state and draft a verifiable action plan; do not contact customers or accept payments.' },
-  { name: 'Research', pattern: /\\b(research|find|compare|explain)\\b/i, next: 'Identify reliable sources and summarize evidence, noting unavailable connections.' }
+  { name: 'Repository engineering', pattern: /\b(github|repository|pull request|\bpr\b|commit|code|tests?)\b/i, next: 'Inspect repository evidence, prepare a reversible patch, and run tests before proposing a pull request.' },
+  { name: 'Windows diagnostics', pattern: /\b(windows|bluetooth|driver|powershell|disk|computer)\b/i, next: 'Collect read-only device evidence first; do not disable services or change drivers without approval.' },
+  { name: 'Defensive security', pattern: /\b(security|audit|vulnerability|firewall|phishing)\b/i, next: 'Confirm authorized scope and perform defensive, non-destructive inspection.' },
+  { name: 'Business operations', pattern: /\b(customer|website|business|streetwise|sales|support)\b/i, next: 'Review current business state and draft a verifiable action plan; do not contact customers or accept payments.' },
+  { name: 'Research', pattern: /\b(research|find|compare|explain)\b/i, next: 'Identify reliable sources and summarize evidence, noting unavailable connections.' }
 ]);
 
 export function planDevilTask(task) {
