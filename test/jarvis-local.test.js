@@ -98,3 +98,14 @@ test('DEVIL mode activates locally, stays cosmetic and preserves free provider g
   const off = await chat({ message: 'JARVIS, DEACTIVATE DEVIL MODE' });
   assert.equal((await off.json()).devilMode, false);
 });
+
+test('DEVIL offline planner routes tasks without provider calls or execution', async t => {
+  const { chat } = await start(t, { apiKey: '', fetchImpl: () => assert.fail('offline planning must not contact AI') });
+  const response = await chat({ message: 'DEVIL PLAN: fix my Windows bluetooth driver' });
+  assert.equal(response.status, 200);
+  const result = await response.json();
+  assert.equal(result.plan.capability, 'Windows diagnostics');
+  assert.equal(result.plan.execution, 'not_performed');
+  assert.equal(result.plan.requiresApproval, true);
+  assert.equal((await chat({ message: 'DEVIL PLAN:' })).status, 400);
+});
