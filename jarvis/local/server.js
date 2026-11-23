@@ -1,5 +1,5 @@
 import http from 'node:http';
-import { devilCommand, devilInstructions } from './devil.js';
+import { devilCommand, devilInstructions, planDevilTask } from './devil.js';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -53,6 +53,10 @@ export function createLocalServer({ apiKey = process.env.OPENROUTER_API_KEY || '
       try { input = JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { return send(400, { error: 'Invalid JSON' }); }
       const message = typeof input?.message === 'string' ? input.message.trim() : '';
       if (!message || message.length > 4000) return send(400, { error: 'Message must be 1–4000 characters' });
+      if (/^DEVIL PLAN:/i.test(message)) {
+        const plan = planDevilTask(message.slice('DEVIL PLAN:'.length).trim());
+        return plan ? send(200, { answer: 'DEVIL offline plan ready. No external action executed.', plan }) : send(400, { error: 'Provide a task after DEVIL PLAN:' });
+      }
       const command = devilCommand(message);
       if (command) return send(200, { answer: command === 'on' ? 'DEVIL MODE ACTIVATED. Persona online. Permissions unchanged.' : 'DEVIL MODE DEACTIVATED. JARVIS normal persona restored.', devilMode: command === 'on' });
       const devilMode = input?.devilMode === true;
