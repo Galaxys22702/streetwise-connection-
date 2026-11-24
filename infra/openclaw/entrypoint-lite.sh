@@ -55,9 +55,11 @@ gosu openclaw node /app/repair-skill-description.cjs || echo '[JARVIS] Skill met
 COUNCIL_DIR="${OPENCLAW_STATE_DIR:-/data/.openclaw}/skills/streetwise-council"
 if [ -f /app/streetwise-council/SKILL.md ]; then
   if [ ! -e "$COUNCIL_DIR/SKILL.md" ]; then
-    install -d -m 0750 -o openclaw -g openclaw "$COUNCIL_DIR"
-    install -m 0640 -o openclaw -g openclaw /app/streetwise-council/SKILL.md "$COUNCIL_DIR/SKILL.md"
-    echo '[JARVIS] Streetwise Council skill installed (opt-in; no tools granted).'
+    if gosu openclaw sh -c 'umask 027; mkdir -p -- "$1" && (set -C; cat /app/streetwise-council/SKILL.md > "$1/SKILL.md")' sh "$COUNCIL_DIR"; then
+      echo '[JARVIS] Streetwise Council skill installed (opt-in; no tools granted).'
+    else
+      echo '[JARVIS] Optional Streetwise Council installation unavailable; continuing startup.'
+    fi
   else
     echo '[JARVIS] Streetwise Council skill already exists; preserving owner version.'
   fi
