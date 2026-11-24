@@ -7,5 +7,23 @@ $('propose').onclick=()=>{const connector=$('connector').value,action=$('action'
 $('approve').onclick=()=>{if(!pending)return;const {connector,action}=pending;log(connector,action,'Approved → simulated → verified no external action');$('proposal').textContent='Simulation complete. Verified: no external action was performed.';lock()};
 $('reject').onclick=()=>{if(!pending)return;log(pending.connector,pending.action,'Rejected');$('proposal').textContent='Rejected. Nothing was executed.';lock()};
 $('clear').onclick=()=>{history=[];try{localStorage.removeItem('jarvis-history')}catch{}render()};
-$('ask').onclick=async()=>{const message=$('prompt').value.trim();if(!message)return;const command=message.trim().replace(/[.!]+$/g,'').toUpperCase();if(command==='JARVIS, ACTIVATE DEVIL MODE')devilMode=true;else if(command==='JARVIS, DEACTIVATE DEVIL MODE')devilMode=false;$('ask').disabled=true;$('reply').textContent='Thinking…';try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message,devilMode})});const data=await r.json();$('reply').textContent=data.plan?data.answer+'\n'+JSON.stringify(data.plan,null,2):(data.answer||data.error||'No response');log('OpenRouter','Chat request',r.ok?'Completed':'Failed')}catch{$('reply').textContent='Unable to reach local JARVIS server.';log('OpenRouter','Chat request','Connection failed')}finally{$('ask').disabled=false}};
+$('ask').onclick=async()=>{
+  const message=$('prompt').value.trim();
+  if(!message)return;
+  const command=message.replace(/[.!]+$/g,'').toUpperCase();
+  const isLocal=command==='JARVIS, ACTIVATE DEVIL MODE'||command==='JARVIS, DEACTIVATE DEVIL MODE'||/^DEVIL PLAN:/i.test(message);
+  const connector=isLocal?'Local JARVIS':'OpenRouter';
+  $('ask').disabled=true;
+  $('reply').textContent='Thinking…';
+  try{
+    const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message,devilMode})});
+    const data=await r.json();
+    if(r.ok&&typeof data.devilMode==='boolean'&&isLocal)devilMode=data.devilMode;
+    $('reply').textContent=data.plan?data.answer+'\n'+JSON.stringify(data.plan,null,2):(data.answer||data.error||'No response');
+    log(connector,isLocal?'Local request':'Chat request',r.ok?'Completed':'Failed');
+  }catch{
+    $('reply').textContent='Unable to reach local JARVIS server. Mode unchanged.';
+    log(connector,isLocal?'Local request':'Chat request','Connection failed');
+  }finally{$('ask').disabled=false}
+};
 fetch('/health').then(r=>r.json()).then(d=>{$('aiState').textContent=d.aiConfigured?'Free OpenRouter route configured':'OpenRouter key or free model needed'}).catch(()=>{$('aiState').textContent='Server offline'});render();
