@@ -8,7 +8,7 @@ function createCloudflareClient({accountId,apiToken,model,fetchImpl=globalThis.f
  const url='https://api.cloudflare.com/client/v4/accounts/'+accountId+'/ai/v1/chat/completions';
  return async function complete(messages) {
   if (!Array.isArray(messages) || messages.length===0) throw new Error('messages required');
-  const response=await fetchImpl(url,{method:'POST',headers:{
+  const response=await fetchImpl(url,{method:'POST',signal:AbortSignal.timeout(15000),headers:{
    Authorization:'Bearer '+apiToken,'Content-Type':'application/json'
   },body:JSON.stringify({model,messages,stream:false})});
   if (!response.ok) {
@@ -22,10 +22,12 @@ function createCloudflareClient({accountId,apiToken,model,fetchImpl=globalThis.f
  };
 }
 // An explicit caller-owned, durable quota counter is required; this helper never increments it.
-async function guardedComplete({gate,client,messages}) {
+async function guardedComplete({gate,client,messages,reserveQuota}) {
  const decision=planFallback(gate);
  if(decision.action!=='eligible') return {decision};
  if(typeof client!=='function') return {decision:{action:'stop',reason:'client_missing'}};
+ if(typeof reserveQuota!=='function') return {decision:{action:'stop',reason:'atomic_quota_reservation_required'}};
+ if(await reserveQuota() !== true) return {decision:{action:'stop',reason:'quota_reservation_denied'}};
  return {decision,result:await client(messages)};
 }
 module.exports={createCloudflareClient,guardedComplete};
