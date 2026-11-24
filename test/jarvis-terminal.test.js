@@ -14,3 +14,7 @@ test("autocomplete is bounded to known shortcut names", () => {
   assert.deepEqual(completeTerminalShortcut("unknown"),[]);
   assert.equal(terminalNames.length,7);
 });
+
+test("autocomplete rejects non-string input", () => {
+  for (const input of [null, undefined, 42, {}, []]) assert.deepEqual(completeTerminalShortcut(input), []);
+});
