@@ -23,7 +23,10 @@ export function mountTerminal({ byId, isBusy }) {
   section.setAttribute("aria-label", "Devil mode terminal shortcuts");
   section.className = "devil-terminal";
   const heading = document.createElement("h2");
-  heading.textContent = "JARVIS // DEVIL MODE";
+  heading.textContent = "JARVIS // DEVIL MODE 100×";
+  const banner = document.createElement("p");
+  banner.className = "devil-banner";
+  banner.textContent = "INFERNO PROTOCOL · OWNER AUTHORIZATION REQUIRED";
   const form = document.createElement("form");
   const label = document.createElement("label");
   label.htmlFor = "terminal-shortcut";
@@ -43,7 +46,7 @@ export function mountTerminal({ byId, isBusy }) {
   row.className = "row";
   row.append(input, button);
   form.append(label, row);
-  section.append(heading, form, output);
+  section.append(heading, banner, form, output);
   byId("command-workspace").before(section);
   let history = [];
   let cursor = 0;
