@@ -1,0 +1,77 @@
+{
+  "asOf": "2026-11-23",
+  "mode": "public aggregate research only",
+  "observations": [
+    {
+      "publisher": "ITU",
+      "published": "2025-02-27",
+      "scope": "global",
+      "metric": "international data traffic via submarine cables",
+      "qualifier": "over",
+      "value": 99,
+      "unit": "percent",
+      "source": "https://www.itu.int/en/mediacentre/Pages/PR-2025-02-27-submarine-cables-summit-nigeria.aspx"
+    },
+    {
+      "publisher": "ITU",
+      "published": "2025-02-27",
+      "scope": "global",
+      "metric": "submarine telecommunications cables",
+      "qualifier": "approximately",
+      "value": 500,
+      "unit": "cables",
+      "source": "https://www.itu.int/en/mediacentre/Pages/PR-2025-02-27-submarine-cables-summit-nigeria.aspx"
+    },
+    {
+      "publisher": "ITU",
+      "published": "2025-02-27",
+      "scope": "global",
+      "metric": "reported submarine cable faults annually",
+      "minimum": 150,
+      "maximum": 200,
+      "unit": "faults per year",
+      "source": "https://www.itu.int/en/mediacentre/Pages/PR-2025-02-27-submarine-cables-summit-nigeria.aspx"
+    }
+  ],
+  "sources": [
+    {
+      "publisher": "ITU DataHub",
+      "url": "https://datahub.itu.int/about/",
+      "purpose": "Published country and regional aggregate bandwidth, broadband traffic and connectivity statistics"
+    },
+    {
+      "publisher": "ITU",
+      "url": "https://www.itu.int/en/mediacentre/Pages/PR-2026-07-10-Submarine-cable-resilience-report.aspx",
+      "purpose": "International cable resilience recommendations"
+    },
+    {
+      "publisher": "Cloudflare Radar",
+      "url": "https://radar.cloudflare.com/",
+      "purpose": "Public aggregate internet trends and disruption reports; provider-specific observation limits apply"
+    },
+    {
+      "publisher": "ODNI",
+      "url": "https://archive.dni.gov/index.php/newsroom/press-releases/press-releases-2026/4150-pr-05-26",
+      "purpose": "Published annual national security transparency statistics; not live intercepts"
+    },
+    {
+      "publisher": "United States Code",
+      "url": "https://uscode.house.gov/us/usc/t18/s2511/",
+      "purpose": "Legal restrictions on interception and disclosure"
+    }
+  ],
+  "controls": {
+    "privateTrafficCollection": false,
+    "interception": false,
+    "individualTracking": false,
+    "automaticDisclosure": false,
+    "agencyAccess": false,
+    "productionChanges": false
+  },
+  "limitations": [
+    "Public aggregates are not communication content or individual metadata.",
+    "An outage alone does not establish hostile action or surveillance.",
+    "No government surveillance authority is conferred by this research.",
+    "Live collection and JARVIS deployment are not implemented."
+  ]
+}
