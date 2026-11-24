@@ -38,3 +38,15 @@ test('reservation precedes provider call',async()=>{
  const order=[];await guardedComplete({gate:eligibleGate,reserveQuota:async()=>{order.push('reserve');return true},client:async()=>{order.push('provider');return {}},messages:[]});
  assert.deepEqual(order,['reserve','provider']);
 });
+
+test('persistent quota survives recreation and rejects concurrent oversubscription',async t=>{
+ const fs=require('node:fs/promises'),os=require('node:os'),path=require('node:path');
+ const {createQuotaReservation}=require('./cloudflare-workers-ai-client.cjs');
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'guardian-quota-'));
+ t.after(()=>fs.rm(directory,{recursive:true,force:true}));
+ const reserve=createQuotaReservation({directory,budget:2});
+ const results=await Promise.all(Array.from({length:12},()=>reserve()));
+ assert.equal(results.filter(Boolean).length,2);
+ assert.equal(await createQuotaReservation({directory,budget:2})(),false);
+ assert.equal(await createQuotaReservation({directory:path.join(directory,'missing'),budget:2})(),false);
+});
