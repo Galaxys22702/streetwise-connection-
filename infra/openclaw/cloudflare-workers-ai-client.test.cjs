@@ -24,3 +24,17 @@ test('provider 429 does not expose response body or token',async()=>{
  const client=createCloudflareClient({accountId:id,model,apiToken:'private-test-token',fetchImpl:async()=>({ok:false,status:429})});
  await assert.rejects(client([{role:'user',content:'hi'}]),e=>e.status===429&&!e.message.includes('private-test-token'));
 });
+
+const eligibleGate={enabled:true,primary:'openrouter/openrouter/free',status:429,retryAfterSeconds:120,nowMs:100000,cloudflareConfigured:true,freeEntitlementVerified:true,providerCostKnownFree:true,budgetRequests:1,requestsUsed:0};
+test('eligible fallback fails closed without quota reservation',async()=>{
+ let calls=0;const r=await guardedComplete({gate:eligibleGate,client:async()=>{calls++},messages:[]});
+ assert.equal(calls,0);assert.equal(r.decision.reason,'atomic_quota_reservation_required');
+});
+test('denied reservation never calls provider',async()=>{
+ let calls=0;const r=await guardedComplete({gate:eligibleGate,reserveQuota:async()=>false,client:async()=>{calls++},messages:[]});
+ assert.equal(calls,0);assert.equal(r.decision.reason,'quota_reservation_denied');
+});
+test('reservation precedes provider call',async()=>{
+ const order=[];await guardedComplete({gate:eligibleGate,reserveQuota:async()=>{order.push('reserve');return true},client:async()=>{order.push('provider');return {}},messages:[]});
+ assert.deepEqual(order,['reserve','provider']);
+});
