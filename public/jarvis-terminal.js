@@ -14,6 +14,7 @@ export function resolveTerminalShortcut(input) {
   return Object.hasOwn(shortcuts, name) ? shortcuts[name] : null;
 }
 export function completeTerminalShortcut(input) {
+  if (typeof input !== "string") return [];
   const prefix = input.trim().toLowerCase();
   return terminalNames.filter(name => name.startsWith(prefix));
 }
