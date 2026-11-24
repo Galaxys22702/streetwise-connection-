@@ -20,9 +20,10 @@ export function completeTerminalShortcut(input) {
 
 export function mountTerminal({ byId, isBusy }) {
   const section = document.createElement("section");
-  section.setAttribute("aria-label", "Terminal shortcuts");
+  section.setAttribute("aria-label", "Devil mode terminal shortcuts");
+  section.className = "devil-terminal";
   const heading = document.createElement("h2");
-  heading.textContent = "JARVIS terminal";
+  heading.textContent = "JARVIS // DEVIL MODE";
   const form = document.createElement("form");
   const label = document.createElement("label");
   label.htmlFor = "terminal-shortcut";
@@ -32,7 +33,7 @@ export function mountTerminal({ byId, isBusy }) {
   input.maxLength = 40;
   input.autocomplete = "off";
   input.spellcheck = false;
-  input.placeholder = "jarvis > help";
+  input.placeholder = "devil@jarvis > help";
   const button = document.createElement("button");
   button.textContent = "Prepare shortcut";
   const output = document.createElement("p");
