@@ -11,6 +11,12 @@ COPY inspect-foreground-transport.cjs inspect-foreground-transport.test.cjs /tmp
 RUN node --test /tmp/inspect-foreground-transport.test.cjs \
  && node /tmp/inspect-foreground-transport.cjs \
  && rm /tmp/inspect-foreground-transport.cjs /tmp/inspect-foreground-transport.test.cjs
+# Install opt-in foreground guard only against the verified compiled fingerprint.
+COPY foreground-cooldown.cjs foreground-cooldown.test.cjs /app/
+COPY patch-foreground-transport.cjs /tmp/patch-foreground-transport.cjs
+RUN node --test /app/foreground-cooldown.test.cjs \
+ && node /tmp/patch-foreground-transport.cjs \
+ && rm /tmp/patch-foreground-transport.cjs
 # Patch ONLY the pinned OpenClaw .mjs setup-inference probe in this image.
 # No /data access, no session edits, no provider requests. Fail closed on version drift.
 COPY probe-gate-166.cjs /app/probe-gate-166.cjs
