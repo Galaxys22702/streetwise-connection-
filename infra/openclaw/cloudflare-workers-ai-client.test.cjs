@@ -158,3 +158,35 @@ test('missing, malformed or symlinked cooldown stores fail closed',{skip:process
  assert.equal(await store.read(),null);
  assert.equal(await store.record(2000),false);
 });
+
+test('primary preflight rejects other routes and unknown storage',async()=>{
+ const {guardedPrimary}=require('./cloudflare-workers-ai-client.cjs');
+ let calls=0;const request=async()=>{calls++};
+ for(const route of [undefined,'openrouter/openrouter/auto','cloudflare/model']){
+  assert.equal((await guardedPrimary({route,request,cooldownStore:{read:async()=>0}})).decision.action,'stop');
+ }
+ for(const store of [undefined,{read:async()=>null},{read:async()=>-1},{read:async()=>{throw new Error('unavailable')}}]){
+  assert.equal((await guardedPrimary({route:'openrouter/openrouter/free',request,cooldownStore:store})).decision.action,'stop');
+ }
+ assert.equal(calls,0);
+});
+test('primary preflight blocks active deadline and allows only exact free route at expiry',async()=>{
+ const {guardedPrimary}=require('./cloudflare-workers-ai-client.cjs');
+ let calls=0;const request=async route=>{calls++;assert.equal(route,'openrouter/openrouter/free');return 'fixture'};
+ const args={route:'openrouter/openrouter/free',request,cooldownStore:{read:async()=>200000}};
+ const paused=await guardedPrimary({...args,now:()=>199999});
+ assert.equal(paused.decision.reason,'primary_cooldown_active');assert.equal(calls,0);
+ assert.equal((await guardedPrimary({...args,now:()=>NaN})).decision.action,'stop');
+ const allowed=await guardedPrimary({...args,now:()=>200000});
+ assert.equal(allowed.result,'fixture');assert.equal(calls,1);
+});
+test('primary preflight reads persisted deadline after store recreation',{skip:process.platform!=='linux'},async t=>{
+ const fs=require('node:fs/promises'),os=require('node:os'),path=require('node:path');
+ const {createCooldownStore,guardedPrimary}=require('./cloudflare-workers-ai-client.cjs');
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'guardian-primary-'));
+ t.after(()=>fs.rm(directory,{recursive:true,force:true}));
+ assert.equal(await createCooldownStore({directory}).record(300000),true);
+ let calls=0;
+ const result=await guardedPrimary({route:'openrouter/openrouter/free',cooldownStore:createCooldownStore({directory}),now:()=>250000,request:async()=>{calls++}});
+ assert.equal(result.decision.reason,'primary_cooldown_active');assert.equal(calls,0);
+});

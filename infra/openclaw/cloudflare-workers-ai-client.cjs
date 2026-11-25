@@ -1,5 +1,5 @@
 'use strict';
-const {planFallback}=require('./cloudflare-fallback-gate.cjs');
+const {planFallback,FREE_PRIMARY}=require('./cloudflare-fallback-gate.cjs');
 const ID=/^[a-f0-9]{32}$/i;
 const MODEL=/^@[a-z0-9_-]+\/[a-z0-9_.-]+(?:\/[a-z0-9_.-]+)*$/i;
 function createCloudflareClient({accountId,apiToken,model,fetchImpl=globalThis.fetch}) {
@@ -134,4 +134,22 @@ function createCooldownStore({directory}) {
  };
 }
 
-module.exports={createCloudflareClient,guardedComplete,createQuotaReservation,createCooldownStore};
+// Caller-owned preflight for the primary transport. No implicit network access.
+// The caller must route every OpenRouter attempt through this boundary.
+async function guardedPrimary({route,cooldownStore,request,now=Date.now}={}){
+ const stop=(reason,extra={})=>({decision:{action:'stop',reason,...extra}});
+ if(route!==FREE_PRIMARY) return stop('unsupported_primary');
+ if(typeof request!=='function'||typeof cooldownStore?.read!=='function'||typeof now!=='function')
+  return stop('primary_guard_unavailable');
+ let deadline,current;
+ try{
+  deadline=await cooldownStore.read();
+  current=now();
+ }catch{return stop('cooldown_storage_unavailable');}
+ if(!Number.isSafeInteger(deadline)||deadline<0) return stop('cooldown_storage_unavailable');
+ if(!Number.isSafeInteger(current)||current<0) return stop('invalid_clock');
+ if(current<deadline) return stop('primary_cooldown_active',{cooldownUntilMs:deadline});
+ return {decision:{action:'allowed',reason:'primary_cooldown_clear'},result:await request(FREE_PRIMARY)};
+}
+
+module.exports={createCloudflareClient,guardedComplete,createQuotaReservation,createCooldownStore,guardedPrimary};
