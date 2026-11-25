@@ -74,3 +74,7 @@ Before implementation:
 7. After code review and explicit approval, deploy in a controlled stage and verify one completed response from each provider within the free allowance. HTTP 200 from /healthz or /readyz is not proof of AI inference.
 
 Known independent blockers: an unapproved OpenClaw client device and repeated memory/listener warnings cannot be fixed by changing AI providers. Keep Streetwise cellular waitlist-only until issue #39 launch gates are complete.
+
+### Persistent cooldown integration contract (still disabled)
+
+The fallback helper now requires a successful durable cooldown record before reserving an alternate-provider request. Provision a dedicated owner-private Linux directory on the verified persistent volume, separate from the quota directory. The marker store preserves the maximum deadline, does not delete entries, and fails closed on unknown storage state. The runtime caller must read the persisted maximum before **every** OpenRouter request, including after restart and when fallback is disabled; a null read must block the request. The helper does not intercept OpenClaw gateway calls, and the live volume, billing limits and gateway wiring have not been verified. Do not activate it or reset the marker directory until those gates are satisfied.

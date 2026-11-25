@@ -23,10 +23,19 @@ function createCloudflareClient({accountId,apiToken,model,fetchImpl=globalThis.f
  };
 }
 // An explicit caller-owned, durable quota counter is required; this helper never increments it.
-async function guardedComplete({gate,client,messages,reserveQuota}) {
+async function guardedComplete({gate,client,messages,reserveQuota,cooldownStore}) {
  const decision=planFallback(gate);
- if(decision.action!=='eligible') return {decision};
  const stop=reason=>({decision:{...decision,action:'stop',reason}});
+ // Persist the primary cooldown before any alternate inference or quota use.
+ // Even a rejected fallback with a valid deadline must record that deadline.
+ if(Number.isSafeInteger(decision.cooldownUntilMs)){
+  if(typeof cooldownStore?.record!=='function') return stop('persistent_cooldown_required');
+  try {
+   if(await cooldownStore.record(decision.cooldownUntilMs)!==true)
+    return stop('cooldown_storage_unavailable');
+  } catch {return stop('cooldown_storage_unavailable');}
+ }
+ if(decision.action!=='eligible') return {decision};
  if(typeof client!=='function') return stop('client_missing');
  if(typeof reserveQuota!=='function') return stop('atomic_quota_reservation_required');
  try {
@@ -70,4 +79,59 @@ async function guardedComplete({gate,client,messages,reserveQuota}) {
   };
  }
 
-module.exports={createCloudflareClient,guardedComplete,createQuotaReservation};
+// Dedicated, owner-private Linux directory, provisioned on a persistent volume.
+// Immutable deadline markers avoid overwriting a longer concurrent cooldown.
+// No automatic deletion. A missing, malformed or exhausted store is unavailable.
+function createCooldownStore({directory}) {
+ const fs=require('node:fs/promises'),path=require('node:path');
+ const {O_RDONLY,O_DIRECTORY,O_NOFOLLOW,O_WRONLY,O_CREAT,O_EXCL}=require('node:fs').constants;
+ if(typeof directory!=='string'||!path.isAbsolute(directory)) throw new Error('Invalid cooldown directory');
+ const limit=4096;
+ async function accessStore(operation){
+  if(process.platform!=='linux'||typeof process.getuid!=='function'||
+     !Number.isInteger(O_DIRECTORY)||!Number.isInteger(O_NOFOLLOW)) return null;
+  try{
+   const dir=await fs.open(directory,O_RDONLY|O_DIRECTORY|O_NOFOLLOW);
+   try{
+    const info=await dir.stat();
+    if(!info.isDirectory()||info.uid!==process.getuid()||(info.mode&0o077)!==0) return null;
+    const pinned='/proc/self/fd/'+dir.fd;
+    const entries=await fs.readdir(pinned,{withFileTypes:true});
+    if(entries.length>limit) return null;
+    const deadlines=new Set();
+    for(const entry of entries){
+     const match=/^deadline-(0|[1-9][0-9]{0,15})$/.exec(entry.name);
+     if(!entry.isFile()||!match||!Number.isSafeInteger(Number(match[1]))) return null;
+     deadlines.add(Number(match[1]));
+    }
+    return await operation(dir,pinned,deadlines);
+   }finally{await dir.close();}
+  }catch{return null;}
+ }
+ return {
+  async read(){
+   return accessStore(async(_dir,_pinned,deadlines)=>Math.max(0,...deadlines));
+  },
+  async record(deadline){
+   if(!Number.isSafeInteger(deadline)||deadline<0) return false;
+   const saved=await accessStore(async(dir,pinned,deadlines)=>{
+    if(Math.max(0,...deadlines)>=deadline){await dir.sync();return true;}
+    if(deadlines.size>=limit) return false;
+    let marker;
+    try{marker=await fs.open(path.join(pinned,'deadline-'+deadline),O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,0o600);}
+    catch(error){
+     // A concurrent identical marker is not treated as committed by this writer.
+     // The next read may observe it; this call fails closed.
+     if(error.code==='EEXIST') return false;
+     throw error;
+    }
+    try{await marker.sync();}finally{await marker.close();}
+    await dir.sync();
+    return true;
+   });
+   return saved===true;
+  }
+ };
+}
+
+module.exports={createCloudflareClient,guardedComplete,createQuotaReservation,createCooldownStore};

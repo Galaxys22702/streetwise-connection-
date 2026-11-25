@@ -25,17 +25,18 @@ test('provider 429 does not expose response body or token',async()=>{
  await assert.rejects(client([{role:'user',content:'hi'}]),e=>e.status===429&&!e.message.includes('private-test-token'));
 });
 
+const cooldownStore={record:async()=>true};
 const eligibleGate={enabled:true,primary:'openrouter/openrouter/free',status:429,primaryQuotaVerified:true,retryAfterSeconds:120,nowMs:100000,cloudflareConfigured:true,freeEntitlementVerified:true,providerCostKnownFree:true,budgetRequests:1,requestsUsed:0};
 test('eligible fallback fails closed without quota reservation',async()=>{
- let calls=0;const r=await guardedComplete({gate:eligibleGate,client:async()=>{calls++},messages:[]});
+ let calls=0;const r=await guardedComplete({gate:eligibleGate,cooldownStore,client:async()=>{calls++},messages:[]});
  assert.equal(calls,0);assert.equal(r.decision.reason,'atomic_quota_reservation_required');
 });
 test('denied reservation never calls provider',async()=>{
- let calls=0;const r=await guardedComplete({gate:eligibleGate,reserveQuota:async()=>false,client:async()=>{calls++},messages:[]});
+ let calls=0;const r=await guardedComplete({gate:eligibleGate,cooldownStore,reserveQuota:async()=>false,client:async()=>{calls++},messages:[]});
  assert.equal(calls,0);assert.equal(r.decision.reason,'quota_reservation_denied');
 });
 test('reservation precedes provider call',async()=>{
- const order=[];await guardedComplete({gate:eligibleGate,reserveQuota:async()=>{order.push('reserve');return true},client:async()=>{order.push('provider');return {}},messages:[]});
+ const order=[];await guardedComplete({gate:eligibleGate,cooldownStore,reserveQuota:async()=>{order.push('reserve');return true},client:async()=>{order.push('provider');return {}},messages:[]});
  assert.deepEqual(order,['reserve','provider']);
 });
 
@@ -101,13 +102,59 @@ test('existing reservation symlink is not followed or replaced',{skip:process.pl
 
 test('reservation failure never calls provider and preserves cooldown',async()=>{
  let calls=0;
- const r=await guardedComplete({gate:eligibleGate,reserveQuota:async()=>{throw new Error('private storage failure')},client:async()=>{calls++},messages:[]});
+ const r=await guardedComplete({gate:eligibleGate,cooldownStore,reserveQuota:async()=>{throw new Error('private storage failure')},client:async()=>{calls++},messages:[]});
  assert.equal(calls,0);
  assert.deepEqual(r.decision,{action:'stop',reason:'quota_reservation_unavailable',cooldownUntilMs:220000});
 });
 test('unverified quota never reserves or calls provider',async()=>{
  let calls=0;
- const r=await guardedComplete({gate:{...eligibleGate,primaryQuotaVerified:false},reserveQuota:async()=>{calls++;return true},client:async()=>{calls++},messages:[]});
+ const r=await guardedComplete({gate:{...eligibleGate,primaryQuotaVerified:false},cooldownStore,reserveQuota:async()=>{calls++;return true},client:async()=>{calls++},messages:[]});
  assert.equal(calls,0);
  assert.equal(r.decision.reason,'primary_quota_unverified');
+});
+
+test('missing or failed cooldown persistence prevents quota and provider use',async()=>{
+ let calls=0;
+ for(const store of [undefined,{record:async()=>false},{record:async()=>{throw new Error('storage unavailable')}}]){
+  const result=await guardedComplete({gate:eligibleGate,cooldownStore:store,reserveQuota:async()=>{calls++;return true},client:async()=>{calls++},messages:[]});
+  assert.equal(result.decision.action,'stop');
+ }
+ assert.equal(calls,0);
+});
+test('cooldown persistence precedes reservation and records rejected fallback deadlines',async()=>{
+ const order=[];
+ const store={record:async deadline=>{order.push(deadline);return true}};
+ await guardedComplete({gate:eligibleGate,cooldownStore:store,reserveQuota:async()=>{order.push('reserve');return true},client:async()=>{order.push('provider');return {}},messages:[]});
+ assert.deepEqual(order,[220000,'reserve','provider']);
+ order.length=0;
+ const result=await guardedComplete({gate:{...eligibleGate,freeEntitlementVerified:false},cooldownStore:store,client:async()=>{order.push('provider')},messages:[]});
+ assert.equal(result.decision.reason,'cloudflare_not_verified');
+ assert.deepEqual(order,[220000]);
+});
+test('persistent cooldown survives recreation and does not shorten',{skip:process.platform!=='linux'},async t=>{
+ const fs=require('node:fs/promises'),os=require('node:os'),path=require('node:path');
+ const {createCooldownStore}=require('./cloudflare-workers-ai-client.cjs');
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'guardian-cooldown-'));
+ t.after(()=>fs.rm(directory,{recursive:true,force:true}));
+ const store=createCooldownStore({directory});
+ assert.equal(await store.read(),0);
+ assert.equal(await store.record(300000),true);
+ assert.equal(await store.record(220000),true);
+ assert.equal(await createCooldownStore({directory}).read(),300000);
+ await Promise.all([400000,500000,450000].map(value=>store.record(value)));
+ assert.equal(await createCooldownStore({directory}).read(),500000);
+ assert.equal(await store.record(Number.MAX_SAFE_INTEGER+1),false);
+});
+test('missing, malformed or symlinked cooldown stores fail closed',{skip:process.platform!=='linux'},async t=>{
+ const fs=require('node:fs/promises'),os=require('node:os'),path=require('node:path');
+ const {createCooldownStore}=require('./cloudflare-workers-ai-client.cjs');
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'guardian-cooldown-safety-'));
+ t.after(()=>fs.rm(directory,{recursive:true,force:true}));
+ const missing=createCooldownStore({directory:path.join(directory,'missing')});
+ assert.equal(await missing.read(),null);
+ assert.equal(await missing.record(1000),false);
+ const store=createCooldownStore({directory});
+ await fs.symlink('/dev/null',path.join(directory,'deadline-1000'));
+ assert.equal(await store.read(),null);
+ assert.equal(await store.record(2000),false);
 });
