@@ -25,7 +25,7 @@ test('provider 429 does not expose response body or token',async()=>{
  await assert.rejects(client([{role:'user',content:'hi'}]),e=>e.status===429&&!e.message.includes('private-test-token'));
 });
 
-const eligibleGate={enabled:true,primary:'openrouter/openrouter/free',status:429,retryAfterSeconds:120,nowMs:100000,cloudflareConfigured:true,freeEntitlementVerified:true,providerCostKnownFree:true,budgetRequests:1,requestsUsed:0};
+const eligibleGate={enabled:true,primary:'openrouter/openrouter/free',status:429,primaryQuotaVerified:true,retryAfterSeconds:120,nowMs:100000,cloudflareConfigured:true,freeEntitlementVerified:true,providerCostKnownFree:true,budgetRequests:1,requestsUsed:0};
 test('eligible fallback fails closed without quota reservation',async()=>{
  let calls=0;const r=await guardedComplete({gate:eligibleGate,client:async()=>{calls++},messages:[]});
  assert.equal(calls,0);assert.equal(r.decision.reason,'atomic_quota_reservation_required');
@@ -97,4 +97,17 @@ test('existing reservation symlink is not followed or replaced',{skip:process.pl
  assert.equal(await createQuotaReservation({directory:root,budget:1})(),false);
  assert.equal(await fs.readFile(target,'utf8'),'unchanged');
  assert.equal((await fs.lstat(path.join(root,'reservation-0'))).isSymbolicLink(),true);
+});
+
+test('reservation failure never calls provider and preserves cooldown',async()=>{
+ let calls=0;
+ const r=await guardedComplete({gate:eligibleGate,reserveQuota:async()=>{throw new Error('private storage failure')},client:async()=>{calls++},messages:[]});
+ assert.equal(calls,0);
+ assert.deepEqual(r.decision,{action:'stop',reason:'quota_reservation_unavailable',cooldownUntilMs:220000});
+});
+test('unverified quota never reserves or calls provider',async()=>{
+ let calls=0;
+ const r=await guardedComplete({gate:{...eligibleGate,primaryQuotaVerified:false},reserveQuota:async()=>{calls++;return true},client:async()=>{calls++},messages:[]});
+ assert.equal(calls,0);
+ assert.equal(r.decision.reason,'primary_quota_unverified');
 });

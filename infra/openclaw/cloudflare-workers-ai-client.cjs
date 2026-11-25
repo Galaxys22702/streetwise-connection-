@@ -26,9 +26,14 @@ function createCloudflareClient({accountId,apiToken,model,fetchImpl=globalThis.f
 async function guardedComplete({gate,client,messages,reserveQuota}) {
  const decision=planFallback(gate);
  if(decision.action!=='eligible') return {decision};
- if(typeof client!=='function') return {decision:{action:'stop',reason:'client_missing'}};
- if(typeof reserveQuota!=='function') return {decision:{action:'stop',reason:'atomic_quota_reservation_required'}};
- if(await reserveQuota() !== true) return {decision:{action:'stop',reason:'quota_reservation_denied'}};
+ const stop=reason=>({decision:{...decision,action:'stop',reason}});
+ if(typeof client!=='function') return stop('client_missing');
+ if(typeof reserveQuota!=='function') return stop('atomic_quota_reservation_required');
+ try {
+  if(await reserveQuota() !== true) return stop('quota_reservation_denied');
+ } catch {
+  return stop('quota_reservation_unavailable');
+ }
  return {decision,result:await client(messages)};
 }
 
