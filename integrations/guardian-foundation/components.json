@@ -1,0 +1,163 @@
+{
+  "version": 1,
+  "model_route": "openrouter/openrouter/free",
+  "paid_fallback": false,
+  "production_changes": false,
+  "network_capture": "owned or explicitly authorized only",
+  "components": [
+    {
+      "name": "OpenTelemetry",
+      "url": "https://opentelemetry.io/",
+      "layer": "telemetry",
+      "gate": "collector capacity and redaction",
+      "status": "UNVERIFIED"
+    },
+    {
+      "name": "Wireshark",
+      "url": "https://www.wireshark.org/",
+      "layer": "network",
+      "gate": "authorized device and capture scope",
+      "status": "UNVERIFIED"
+    },
+    {
+      "name": "Suricata",
+      "url": "https://suricata.io/",
+      "layer": "network",
+      "gate": "authorized network and dedicated capacity",
+      "status": "UNVERIFIED"
+    },
+    {
+      "name": "Wazuh",
+      "url": "https://wazuh.com/",
+      "layer": "security",
+      "gate": "manager and agent capacity",
+      "status": "UNVERIFIED"
+    },
+    {
+      "name": "Grafana",
+      "url": "https://grafana.com/oss/grafana/",
+      "layer": "telemetry",
+      "gate": "private dashboard and datasource",
+      "status": "UNVERIFIED"
+    },
+    {
+      "name": "Prometheus",
+      "url": "https://prometheus.io/",
+      "layer": "telemetry",
+      "gate": "private metrics endpoints",
+      "status": "UNVERIFIED"
+    },
+    {
+      "name": "NATS",
+      "url": "https://nats.io/",
+      "layer": "execution",
+      "gate": "authenticated private broker",
+      "status": "UNVERIFIED"
+    },
+    {
+      "name": "Uptime Kuma",
+      "url": "https://github.com/louislam/uptime-kuma",
+      "layer": "monitoring",
+      "gate": "private runtime",
+      "status": "UNVERIFIED"
+    },
+    {
+      "name": "Trivy",
+      "url": "https://trivy.dev/",
+      "layer": "audit",
+      "gate": "pinned scanner and CI budget",
+      "status": "UNVERIFIED"
+    },
+    {
+      "name": "pgvector",
+      "url": "https://github.com/pgvector/pgvector",
+      "layer": "memory",
+      "gate": "database authentication and embedding choice",
+      "status": "UNVERIFIED"
+    },
+    {
+      "name": "Temporal",
+      "url": "https://temporal.io/",
+      "layer": "execution",
+      "gate": "dedicated worker and persistence capacity",
+      "status": "UNVERIFIED"
+    },
+    {
+      "name": "OpenBao",
+      "url": "https://openbao.org/",
+      "layer": "security",
+      "gate": "private host and recovery key custody",
+      "status": "UNVERIFIED"
+    },
+    {
+      "name": "Zeek",
+      "url": "https://zeek.org/",
+      "layer": "network",
+      "gate": "authorized network and capture scope",
+      "status": "UNVERIFIED"
+    },
+    {
+      "name": "Osquery",
+      "url": "https://osquery.io/",
+      "layer": "security",
+      "gate": "online authorized device",
+      "status": "UNVERIFIED"
+    },
+    {
+      "name": "Falco",
+      "url": "https://falco.org/",
+      "layer": "security",
+      "gate": "supported Linux kernel/runtime",
+      "status": "UNVERIFIED"
+    },
+    {
+      "name": "LiteLLM",
+      "url": "https://docs.litellm.ai/",
+      "layer": "model",
+      "gate": "explicit free-only route and no fallback",
+      "status": "UNVERIFIED"
+    },
+    {
+      "name": "Langfuse",
+      "url": "https://langfuse.com/",
+      "layer": "telemetry",
+      "gate": "private storage, redaction and retention",
+      "status": "UNVERIFIED"
+    },
+    {
+      "name": "Open Policy Agent",
+      "url": "https://www.openpolicyagent.org/",
+      "layer": "security",
+      "gate": "tested least privilege policy",
+      "status": "UNVERIFIED"
+    },
+    {
+      "name": "PGMQ",
+      "url": "https://github.com/pgmq/pgmq",
+      "layer": "execution",
+      "gate": "database authentication and extension availability",
+      "status": "UNVERIFIED"
+    },
+    {
+      "name": "Gitleaks",
+      "url": "https://github.com/gitleaks/gitleaks",
+      "layer": "audit",
+      "gate": "pinned scanner and redacted output",
+      "status": "UNVERIFIED"
+    },
+    {
+      "name": "Ollama",
+      "url": "https://ollama.com/",
+      "layer": "model",
+      "gate": "local hardware check; outside current OpenRouter-only policy",
+      "status": "UNVERIFIED"
+    },
+    {
+      "name": "MCP",
+      "url": "https://modelcontextprotocol.io/",
+      "layer": "execution",
+      "gate": "approved individual tool scopes",
+      "status": "UNVERIFIED"
+    }
+  ]
+}
