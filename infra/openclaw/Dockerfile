@@ -6,6 +6,11 @@ RUN apt-get update \
 RUN npm install -g --allow-scripts=openclaw openclaw@2026.9.9 \
  && node --version | grep -Eq '^v26[.]' \
  && openclaw --version | grep -Eq '^OpenClaw 2026[.]9[.]9( |$)'
+# Locate the installed foreground transport without changing the vendor bundle.
+COPY inspect-foreground-transport.cjs inspect-foreground-transport.test.cjs /tmp/
+RUN node --test /tmp/inspect-foreground-transport.test.cjs \
+ && node /tmp/inspect-foreground-transport.cjs \
+ && rm /tmp/inspect-foreground-transport.cjs /tmp/inspect-foreground-transport.test.cjs
 # Patch ONLY the pinned OpenClaw .mjs setup-inference probe in this image.
 # No /data access, no session edits, no provider requests. Fail closed on version drift.
 COPY probe-gate-166.cjs /app/probe-gate-166.cjs
