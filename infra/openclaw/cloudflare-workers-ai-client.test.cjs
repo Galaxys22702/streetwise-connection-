@@ -39,7 +39,7 @@ test('reservation precedes provider call',async()=>{
  assert.deepEqual(order,['reserve','provider']);
 });
 
-test('persistent quota survives recreation and rejects concurrent oversubscription',async t=>{
+test('persistent quota survives recreation and rejects concurrent oversubscription',{skip:process.platform!=='linux'},async t=>{
  const fs=require('node:fs/promises'),os=require('node:os'),path=require('node:path');
  const {createQuotaReservation}=require('./cloudflare-workers-ai-client.cjs');
  const directory=await fs.mkdtemp(path.join(os.tmpdir(),'guardian-quota-'));
@@ -64,4 +64,37 @@ test('missing, empty and oversized replies fail closed',async()=>{
   const client=createCloudflareClient({accountId:id,model,apiToken:'fake-test-token',fetchImpl:async()=>({ok:true,json:async()=>payload})});
   await assert.rejects(client([{role:'user',content:'hi'}]),/Invalid Cloudflare response/);
  }
+});
+
+test('quota directory rejects symlinks, ordinary files and shared permissions',{skip:process.platform!=='linux'},async t=>{
+ const fs=require('node:fs/promises'),os=require('node:os'),path=require('node:path');
+ const {createQuotaReservation}=require('./cloudflare-workers-ai-client.cjs');
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'guardian-quota-safety-'));
+ t.after(()=>fs.rm(root,{recursive:true,force:true}));
+ const target=path.join(root,'target'),link=path.join(root,'link'),file=path.join(root,'file');
+ await fs.mkdir(target,{mode:0o700});
+ await fs.symlink(target,link);
+ await fs.writeFile(file,'unchanged');
+ for(const directory of [link,file]){
+  assert.equal(await createQuotaReservation({directory,budget:1})(),false);
+ }
+ await fs.chmod(target,0o755);
+ assert.equal(await createQuotaReservation({directory:target,budget:1})(),false);
+ assert.deepEqual(await fs.readdir(target),[]);
+ assert.equal(await fs.readFile(file,'utf8'),'unchanged');
+ await fs.chmod(target,0o700);
+ assert.equal(await createQuotaReservation({directory:target,budget:1})(),true);
+ assert.deepEqual(await fs.readdir(target),['reservation-0']);
+});
+test('existing reservation symlink is not followed or replaced',{skip:process.platform!=='linux'},async t=>{
+ const fs=require('node:fs/promises'),os=require('node:os'),path=require('node:path');
+ const {createQuotaReservation}=require('./cloudflare-workers-ai-client.cjs');
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'guardian-quota-slot-'));
+ t.after(()=>fs.rm(root,{recursive:true,force:true}));
+ const target=path.join(root,'target');
+ await fs.writeFile(target,'unchanged');
+ await fs.symlink(target,path.join(root,'reservation-0'));
+ assert.equal(await createQuotaReservation({directory:root,budget:1})(),false);
+ assert.equal(await fs.readFile(target,'utf8'),'unchanged');
+ assert.equal((await fs.lstat(path.join(root,'reservation-0'))).isSymbolicLink(),true);
 });

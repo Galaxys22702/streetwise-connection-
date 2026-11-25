@@ -32,25 +32,34 @@ async function guardedComplete({gate,client,messages,reserveQuota}) {
  return {decision,result:await client(messages)};
 }
 
- // Conservative lifetime budget: atomic exclusive slot creation on a shared persistent
- // filesystem. No automatic reset or refund, including after provider failure.
+// Conservative lifetime budget: atomic exclusive slots, never automatically reset.
+ // Linux container only. Use an owner-private directory under a trusted persistent
+ // parent; the owner must not rename, replace or delete it while in service.
+ // Pin the directory inode for each reservation, rather than checking a path
+ // and subsequently reopening it. A missing procfs or unsupported OS fails closed.
  function createQuotaReservation({directory,budget}) {
   const fs=require('node:fs/promises'), path=require('node:path');
+  const {O_RDONLY,O_DIRECTORY,O_NOFOLLOW,O_WRONLY,O_CREAT,O_EXCL}=require('node:fs').constants;
   if(typeof directory!=='string'||!path.isAbsolute(directory)||!Number.isSafeInteger(budget)||budget<1||budget>10000)
    throw new Error('Invalid persistent quota configuration');
   return async function reserveQuota(){
+   if(process.platform!=='linux'||typeof process.getuid!=='function'||
+      !Number.isInteger(O_DIRECTORY)||!Number.isInteger(O_NOFOLLOW)) return false;
    try {
-    const stat=await fs.lstat(directory);
-    if(!stat.isDirectory()||stat.isSymbolicLink()) return false;
-    for(let i=0;i<budget;i++){
-     let handle;
-     try {handle=await fs.open(path.join(directory,'reservation-'+i),'wx',0o600);}
-     catch(e){if(e.code==='EEXIST') continue;return false;}
-     try {await handle.sync();} finally {await handle.close();}
-     const dir=await fs.open(directory,'r');
-     try {await dir.sync();} finally {await dir.close();}
-     return true;
-    }
+    const dir=await fs.open(directory,O_RDONLY|O_DIRECTORY|O_NOFOLLOW);
+    try {
+     const info=await dir.stat();
+     if(!info.isDirectory()||info.uid!==process.getuid()||(info.mode&0o077)!==0) return false;
+     const pinned='/proc/self/fd/'+dir.fd;
+     for(let i=0;i<budget;i++){
+      let handle;
+      try {handle=await fs.open(path.join(pinned,'reservation-'+i),O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,0o600);}
+      catch(e){if(e.code==='EEXIST') continue;return false;}
+      try {await handle.sync();} finally {await handle.close();}
+      await dir.sync();
+      return true;
+     }
+    } finally {await dir.close();}
    } catch {return false;}
    return false;
   };
