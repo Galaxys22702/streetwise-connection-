@@ -8,7 +8,7 @@ function createCloudflareClient({accountId,apiToken,model,fetchImpl=globalThis.f
  const url='https://api.cloudflare.com/client/v4/accounts/'+accountId+'/ai/v1/chat/completions';
  return async function complete(messages) {
   if (!Array.isArray(messages) || messages.length===0) throw new Error('messages required');
-  const response=await fetchImpl(url,{method:'POST',signal:AbortSignal.timeout(15000),headers:{
+  const response=await fetchImpl(url,{method:'POST',redirect:'error',signal:AbortSignal.timeout(15000),headers:{
    Authorization:'Bearer '+apiToken,'Content-Type':'application/json'
   },body:JSON.stringify({model,messages,stream:false})});
   if (!response.ok) {
@@ -17,7 +17,8 @@ function createCloudflareClient({accountId,apiToken,model,fetchImpl=globalThis.f
    throw err;
   }
   const result=await response.json();
-  if (!result || !Array.isArray(result.choices)) throw new Error('Invalid Cloudflare response');
+  const reply=result?.choices?.[0]?.message?.content;
+  if (typeof reply!=='string' || !reply.trim() || reply.length>16000) throw new Error('Invalid Cloudflare response');
   return result;
  };
 }

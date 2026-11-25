@@ -50,3 +50,18 @@ test('persistent quota survives recreation and rejects concurrent oversubscripti
  assert.equal(await createQuotaReservation({directory,budget:2})(),false);
  assert.equal(await createQuotaReservation({directory:path.join(directory,'missing'),budget:2})(),false);
 });
+
+
+test('provider request rejects redirects',async()=>{
+ const client=createCloudflareClient({accountId:id,model,apiToken:'fake-test-token',fetchImpl:async(_url,options)=>{
+  assert.equal(options.redirect,'error');
+  return {ok:true,json:async()=>({choices:[{message:{content:'hello'}}]})};
+ }});
+ await client([{role:'user',content:'hi'}]);
+});
+test('missing, empty and oversized replies fail closed',async()=>{
+ for(const payload of [{choices:[]},{choices:[{message:{content:' '}}]},{choices:[{message:{content:'x'.repeat(16001)}}]}]){
+  const client=createCloudflareClient({accountId:id,model,apiToken:'fake-test-token',fetchImpl:async()=>({ok:true,json:async()=>payload})});
+  await assert.rejects(client([{role:'user',content:'hi'}]),/Invalid Cloudflare response/);
+ }
+});
