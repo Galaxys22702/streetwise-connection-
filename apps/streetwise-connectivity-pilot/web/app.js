@@ -49,11 +49,14 @@ async function relayed(pc) {
 get('test').addEventListener('click',async () => {
   const button = get('test');
   const output = get('result');
+  const code = get('turn-code').value;
+  get('turn-code').value = '';
+  if (!code) { output.textContent = 'Enter your invited relay access code.'; return; }
   button.disabled = true;
   output.textContent = 'Getting temporary relay access…';
   let first,second,timer;
   try {
-    const {iceServers} = await request('/v1/turn',{method:'POST'});
+    const {iceServers} = await request('/v1/turn',{method:'POST',headers:{'X-Turn-Access-Code':code}});
     const configuration = {iceServers,iceTransportPolicy:'relay'};
     first = new RTCPeerConnection(configuration);
     second = new RTCPeerConnection(configuration);
@@ -94,8 +97,9 @@ get('test').addEventListener('click',async () => {
     const average = results.reduce((sum,value)=>sum+value,0) / results.length;
     output.textContent = 'Verified TURN round trip averaged ' + average.toFixed(1) + ' ms. ' +
       results.length + ' of ' + sequence + ' probes replied.';
-  } catch {
-    output.textContent = 'No verified TURN result. The API, relay, or browser route was unavailable.';
+  } catch (error) {
+    if (error.message === 'turn_access_required') { output.textContent = 'The relay access code was rejected.'; }
+    else output.textContent = 'No verified TURN result. The API, relay, or browser route was unavailable.';
   } finally {
     clearInterval(timer);first?.close();second?.close();button.disabled=false;
   }
