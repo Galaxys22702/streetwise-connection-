@@ -43,8 +43,9 @@ test('defaults TURN and eSIM off and never calls a provider in that mode', async
 });
 test('issues short-lived TURN credentials only for the approved origin and limits requests', async t=>{
   const secret='synthetic-test-secret'.repeat(3);
-  const ask=await fixture(t,{TURN_SHARED_SECRET:secret,TURN_URLS:'turn:turn.example.test:3478?transport=udp'});
-  const open=site=>ask('/v1/turn',{method:'POST',headers:{Origin:site}});
+  const accessCode='fixture-only-turn-access-code'.repeat(2);
+  const ask=await fixture(t,{TURN_SHARED_SECRET:secret,TURN_ACCESS_CODE:accessCode,TURN_URLS:'turn:turn.example.test:3478?transport=udp'});
+  const open=site=>ask('/v1/turn',{method:'POST',headers:{Origin:site,'X-Turn-Access-Code':accessCode}});
   assert.equal((await open('https://other.example.test')).status,403);
   const response=await open(origin);
   const [server]=(await response.json()).iceServers;
@@ -76,4 +77,20 @@ test('returns only the real provider field for the authorized active subscriptio
   installed=installed.replace('esimsetup.apple.com','example.test');
   assert.equal((await activate(ask)).status,409);
   assert.equal(pathCount,4);
+});
+
+test('TURN fails closed without distinct access code and rejects missing or incorrect credentials', async t=>{
+  const secret='fixture-turn-shared-secret'.repeat(2);
+  const code='fixture-turn-access-code'.repeat(2);
+  const env={TURN_SHARED_SECRET:secret,TURN_URLS:'turn:turn.example.test:3478'};
+  assert.throws(()=>buildServer(env), /TURN configuration is incomplete/);
+  assert.throws(()=>buildServer({...env,TURN_ACCESS_CODE:secret}), /TURN configuration is incomplete/);
+  const ask=await fixture(t,{...env,TURN_ACCESS_CODE:code});
+  for(const headers of [{Origin:origin},{Origin:origin,'X-Turn-Access-Code':'wrong'}]){
+    const res=await ask('/v1/turn',{method:'POST',headers});
+    assert.equal(res.status,403);
+    assert.deepEqual(await res.json(),{error:'turn_access_required'});
+  }
+  const allowed=await ask('/v1/turn',{method:'POST',headers:{Origin:origin,'X-Turn-Access-Code':code}});
+  assert.equal(allowed.status,200);
 });
