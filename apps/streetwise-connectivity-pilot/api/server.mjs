@@ -54,8 +54,9 @@ export function buildServer(env = process.env, providerFetch = fetch, now = Date
   const allowed = new Set((env.WEB_ORIGINS || 'https://streetwiseconnection.com').split(',').map(s => s.trim()));
   const onNetwork = cidrMatcher(env.CBRS_CIDRS);
   const turnSecret = env.TURN_SHARED_SECRET;
+  const turnAccessCode = env.TURN_ACCESS_CODE;
   const turnUrls = (env.TURN_URLS || '').split(',').map(s => s.trim()).filter(Boolean);
-  if (turnUrls.some(url => !/^turns?:[^\s]+$/.test(url)) || (turnUrls.length && (!turnSecret || turnSecret.length < 32))) {
+  if (turnUrls.some(url => !/^turns?:[^\s]+$/.test(url)) || (turnUrls.length && (!turnSecret || turnSecret.length < 32 || typeof turnAccessCode !== 'string' || turnAccessCode.length < 32 || turnAccessCode === turnSecret))) {
     throw Error('TURN configuration is incomplete');
   }
   const live = env.GIGS_ESIM_ENABLED === 'true';
@@ -103,7 +104,7 @@ export function buildServer(env = process.env, providerFetch = fetch, now = Date
     if (req.method === 'OPTIONS') {
       if (!originOK) return reply(403,{error:'origin_denied'});
       res.writeHead(204,{'Access-Control-Allow-Methods':'GET,POST,OPTIONS',
-        'Access-Control-Allow-Headers':'Content-Type,X-Pilot-Code','Access-Control-Max-Age':'600'}); return res.end();
+        'Access-Control-Allow-Headers':'Content-Type,X-Pilot-Code,X-Turn-Access-Code','Access-Control-Max-Age':'600'}); return res.end();
     }
     const peer = normalizeIp(req.socket.remoteAddress);
     const observed = env.TRUST_LOOPBACK_PROXY === 'true' && peer === '127.0.0.1' &&
@@ -115,6 +116,8 @@ export function buildServer(env = process.env, providerFetch = fetch, now = Date
       if (!originOK) return reply(403,{error:'origin_denied'});
       if (!turnUrls.length) return reply(503,{error:'turn_not_configured'});
       if (!quota('turn:' + observed,60_000,4)) return reply(429,{error:'try_again_later'});
+      const code = req.headers['x-turn-access-code'];
+      if (typeof code !== 'string' || !timingSafeEqual(hash(code),hash(turnAccessCode))) return reply(403,{error:'turn_access_required'});
       const username = Math.floor(now() / 1000 + 180) + ':' + randomBytes(9).toString('hex');
       const credential = createHmac('sha1',turnSecret).update(username).digest('base64');
       return reply(200,{iceServers:[{urls:turnUrls,username,credential}]});
