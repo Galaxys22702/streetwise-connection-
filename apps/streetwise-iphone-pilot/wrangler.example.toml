@@ -1,0 +1,10 @@
+# Copy to wrangler.toml in this pilot directory after creating a separate D1 database.
+# The repository's top-level Worker config remains unchanged.
+name = "streetwise-iphone-pilot"
+main = "./dist/server/index.js"
+compatibility_date = "2026-11-21"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "streetwise-iphone-pilot"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
