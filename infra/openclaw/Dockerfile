@@ -17,9 +17,7 @@ COPY patch-foreground-transport.cjs /tmp/patch-foreground-transport.cjs
 RUN node --test /app/foreground-cooldown.test.cjs \
  && node /tmp/patch-foreground-transport.cjs \
  && rm /tmp/patch-foreground-transport.cjs
-COPY compiled-foreground-fixture.cjs /tmp/compiled-foreground-fixture.cjs
-RUN node --test /tmp/compiled-foreground-fixture.cjs \
- && rm /tmp/compiled-foreground-fixture.cjs
+
 # Patch ONLY the pinned OpenClaw .mjs setup-inference probe in this image.
 # No /data access, no session edits, no provider requests. Fail closed on version drift.
 COPY probe-gate-166.cjs /app/probe-gate-166.cjs
@@ -51,6 +49,9 @@ RUN node patch-startup.cjs && node --check /app/src/server.js && rm patch-startu
 COPY cloudflare-fallback-gate.cjs cloudflare-fallback-gate.test.cjs cloudflare-workers-ai-client.cjs cloudflare-workers-ai-client.test.cjs ./
 RUN node --check /app/cloudflare-fallback-gate.cjs && node --check /app/cloudflare-workers-ai-client.cjs \
  && node --test /app/cloudflare-fallback-gate.test.cjs /app/cloudflare-workers-ai-client.test.cjs
+COPY compiled-foreground-fixture.cjs /tmp/compiled-foreground-fixture.cjs
+RUN node --test /tmp/compiled-foreground-fixture.cjs \
+ && rm /tmp/compiled-foreground-fixture.cjs
 COPY optimize-plugins.cjs ./optimize-plugins.cjs
 COPY configure-gemini-auth.cjs ./configure-gemini-auth.cjs
 COPY recover-model.cjs ./recover-model.cjs

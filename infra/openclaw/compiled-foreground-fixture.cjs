@@ -47,3 +47,51 @@ test('actual compiled wrapper delegates to guard and persists rate limits',async
  assert.equal((await transport(url,init)).status,429);
  assert.equal(calls,2);
 });
+
+// Use the actual installed SDK's serialization and stream parser, not handcrafted
+// fetch arguments. The upstream network is deliberately replaced; no real API key.
+test('installed SDK exercises free request, durable cooldown, and streamed text',{timeout:15000},async t=>{
+ const {createRequire}=require('node:module');
+ const localRequire=createRequire('/usr/local/lib/node_modules/openclaw/package.json');
+ const sdk=localRequire('openai');
+ const OpenAI=sdk.OpenAI??sdk.default??sdk;
+ const {createAdmission}=require('/app/foreground-cooldown.cjs');
+ // The Dockerfile copies these dependencies after the compiled-wrapper test.
+ // The actual fixture is run again after those files are installed.
+ const {createCooldownStore}=require('/app/cloudflare-workers-ai-client.cjs');
+ const fsPromises=require('node:fs/promises'),os=require('node:os'),path=require('node:path');
+ const root=await fsPromises.mkdtemp(path.join(os.tmpdir(),'jarvis-sdk-fixture-'));
+ t.after(()=>fsPromises.rm(root,{recursive:true,force:true}));
+ const cooldown=path.join(root,'cooldown'),admission=path.join(root,'admission');
+ await fsPromises.mkdir(cooldown,{mode:0o700});
+ await fsPromises.mkdir(admission,{mode:0o700});
+ let calls=0,clock=100000;
+ const makeClient=()=>new OpenAI({apiKey:'fixture-not-a-real-key',baseURL:'https://openrouter.ai/api/v1',maxRetries:0,
+  fetch:createForegroundGuard({model,now:()=>clock,
+   store:createCooldownStore({directory:cooldown}),acquire:createAdmission(admission),
+   original:async(input,options)=>{
+    calls++;
+    assert.equal(String(input),url);
+    assert.equal(JSON.parse(options.body).model,'openrouter/free');
+    if(calls===1)return new Response(JSON.stringify({error:{message:'fixture quota',code:429}}),{status:429,headers:{'content-type':'application/json','retry-after':'120.5'}});
+    const chunk=(delta,finish_reason)=>({id:'fixture',object:'chat.completion.chunk',created:1,model:'openrouter/free',choices:[{index:0,delta,finish_reason}]});
+    return new Response('data: '+JSON.stringify(chunk({role:'assistant',content:'JARVIS FIXTURE'},null))+'\n\ndata: '+JSON.stringify(chunk({},'stop'))+'\n\ndata: [DONE]\n\n',{headers:{'content-type':'text/event-stream'}});
+   }})
+ });
+ const request={model:'openrouter/free',messages:[{role:'user',content:'fixture'}],stream:true};
+ await assert.rejects(makeClient().chat.completions.create(request),e=>e.status===429);
+ const deadline=await createCooldownStore({directory:cooldown}).read();
+ assert.equal(deadline,220500);
+ await assert.rejects(makeClient().chat.completions.create(request));
+ assert.equal(calls,1);
+ clock=deadline;
+ const stream=await makeClient().chat.completions.create(request);
+ let visible='',finish;
+ for await(const chunk of stream){
+  visible+=chunk.choices[0]?.delta?.content??'';
+  if(chunk.choices[0]?.finish_reason)finish=chunk.choices[0].finish_reason;
+ }
+ assert.equal(visible,'JARVIS FIXTURE');
+ assert.equal(finish,'stop');
+ assert.equal(calls,2);
+});
