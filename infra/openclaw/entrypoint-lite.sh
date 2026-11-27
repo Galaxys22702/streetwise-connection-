@@ -50,6 +50,21 @@ gosu openclaw node /app/configure-free-chat.cjs
 gosu openclaw node /app/inspect-session-thinking-166.cjs || echo '[JARVIS] SQLite thinking audit unavailable.'
 # Repair only the known skill's missing YAML description, with a private exact backup.
 gosu openclaw node /app/repair-skill-description.cjs || echo '[JARVIS] Skill metadata repair unavailable.'
+# Install the bundled, opt-in council skill in OpenClaw's persistent managed skills directory.
+# Never replace an existing owner-edited skill; fail safely if storage is unavailable.
+COUNCIL_DIR="${OPENCLAW_STATE_DIR:-/data/.openclaw}/skills/streetwise-council"
+if [ -f /app/streetwise-council/SKILL.md ]; then
+  if [ ! -e "$COUNCIL_DIR/SKILL.md" ]; then
+    if gosu openclaw sh -c 'umask 027; mkdir -p -- "$1" && (set -C; cat /app/streetwise-council/SKILL.md > "$1/SKILL.md")' sh "$COUNCIL_DIR"; then
+      echo '[JARVIS] Streetwise Council skill installed (opt-in; no tools granted).'
+    else
+      echo '[JARVIS] Optional Streetwise Council installation unavailable; continuing startup.'
+    fi
+  else
+    echo '[JARVIS] Streetwise Council skill already exists; preserving owner version.'
+  fi
+fi
+
 gosu openclaw node /app/optimize-plugins.cjs
 
 if [ "${JARVIS_APPROVE_LOCAL_OPERATOR:-0}" = "1" ] || [ "${JARVIS_STATUS_PROBE:-0}" = "1" ]; then

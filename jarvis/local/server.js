@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { devilCommand, devilInstructions, planDevilTask } from './devil.js';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -52,12 +53,19 @@ export function createLocalServer({ apiKey = process.env.OPENROUTER_API_KEY || '
       try { input = JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { return send(400, { error: 'Invalid JSON' }); }
       const message = typeof input?.message === 'string' ? input.message.trim() : '';
       if (!message || message.length > 4000) return send(400, { error: 'Message must be 1–4000 characters' });
+      if (/^DEVIL PLAN:/i.test(message)) {
+        const plan = planDevilTask(message.slice('DEVIL PLAN:'.length).trim());
+        return plan ? send(200, { answer: 'DEVIL offline plan ready. No external action executed.', plan }) : send(400, { error: 'Provide a task after DEVIL PLAN:' });
+      }
+      const command = devilCommand(message);
+      if (command) return send(200, { answer: command === 'on' ? 'DEVIL MODE ACTIVATED. Persona online. Permissions unchanged.' : 'DEVIL MODE DEACTIVATED. JARVIS normal persona restored.', devilMode: command === 'on' });
+      const devilMode = input?.devilMode === true;
       if (!apiKey) return send(503, { error: 'AI not configured. Restart with the Windows launcher and enter your OpenRouter key in its hidden prompt.' });
       if (inFlight) return send(429, { error: 'Wait for the current response.' });
       inFlight = true;
       try {
         const answer = await requestJarvisReply([{ role: 'user', content: message }], { env, fetchImpl,
-          instructions: 'You are JARVIS, a practical creative and technical assistant for Rob the Producer. Address the user as sir. Provide useful answers and drafts. You have no execution tools: never claim to send, publish, purchase, deploy, or edit files. Do not request secrets.' });
+          instructions: 'You are JARVIS, a practical creative and technical assistant for Rob the Producer. Address the user as sir. Provide useful answers and drafts. You have no execution tools: never claim to send, publish, purchase, deploy, or edit files. Do not request secrets.' + (devilMode ? ' ' + devilInstructions() : '') });
         return send(200, { answer });
       } finally { inFlight = false; }
     } catch (error) {
