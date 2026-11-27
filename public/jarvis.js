@@ -1,4 +1,5 @@
 import { createJarvisVoice } from "./jarvis-voice.js";
+import { mountTerminal } from "./jarvis-terminal.js";
 import { createCommandControls } from "./jarvis-commands.js";
 import { retryAfterSeconds, isLocalStatusPrompt } from "./jarvis-rate-limit.js";
 
@@ -74,6 +75,8 @@ const commandControls = createCommandControls({ api, byId, isChatBusy: () => bus
     byId("voice-input").disabled = active || busy || !voice.canListen;
   }
 });
+
+mountTerminal({ byId, isBusy: () => busy || listening || commandControls.running });
 
 async function api(path, body) {
   const response = await fetch(path, {
