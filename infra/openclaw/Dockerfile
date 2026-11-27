@@ -6,6 +6,18 @@ RUN apt-get update \
 RUN npm install -g --allow-scripts=openclaw openclaw@2026.9.9 \
  && node --version | grep -Eq '^v26[.]' \
  && openclaw --version | grep -Eq '^OpenClaw 2026[.]9[.]9( |$)'
+# Locate the installed foreground transport without changing the vendor bundle.
+COPY inspect-foreground-transport.cjs inspect-foreground-transport.test.cjs /tmp/
+RUN node --test /tmp/inspect-foreground-transport.test.cjs \
+ && node /tmp/inspect-foreground-transport.cjs \
+ && rm /tmp/inspect-foreground-transport.cjs /tmp/inspect-foreground-transport.test.cjs
+# Install opt-in foreground guard only against the verified compiled fingerprint.
+COPY foreground-cooldown.cjs foreground-cooldown.test.cjs /app/
+COPY patch-foreground-transport.cjs /tmp/patch-foreground-transport.cjs
+RUN node --test /app/foreground-cooldown.test.cjs \
+ && node /tmp/patch-foreground-transport.cjs \
+ && rm /tmp/patch-foreground-transport.cjs
+
 # Patch ONLY the pinned OpenClaw .mjs setup-inference probe in this image.
 # No /data access, no session edits, no provider requests. Fail closed on version drift.
 COPY probe-gate-166.cjs /app/probe-gate-166.cjs
@@ -34,6 +46,12 @@ RUN npm install -g pnpm@11.24.0 \
  && pnpm install --frozen-lockfile --prod
 COPY patch-startup.cjs setup-models.cjs setup-route.cjs ./
 RUN node patch-startup.cjs && node --check /app/src/server.js && rm patch-startup.cjs setup-models.cjs setup-route.cjs
+COPY cloudflare-fallback-gate.cjs cloudflare-fallback-gate.test.cjs cloudflare-workers-ai-client.cjs cloudflare-workers-ai-client.test.cjs ./
+RUN node --check /app/cloudflare-fallback-gate.cjs && node --check /app/cloudflare-workers-ai-client.cjs \
+ && node --test /app/cloudflare-fallback-gate.test.cjs /app/cloudflare-workers-ai-client.test.cjs
+COPY compiled-foreground-fixture.cjs /tmp/compiled-foreground-fixture.cjs
+RUN node --test /tmp/compiled-foreground-fixture.cjs \
+ && rm /tmp/compiled-foreground-fixture.cjs
 COPY optimize-plugins.cjs ./optimize-plugins.cjs
 COPY configure-gemini-auth.cjs ./configure-gemini-auth.cjs
 COPY recover-model.cjs ./recover-model.cjs

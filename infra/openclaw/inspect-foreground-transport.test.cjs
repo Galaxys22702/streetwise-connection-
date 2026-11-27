@@ -1,0 +1,21 @@
+'use strict';
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
+const {locate}=require('./inspect-foreground-transport.cjs');
+test('finds full marker set only and does not follow symlinks',t=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'jarvis-transport-'));
+ t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+ const full='function buildGuardedModelFetch() {} // [model-fetch] start provider= [model-fetch] response provider= Unsupported fetch input for transport-aware model request';
+ fs.writeFileSync(path.join(dir,'candidate.mjs'),full);
+ fs.writeFileSync(path.join(dir,'partial.mjs'),'[model-fetch] start provider=');
+ fs.symlinkSync(path.join(dir,'candidate.mjs'),path.join(dir,'alias.mjs'));
+ const hits=locate(dir);
+ assert.equal(hits.length,1);
+ assert.equal(hits[0].file,'candidate.mjs');
+ assert.equal(hits[0].namedFunction,true);
+ assert.match(hits[0].sha256,/^[a-f0-9]{64}$/);
+ assert.ok(hits[0].markers.every(x=>x.count===1));
+ fs.writeFileSync(path.join(dir,'second.mjs'),full);
+ assert.equal(locate(dir).length,2);
+});
