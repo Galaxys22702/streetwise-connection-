@@ -66,3 +66,9 @@ test('durable admission is exclusive and survives recreation on failure',{skip:p
  await second(false);
  assert.equal(await createAdmission(directory)(),null);
 });
+
+test('fractional retry delays are rounded up, never shortened',()=>{
+ assert.equal(deadlineFromResponse(new Response(null,{status:429,headers:{'retry-after':'120.0011'}}),100000),220002);
+ assert.equal(deadlineFromResponse(new Response(null,{status:429,headers:{'retry-after':'0.25'}}),100000),160000);
+ assert.equal(deadlineFromResponse(null,-1),null);
+});

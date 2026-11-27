@@ -17,6 +17,9 @@ COPY patch-foreground-transport.cjs /tmp/patch-foreground-transport.cjs
 RUN node --test /app/foreground-cooldown.test.cjs \
  && node /tmp/patch-foreground-transport.cjs \
  && rm /tmp/patch-foreground-transport.cjs
+COPY compiled-foreground-fixture.cjs /tmp/compiled-foreground-fixture.cjs
+RUN node --test /tmp/compiled-foreground-fixture.cjs \
+ && rm /tmp/compiled-foreground-fixture.cjs
 # Patch ONLY the pinned OpenClaw .mjs setup-inference probe in this image.
 # No /data access, no session edits, no provider requests. Fail closed on version drift.
 COPY probe-gate-166.cjs /app/probe-gate-166.cjs

@@ -37,8 +37,9 @@ function createAdmission(directory){
 function deadlineFromResponse(response,now){
  const value=response?.headers?.get('retry-after')?.trim();
  let wait=900000;
- if(value&&/^\d+$/.test(value)){
-  wait=Math.max(60000,Number(value)*1000);
+ if(!Number.isSafeInteger(now)||now<0)return null;
+ if(value&&/^\d+(?:\.\d+)?$/.test(value)){
+  wait=Math.max(60000,Math.ceil(Number(value)*1000));
  }else if(value){
   const date=Date.parse(value);
   if(Number.isFinite(date)) wait=Math.max(60000,date-now);
